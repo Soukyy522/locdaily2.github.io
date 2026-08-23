@@ -1,0 +1,4 @@
+LocDailyMar
+Tahap: 1 - GitHub Repository Ready
+Baseline: Tahap 0
+Tanggal: 2026-08-24
