@@ -87,3 +87,18 @@ Tabel foundation:
 - `devices`
 
 Edit Akun tetap hanya untuk Owner. Supabase Auth dan migrasi data bisnis belum diaktifkan pada Tahap 4.
+
+
+## Tahap 5 - Supabase Auth Foundation
+
+File baru:
+
+- `js/cloud-auth.js`
+- `supabase-stage5-auth-test.html`
+- `supabase/sql/02-stage5-auth-foundation.sql`
+- `supabase/sql/02-stage5-bootstrap-owner-template.sql`
+- `supabase/sql/02-stage5-verify.sql`
+
+Login utama `index.html` belum diganti. Supabase Auth diuji terpisah terlebih dahulu untuk mencegah lockout saat setup.
+
+Edit Akun tetap hanya dapat diakses Owner.

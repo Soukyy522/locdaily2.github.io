@@ -1,8 +1,9 @@
 LocDailyMar
 Roadmap: Live Sync
-Tahap: 4 - Cloud Foundation
-Baseline: Tahap 3 Owner Login Fixed
+Tahap: 5 - Supabase Auth Foundation
+Baseline: Tahap 4 Cloud Foundation
 Edit Akun: Owner Only
 Shift Management: Removed
-Supabase Auth: Not Active Yet
+Supabase Auth: Test Mode Active
+Main Login: Legacy Local Temporarily
 Business Data Migration: Not Started
