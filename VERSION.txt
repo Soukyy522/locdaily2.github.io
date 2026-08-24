@@ -1,0 +1,6 @@
+LocDailyMar
+Roadmap: Live Sync
+Tahap: 3 - Supabase Project & Connection Ready
+Baseline: Tahap 2 GitHub Pages Ready
+Shift Management: Removed
+Business data source: localStorage (not migrated yet)
