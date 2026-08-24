@@ -1,5 +1,0 @@
-LocDailyMar
-Roadmap: Live Sync
-Tahap: 1 - GitHub Repository Ready
-Baseline: LocDailyMar-LiveSync-TAHAP-0-BASELINE.zip
-Shift Management: Removed
