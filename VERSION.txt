@@ -1,6 +1,8 @@
 LocDailyMar
 Roadmap: Live Sync
-Tahap: 3 - Supabase Project & Connection Ready
-Baseline: Tahap 2 GitHub Pages Ready
+Tahap: 4 - Cloud Foundation
+Baseline: Tahap 3 Owner Login Fixed
+Edit Akun: Owner Only
 Shift Management: Removed
-Business data source: localStorage (not migrated yet)
+Supabase Auth: Not Active Yet
+Business Data Migration: Not Started

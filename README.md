@@ -70,3 +70,20 @@ Isi Project URL + Publishable Key di `js/supabase-config.js`, jalankan SQL
 `supabase/sql/00-stage3-system-meta.sql`, lalu uji koneksi melalui GitHub Pages.
 
 Data bisnis masih menggunakan `localStorage` pada tahap ini.
+
+
+## Tahap 4 - Cloud Foundation
+
+Database foundation sudah disiapkan melalui:
+
+- `supabase/sql/01-stage4-cloud-foundation.sql`
+- `supabase/sql/01-stage4-verify.sql`
+- `supabase-stage4-test.html`
+
+Tabel foundation:
+
+- `stores`
+- `profiles`
+- `devices`
+
+Edit Akun tetap hanya untuk Owner. Supabase Auth dan migrasi data bisnis belum diaktifkan pada Tahap 4.

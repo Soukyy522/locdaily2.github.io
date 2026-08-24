@@ -1,0 +1,10 @@
+LocDailyMar - Owner Login Fix
+
+Perbaikan:
+1. index.html kini membuat akun default jika daftarAkun belum ada.
+2. Migrasi password kini membangun ulang passwordHash jika password plaintext lama masih ada, termasuk jika hash lama/stale ikut tersimpan.
+3. Role default cornermar tetap Owner.
+
+Catatan:
+- Data akun yang sudah ada di localStorage tidak dihapus.
+- Password plaintext lama yang berhasil dimigrasi tetap dihapus setelah di-hash.
