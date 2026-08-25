@@ -1528,7 +1528,7 @@
     <script src="js/cloud-session-guard.js?v=6.0"></script>
     <!-- Live Sync Tahap 7: Cloud Master Barang -->
     <script src="js/products-service.js?v=7.0"></script>
-    <script src="js/transactions-service.js?v=8.0"></script>
+    <script src="js/transactions-service.js?v=8.1"></script>
     <script src="js/products-bootstrap.js?v=7.0"></script>
 
 </head>
@@ -3551,12 +3551,85 @@ function tambahItem() {
             hapusDraftKasirOtomatis();
         }
 
-        async function prosesCheckoutCloud(metode, detailKombinasi = null) {
-            if (!window.LDMTransactions) {
-                throw new Error(
-                    "transactions-service.js belum termuat."
+        let transactionsServiceLoadingPromise = null;
+
+        function pastikanTransactionsService() {
+            if (
+                window.LDMTransactions &&
+                typeof window.LDMTransactions.checkout === "function"
+            ) {
+                return Promise.resolve(
+                    window.LDMTransactions
                 );
             }
+
+            if (transactionsServiceLoadingPromise) {
+                return transactionsServiceLoadingPromise;
+            }
+
+            transactionsServiceLoadingPromise =
+                new Promise((resolve, reject) => {
+
+                    const existing =
+                        document.querySelector(
+                            'script[data-ldm-transactions-loader="true"]'
+                        );
+
+                    if (existing) {
+                        existing.remove();
+                    }
+
+                    const script =
+                        document.createElement("script");
+
+                    script.src =
+                        "js/transactions-service.js?v=8.1&reload=" +
+                        Date.now();
+
+                    script.async = true;
+
+                    script.dataset.ldmTransactionsLoader =
+                        "true";
+
+                    script.onload = function() {
+                        if (
+                            window.LDMTransactions &&
+                            typeof window.LDMTransactions.checkout === "function"
+                        ) {
+                            resolve(
+                                window.LDMTransactions
+                            );
+                            return;
+                        }
+
+                        reject(
+                            new Error(
+                                "transactions-service.js berhasil dimuat tetapi LDMTransactions tidak terbentuk."
+                            )
+                        );
+                    };
+
+                    script.onerror = function() {
+                        reject(
+                            new Error(
+                                "File js/transactions-service.js tidak dapat dimuat. Pastikan file tersebut ada di repository GitHub pada folder js/."
+                            )
+                        );
+                    };
+
+                    document.head.appendChild(
+                        script
+                    );
+                })
+                .finally(() => {
+                    transactionsServiceLoadingPromise = null;
+                });
+
+            return transactionsServiceLoadingPromise;
+        }
+
+        async function prosesCheckoutCloud(metode, detailKombinasi = null) {
+            await pastikanTransactionsService();
 
             const absensiAktif =
                 getAbsensiAktifKasir();
