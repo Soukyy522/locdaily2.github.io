@@ -34,7 +34,7 @@ pre{margin:0;background:#101828;color:#f2f4f7;border-radius:10px;padding:12px;wh
 <script src="js/supabase-client.js"></script>
 <script src="js/cloud-auth.js?v=5.1"></script>
 <script src="js/cloud-session.js?v=6.0"></script>
-<script src="js/attendance-service.js?v=9.0"></script>
+<script src="js/attendance-service.js?v=9.1"></script>
 </head>
 <body>
 <div class="wrap">
@@ -91,6 +91,24 @@ function readLegacy(){
     }
 }
 
+function normalizeUsername(value){
+    if(window.LDMAttendance && typeof window.LDMAttendance.normalizeUsername === "function") {
+        return window.LDMAttendance.normalizeUsername(value);
+    }
+    return String(value || "")
+        .normalize("NFKC")
+        .replace(/[\u200B-\u200D\u2060\uFEFF]/g, "")
+        .replace(/\s+/g, " ")
+        .trim()
+        .toLowerCase();
+}
+
+function codePoints(value){
+    return Array.from(String(value || ""))
+        .map(ch => "U+" + ch.codePointAt(0).toString(16).toUpperCase().padStart(4,"0"))
+        .join(" ");
+}
+
 async function inspectData(){
     try{
         const context = await LDMCloudSession.ensureAuthenticated({registerDevice:false});
@@ -102,28 +120,74 @@ async function inspectData(){
         document.getElementById("legacyCount").textContent = String(legacy.length);
         document.getElementById("profileCount").textContent = String(profiles.length);
 
-        const missing = legacy
-            .map(item => String(item.username || "").trim().toLowerCase())
-            .filter(Boolean)
-            .filter(name => !profiles.some(p => String(p.username || "").trim().toLowerCase() === name));
+        const legacyNames = [...new Set(
+            legacy.map(item => String(item.username || "")).filter(Boolean)
+        )];
 
-        out([
+        const profileNames = profiles.map(profile => ({
+            raw: String(profile.username || ""),
+            normalized: normalizeUsername(profile.username),
+            id: profile.id,
+            role: profile.role
+        }));
+
+        const missing = legacyNames.filter(name =>
+            !profileNames.some(profile =>
+                profile.normalized === normalizeUsername(name)
+            )
+        );
+
+        const lines = [
             "✅ DATA DIPERIKSA",
             "",
             `Role          : ${context.profile.role}`,
             `Store         : ${context.profile.store_code}`,
+            `Store ID      : ${context.profile.store_id}`,
             `Legacy Lokal  : ${legacy.length}`,
             `Profile Cloud : ${profiles.length}`,
             `Cloud Enabled : ${LDMAttendance.isEnabled() ? "YA" : "BELUM"}`,
             "",
-            missing.length
-                ? `⚠️ Username belum punya profile cloud: ${[...new Set(missing)].join(", ")}`
-                : "Semua username legacy cocok dengan profile cloud.",
+            "PROFILE YANG BENAR-BENAR DIBACA DARI SUPABASE:"
+        ];
+
+        if(profileNames.length === 0){
+            lines.push("(tidak ada profile yang dikembalikan RPC)");
+        }else{
+            profileNames.forEach(profile => {
+                lines.push(`- "${profile.raw}" | normalized="${profile.normalized}" | role=${profile.role} | id=${profile.id}`);
+            });
+        }
+
+        lines.push("", "USERNAME DARI dataAbsensi LEGACY:");
+
+        if(legacyNames.length === 0){
+            lines.push("(tidak ada username legacy)");
+        }else{
+            legacyNames.forEach(name => {
+                lines.push(`- "${name}" | normalized="${normalizeUsername(name)}" | chars=${codePoints(name)}`);
+            });
+        }
+
+        lines.push("");
+        if(missing.length){
+            lines.push(
+                `⚠️ BELUM COCOK: ${missing.join(", ")}`,
+                "",
+                "Jika tulisan terlihat sama, bandingkan nilai normalized di atas.",
+                "Jika profile tidak muncul pada daftar Supabase di atas, periksa store_id, active, dan deleted_at."
+            );
+        }else{
+            lines.push("✅ Semua username legacy cocok dengan profile cloud.");
+        }
+
+        lines.push(
             "",
             String(context.profile.role).toLowerCase() === "owner"
                 ? "Owner siap menjalankan migrasi."
                 : "Migrasi hanya dapat dijalankan oleh Owner."
-        ].join("\n"));
+        );
+
+        out(lines.join("\n"));
     }catch(error){
         out("❌ PEMERIKSAAN GAGAL\n\n" + (error.message || String(error)));
     }
