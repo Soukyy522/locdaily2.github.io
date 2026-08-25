@@ -206,11 +206,27 @@ pre{
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase-config.js"></script>
 <script src="js/supabase-client.js"></script>
-<script src="js/cloud-auth.js"></script>
+<script src="js/cloud-auth.js?v=5.1"></script>
 
 <script>
 let currentSubscription =
     null;
+
+function getCloudAuth(){
+    const helper =
+        window.LDMCloudAuth;
+
+    if(
+        !helper ||
+        typeof helper.signIn !== "function"
+    ){
+        throw new Error(
+            "Helper Auth tidak termuat. Pastikan file js/cloud-auth.js ada di repository GitHub dan dapat dibuka dari alamat situs."
+        );
+    }
+
+    return helper;
+}
 
 function statusItem(
     label,
@@ -274,7 +290,7 @@ function renderStatus(
                 "Device ID",
                 (
                     window.LDMCloudAuth
-                        ? LDMCloudAuth
+                        ? window.LDMCloudAuth
                             .getOrCreateDeviceId()
                         : "-"
                 ),
@@ -295,19 +311,22 @@ function setResult(
 }
 
 async function getFullCloudState(){
+    const cloudAuth =
+        getCloudAuth();
+
     const context =
-        await LDMCloudAuth.getContext();
+        await cloudAuth.getContext();
 
     if(!context){
         return null;
     }
 
     const device =
-        await LDMCloudAuth
+        await cloudAuth
             .registerCurrentDevice();
 
     const devices =
-        await LDMCloudAuth
+        await cloudAuth
             .listDevices();
 
     return {
@@ -420,7 +439,7 @@ async function loginCloud(){
             "Login ke Supabase Auth..."
         );
 
-        await LDMCloudAuth.signIn(
+        await getCloudAuth().signIn(
             email,
             password
         );
@@ -454,7 +473,7 @@ async function loginCloud(){
 
 async function logoutCloud(){
     try{
-        await LDMCloudAuth.signOut();
+        await getCloudAuth().signOut();
 
         renderStatus(null);
 
@@ -491,7 +510,7 @@ document.addEventListener(
         }
 
         currentSubscription =
-            LDMCloudAuth.watchAuth(
+            getCloudAuth().watchAuth(
                 function(
                     event
                 ){
