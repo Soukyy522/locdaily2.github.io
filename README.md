@@ -134,3 +134,24 @@ File utama:
 - `supabase-stage7-realtime-test.html`
 - `supabase/sql/04-stage7-products-cloud.sql`
 - `supabase/sql/04-stage7-verify.sql`
+
+
+### Multi User Profile
+
+Tahap 7 memakai template multi-account untuk menghubungkan beberapa Supabase Auth user ke `public.profiles` sekaligus:
+
+- `supabase/sql/04-stage7-link-multiple-user-profiles.sql`
+
+
+## Tahap 8 - Cloud Transactions + Atomic Stock
+
+Checkout Kasir sekarang menggunakan `ldm_complete_sale()`.
+Transaksi, item, pengurangan stok, dan stock movement disimpan dalam satu PostgreSQL transaction.
+
+File utama:
+- `js/transactions-service.js`
+- `supabase-stage8-transactions-stock-test.html`
+- `supabase/sql/05-stage8-transactions-atomic-stock.sql`
+- `supabase/sql/05-stage8-verify.sql`
+
+Atomic stock saat ini berlaku untuk SALE Kasir. Inventory flow lain masih dimigrasikan bertahap.

@@ -1528,6 +1528,7 @@
     <script src="js/cloud-session-guard.js?v=6.0"></script>
     <!-- Live Sync Tahap 7: Cloud Master Barang -->
     <script src="js/products-service.js?v=7.0"></script>
+    <script src="js/transactions-service.js?v=8.0"></script>
     <script src="js/products-bootstrap.js?v=7.0"></script>
 
 </head>
@@ -2016,6 +2017,8 @@ document.addEventListener(
         let nominalDiskon = 0;
         let uang = 0;
         let lastTransaksiData = null;
+        let pembayaranSedangDiproses = false;
+
         let activeDropdownIndex = -1;
         let html5QrCodeScanner = null;
 
@@ -3049,7 +3052,17 @@ function tambahItem() {
     // ==========================================
 
     let existingIdx = keranjang.findIndex(
-        k => k.nama === barang.nama
+        k =>
+            (
+                barang.id &&
+                k.productId &&
+                k.productId === barang.id
+            )
+            ||
+            (
+                !barang.id &&
+                k.nama === barang.nama
+            )
     );
 
     if (existingIdx !== -1) {
@@ -3061,6 +3074,12 @@ function tambahItem() {
 
         const hargaBaru = getHargaEfektif(barang, qtyBaru);
 
+        keranjang[existingIdx].productId =
+            barang.id || keranjang[existingIdx].productId || null;
+        keranjang[existingIdx].barcode =
+            barang.barcode || keranjang[existingIdx].barcode || "";
+        keranjang[existingIdx].hargaBeli =
+            Number(barang.hargaBeli) || 0;
         keranjang[existingIdx].harga = hargaBaru;
         keranjang[existingIdx].hargaNormal = hargaNormal;
         keranjang[existingIdx].isPromo = hargaBaru < hargaNormal;
@@ -3071,7 +3090,10 @@ function tambahItem() {
     } else {
 
         keranjang.push({
+            productId: barang.id || null,
+            barcode: barang.barcode || "",
             nama: barang.nama,
+            hargaBeli: Number(barang.hargaBeli) || 0,
 
             // INI YANG PENTING:
             // gunakan harga promo jika promo aktif
@@ -3267,16 +3289,22 @@ function tambahItem() {
             simpanDraftKasirOtomatis();
         }
 
-        function potongStokDatabase() {
-            let dataBarang = JSON.parse(localStorage.getItem("dataBarang")) || [];
-            keranjang.forEach(item => {
-                let idx = dataBarang.findIndex(b => b.nama.toLowerCase() === item.nama.toLowerCase());
-                if (idx !== -1) {
-                    let stokLama = Number(dataBarang[idx].stok) || 0;
-                    dataBarang[idx].stok = Math.max(0, stokLama - item.qty);
-                }
-            });
-            localStorage.setItem("dataBarang", JSON.stringify(dataBarang));
+        async function potongStokDatabase() {
+            /*
+             * Tahap 8:
+             * Pengurangan stok TIDAK lagi dilakukan di browser.
+             * ldm_complete_sale() mengunci row produk, memotong stok,
+             * dan menulis stock_movements dalam satu transaksi database.
+             * Fungsi legacy ini sekarang hanya refresh cache setelah commit.
+             */
+            if (
+                window.LDMProducts &&
+                window.LDMProducts.isEnabled()
+            ) {
+                await window.LDMProducts
+                    .refreshCache();
+            }
+
             cekPeringatanStok();
         }
 
@@ -3367,18 +3395,24 @@ function tambahItem() {
             return sudahKeluar ? null : masuk;
         }
 
-        function simpanKeLaporan(metode, detailKombinasi = null) {
+        function simpanKeLaporan(metode, detailKombinasi = null, cloudResult = null) {
             checkAndResetLaporan24Jam();
 
             let dataLaporan = JSON.parse(localStorage.getItem("laporan")) || JSON.parse(localStorage.getItem("dataLaporan")) || [];
             let kasirAktif = localStorage.getItem("currentUser") || localStorage.getItem("username") || "Owner";
             let namaBarangStr = keranjang.map(k => `${k.nama} (${k.qty} ${k.satuan})`).join(", ");
             
-            let w = new Date();
+            let w = cloudResult && cloudResult.transacted_at
+                ? new Date(cloudResult.transacted_at)
+                : new Date();
             let pad = (n) => n.toString().padStart(2, '0');
-            let tglToday = `${w.getFullYear()}-${pad(w.getMonth()+1)}-${pad(w.getDate())}`;
+            let tglToday = cloudResult && cloudResult.business_date
+                ? String(cloudResult.business_date)
+                : `${w.getFullYear()}-${pad(w.getMonth()+1)}-${pad(w.getDate())}`;
             let waktuTeks = `${tglToday} ${pad(w.getHours())}:${pad(w.getMinutes())}:${pad(w.getSeconds())}`;
-            let skrg = Date.now();
+            let skrg = Number.isFinite(w.getTime())
+                ? w.getTime()
+                : Date.now();
 
             let bayarVal = 0;
             let kembaliVal = 0;
@@ -3404,37 +3438,91 @@ function tambahItem() {
                 }
             }
 
+            if (cloudResult) {
+                bayarVal = Number(cloudResult.cash_received) ||
+                    (Number(cloudResult.cash_amount) || 0) +
+                    (Number(cloudResult.qris_amount) || 0);
+                kembaliVal = Number(cloudResult.change_amount) || 0;
+                nominalCash = Number(cloudResult.cash_amount) || 0;
+                nominalQris = Number(cloudResult.qris_amount) || 0;
+            }
+
             const kodeTransaksi =
-                buatKodeTransaksiKasir(
-                    skrg,
-                    kasirAktif,
-                    totalAkhir
-                );
+                cloudResult && cloudResult.transaction_code
+                    ? cloudResult.transaction_code
+                    : buatKodeTransaksiKasir(
+                        skrg,
+                        kasirAktif,
+                        totalAkhir
+                    );
+
+            const cloudItems =
+                cloudResult &&
+                Array.isArray(cloudResult.items)
+                    ? cloudResult.items.map(item => ({
+                        productId: item.product_id || null,
+                        barcode: item.barcode || "",
+                        nama: item.nama || "",
+                        hargaBeli: Number(item.hargaBeli) || 0,
+                        harga: Number(item.harga) || 0,
+                        hargaNormal: Number(item.hargaNormal) || Number(item.harga) || 0,
+                        isPromo: (Number(item.harga) || 0) < (Number(item.hargaNormal) || Number(item.harga) || 0),
+                        qty: Number(item.qty) || 0,
+                        satuan: item.satuan || "Pcs",
+                        subtotal: Number(item.subtotal) || 0,
+                        diskon: Number(item.diskon) || 0
+                    }))
+                    : JSON.parse(JSON.stringify(keranjang));
+
+            const productDiscount = cloudResult
+                ? Number(cloudResult.product_discount) || 0
+                : keranjang.reduce((total, item) => {
+                    const hargaNormal = Number(item.hargaNormal) || Number(item.harga) || 0;
+                    const hargaPromo = Number(item.harga) || 0;
+                    const qty = Number(item.qty) || 0;
+                    return total + Math.max(0, (hargaNormal - hargaPromo) * qty);
+                }, 0);
+
+            const manualDiscount = cloudResult
+                ? Number(cloudResult.manual_discount) || 0
+                : Number(nominalDiskon) || 0;
+
+            const totalDiscount = cloudResult
+                ? Number(cloudResult.total_discount) || 0
+                : productDiscount + manualDiscount;
 
             lastTransaksiData = {
                 id: skrg,
                 timestamp: skrg,
+                cloudId: cloudResult ? cloudResult.id : null,
+                clientTransactionId: cloudResult ? cloudResult.client_transaction_id : null,
+                cloudStatus: cloudResult ? cloudResult.status : null,
                 kodeTransaksi,
                 tanggal: tglToday,
                 waktu_teks: waktuTeks,
-                kasir: kasirAktif,
+                kasir: cloudResult && cloudResult.cashier_username
+                    ? cloudResult.cashier_username
+                    : kasirAktif,
                 shiftId: "",
-                shift: (getAbsensiAktifKasir() || {}).shift || "",
+                shift: cloudResult && cloudResult.shift_label
+                    ? cloudResult.shift_label
+                    : (getAbsensiAktifKasir() || {}).shift || "",
                 shiftStartedAt: "",
-                barang: namaBarangStr,
-                keranjang: JSON.parse(JSON.stringify(keranjang)),
-                subtotal: subtotalBelanja,
-  diskon: keranjang.reduce((total, item) => {
-    const hargaNormal = Number(item.hargaNormal) || Number(item.harga) || 0;
-    const hargaPromo = Number(item.harga) || 0;
-    const qty = Number(item.qty) || 0;
-
-    return total + Math.max(
-        0,
-        (hargaNormal - hargaPromo) * qty
-    );
-}, 0),
-                total: totalAkhir,
+                barang: cloudItems.map(k => `${k.nama} (${k.qty} ${k.satuan})`).join(", "),
+                keranjang: cloudItems,
+                subtotal: cloudResult
+                    ? Number(cloudResult.subtotal) || 0
+                    : subtotalBelanja,
+                normalSubtotal: cloudResult
+                    ? Number(cloudResult.normal_subtotal) || 0
+                    : subtotalBelanja + productDiscount,
+                productDiscount,
+                manualDiscount,
+                totalDiskon: totalDiscount,
+                diskon: totalDiscount,
+                total: cloudResult
+                    ? Number(cloudResult.grand_total) || 0
+                    : totalAkhir,
                 bayar: bayarVal,
                 kembali: kembaliVal,
                 metode: metode,
@@ -3463,25 +3551,136 @@ function tambahItem() {
             hapusDraftKasirOtomatis();
         }
 
-        function prosesBayar() {
+        async function prosesCheckoutCloud(metode, detailKombinasi = null) {
+            if (!window.LDMTransactions) {
+                throw new Error(
+                    "transactions-service.js belum termuat."
+                );
+            }
+
+            const absensiAktif =
+                getAbsensiAktifKasir();
+
+            let cashReceived = 0;
+            let cashAmount = 0;
+            let qrisAmount = 0;
+
+            if (metode === "Tunai") {
+                cashReceived = uang;
+                cashAmount = totalAkhir;
+            } else if (detailKombinasi) {
+                cashReceived = detailKombinasi.cash;
+                cashAmount = detailKombinasi.cash;
+                qrisAmount = detailKombinasi.qris;
+            } else {
+                qrisAmount = totalAkhir;
+            }
+
+            return await window.LDMTransactions.checkout({
+                items: keranjang,
+                manualDiscount: nominalDiskon,
+                paymentMethod: metode,
+                cashReceived,
+                cashAmount,
+                qrisAmount,
+                shiftLabel: absensiAktif
+                    ? absensiAktif.shift || ""
+                    : ""
+            });
+        }
+
+        async function finalisasiTransaksiCloud(
+            metode,
+            detailKombinasi = null
+        ) {
+            if (pembayaranSedangDiproses) {
+                throw new Error(
+                    "Pembayaran sedang diproses. Jangan tekan tombol dua kali."
+                );
+            }
+
+            pembayaranSedangDiproses = true;
+
+            try {
+                const cloudResult =
+                    await prosesCheckoutCloud(
+                        metode,
+                        detailKombinasi
+                    );
+
+                await potongStokDatabase();
+
+                /*
+                 * Baru setelah COMMIT cloud sukses,
+                 * kita tulis compatibility report lokal.
+                 */
+                simpanKeLaporan(
+                    metode,
+                    detailKombinasi,
+                    cloudResult
+                );
+
+                return cloudResult;
+
+            } finally {
+                pembayaranSedangDiproses = false;
+            }
+        }
+
+        async function prosesBayar() {
             if (keranjang.length === 0) {
-                tampilkanAlertModal("Keranjang Kosong", "Belum ada barang di dalam keranjang belanja!", "⚠️");
+                tampilkanAlertModal(
+                    "Keranjang Kosong",
+                    "Belum ada barang di dalam keranjang belanja!",
+                    "⚠️"
+                );
                 return;
             }
 
             if (uang < totalAkhir) {
-                tampilkanAlertModal("Uang Kurang", "Pembayaran tunai kurang dari total tagihan!", "⚠️");
+                tampilkanAlertModal(
+                    "Uang Kurang",
+                    "Pembayaran tunai kurang dari total tagihan!",
+                    "⚠️"
+                );
                 return;
             }
 
-            potongStokDatabase();
-            simpanKeLaporan("Tunai");
+            try {
+                const cloudResult =
+                    await finalisasiTransaksiCloud(
+                        "Tunai"
+                    );
 
-            let kembali = uang - totalAkhir;
-            document.getElementById("teksKembali").innerText = kembali.toLocaleString('id-ID');
-            document.getElementById("popupKembali").style.display = "flex";
+                const kembali =
+                    Number(cloudResult.change_amount) || 0;
 
-            cetakStrukManual(lastTransaksiData);
+                document
+                    .getElementById("teksKembali")
+                    .innerText =
+                        kembali.toLocaleString("id-ID");
+
+                document
+                    .getElementById("popupKembali")
+                    .style.display = "flex";
+
+                cetakStrukManual(
+                    lastTransaksiData
+                );
+
+            } catch (error) {
+                console.error(
+                    "Checkout cloud gagal:",
+                    error
+                );
+
+                tampilkanAlertModal(
+                    "Transaksi Gagal",
+                    (error.message || String(error)) +
+                    "\n\nTransaksi tidak dicatat dan stok tidak dipotong.",
+                    "❌"
+                );
+            }
         }
 
         function bukaPopupQris() {
@@ -3517,8 +3716,17 @@ function tambahItem() {
             document.getElementById("popupQris").style.display = "none";
         }
 
-        function prosesBayarQris() {
-            let sisaNonTunai = Math.max(0, totalAkhir - uang);
+        async function prosesBayarQris() {
+            if (pembayaranSedangDiproses) {
+                return;
+            }
+
+            let sisaNonTunai =
+                Math.max(
+                    0,
+                    totalAkhir - uang
+                );
+
             let detailKombinasi = null;
 
             if (uang > 0 && uang < totalAkhir) {
@@ -3528,14 +3736,40 @@ function tambahItem() {
                 };
             }
 
-            tutupPopupQris();
-            potongStokDatabase();
-            simpanKeLaporan("Non Tunai", detailKombinasi);
+            try {
+                const cloudResult =
+                    await finalisasiTransaksiCloud(
+                        "Non Tunai",
+                        detailKombinasi
+                    );
 
-            document.getElementById("teksKembali").innerText = "0";
-            document.getElementById("popupKembali").style.display = "flex";
+                tutupPopupQris();
 
-            cetakStrukManual(lastTransaksiData);
+                document
+                    .getElementById("teksKembali")
+                    .innerText = "0";
+
+                document
+                    .getElementById("popupKembali")
+                    .style.display = "flex";
+
+                cetakStrukManual(
+                    lastTransaksiData
+                );
+
+            } catch (error) {
+                console.error(
+                    "Checkout Non Tunai cloud gagal:",
+                    error
+                );
+
+                tampilkanAlertModal(
+                    "Transaksi Gagal",
+                    (error.message || String(error)) +
+                    "\n\nTransaksi tidak dicatat dan stok tidak dipotong.",
+                    "❌"
+                );
+            }
         }
 
         function ulangCetakStruk() {
