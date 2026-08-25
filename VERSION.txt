@@ -1,9 +1,10 @@
 LocDailyMar
 Roadmap: Live Sync
-Tahap: 5 - Supabase Auth Foundation
-Baseline: Tahap 4 Cloud Foundation
+Tahap: 6 - Main Supabase Auth
+Baseline: Tahap 5 Auth Loader Fixed
+Main Login: Supabase Auth
+Role Authority: public.profiles.role
+Local Role: Compatibility Cache Only
 Edit Akun: Owner Only
 Shift Management: Removed
-Supabase Auth: Test Mode Active
-Main Login: Legacy Local Temporarily
 Business Data Migration: Not Started

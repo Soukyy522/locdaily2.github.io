@@ -102,3 +102,20 @@ File baru:
 Login utama `index.html` belum diganti. Supabase Auth diuji terpisah terlebih dahulu untuk mencegah lockout saat setup.
 
 Edit Akun tetap hanya dapat diakses Owner.
+
+
+## Tahap 6 - Main Supabase Auth
+
+Login utama sekarang menggunakan Supabase Auth.
+
+Role resmi berasal dari `public.profiles.role`. Nilai role di localStorage hanya dipertahankan sebagai cache kompatibilitas untuk modul lama.
+
+File utama:
+- `js/cloud-session.js`
+- `js/cloud-session-guard.js`
+- `supabase-stage6-auth-authority-test.html`
+- `supabase/sql/03-stage6-main-cloud-auth.sql`
+- `supabase/sql/03-stage6-link-user-profile-template.sql`
+- `supabase/sql/03-stage6-verify.sql`
+
+Edit Akun tetap Owner-only.

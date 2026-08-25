@@ -625,16 +625,16 @@
 
         <form id="formLogin" onsubmit="handleLogin(event)">
             <div class="input-group">
-                <label for="username">Username / NIK Karyawan</label>
+                <label for="username">Email Auth Supabase</label>
                 <div class="input-wrapper">
-                    <input type="text" id="username" placeholder="Masukkan username atau NIK Karyawan" required autocomplete="username">
+                    <input type="email" id="username" placeholder="Masukkan email akun Supabase" required autocomplete="username">
                 </div>
             </div>
 
             <div class="input-group">
                 <label for="password">Password</label>
                 <div class="input-wrapper">
-                    <input type="password" id="password" placeholder="Masukkan password" required autocomplete="current-password" minlength="3" maxlength="8">
+                    <input type="password" id="password" placeholder="Masukkan password Supabase Auth" required autocomplete="current-password">
                     <button type="button" class="toggle-password" onclick="togglePasswordVisibility()">👁️</button>
                 </div>
             </div>
@@ -648,7 +648,7 @@
     id="loginSecurityStatus"
     class="login-security-status"
 >
-    🔒 Sistem login aktif
+    🔒 Supabase Auth aktif
 </div>
 
             <button type="submit" class="btn-login">Masuk</button>
@@ -664,6 +664,12 @@
             <button class="btn-pop" onclick="closePopup()">Tutup</button>
         </div>
     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/cloud-auth.js?v=5.1"></script>
+    <script src="js/cloud-session.js?v=6.0"></script>
 
     <script>
         // Sinkronisasi Tema & Konfigurasi dari LocalStorage (tersambung ke dashboard.html)
@@ -1051,150 +1057,197 @@ async function handleLogin(event) {
 
     event.preventDefault();
 
+    if (
+        isLoginLocked()
+    ) {
+        updateLoginSecurityDisplay();
 
-    const usernameInput =
+        showAlert(
+            "Login Dikunci",
+            "Tunggu sampai masa penguncian login selesai.",
+            "🔒"
+        );
+
+        return;
+    }
+
+    const emailInput =
         document
             .getElementById("username")
             .value
-            .trim();
-
+            .trim()
+            .toLowerCase();
 
     const passwordInput =
         document
             .getElementById("password")
             .value;
 
-
     if (
-        !usernameInput ||
+        !emailInput ||
         !passwordInput
     ) {
-
         showAlert(
             "Login Gagal",
-            "Username/NIK Karyawan dan password wajib diisi.",
+            "Email dan password wajib diisi.",
             "⚠️"
         );
 
         return;
     }
 
-
-    const akunList =
-        getDatabaseAkun();
-
-
-    /*
-     * Bisa login menggunakan Username ATAU NIK Karyawan.
-     */
-    const loginIdentity =
-        window.LDMEmployee
-            ? LDMEmployee.resolveLogin(
-                usernameInput
-            )
-            : {
-                username:
-                    usernameInput,
-                employee:
-                    null
-            };
-
-
-    const resolvedUsername =
-        String(
-            loginIdentity.username ||
-            usernameInput
-        );
-
-
-    const userFound =
-        akunList.find(
-            account =>
-
-                account.username &&
-                account.username
-                    .toLowerCase() ===
-                resolvedUsername
-                    .toLowerCase()
-        );
-
-
-    if (!userFound) {
-
-        showAlert(
-            "Login Gagal",
-            "Username atau password salah.",
-            "❌"
-        );
-
-        return;
-    }
-
-
-    /*
-     * Pastikan akun aktif.
-     */
-
     if (
-        userFound.active === false ||
-        userFound.aktif === false
+        !window.LDMSupabase ||
+        !window.LDMSupabase.isConfigured()
     ) {
-
         showAlert(
-            "Akun Tidak Aktif",
-            "Akun ini sedang dinonaktifkan.",
+            "Supabase Belum Siap",
+            "Isi Project URL dan Publishable Key di js/supabase-config.js.",
             "⚠️"
         );
 
         return;
     }
 
-
-    /*
-     * Hash password yang dimasukkan
-     */
-
-    const passwordHash =
-        await hashPassword(
-            passwordInput
-        );
-
-
-    /*
-     * Bandingkan dengan hash yang tersimpan.
-     */
-
     if (
-        !userFound.passwordHash ||
-        passwordHash !==
-        userFound.passwordHash
+        !window.LDMCloudSession
     ) {
-
         showAlert(
-            "Login Gagal",
-            "Username atau password salah.",
+            "Komponen Auth Gagal Dimuat",
+            "Pastikan js/cloud-auth.js dan js/cloud-session.js tersedia di GitHub.",
             "❌"
         );
 
         return;
     }
 
+    const submitButton =
+        document.querySelector(
+            "#formLogin .btn-login"
+        );
 
-    /*
-     * Login berhasil.
-     */
+    if(submitButton){
+        submitButton.disabled = true;
+        submitButton.textContent =
+            "Memeriksa akun...";
+    }
 
-    createLoginSession(
-        userFound
+    try {
+
+        const context =
+            await window.LDMCloudSession
+                .signIn(
+                    emailInput,
+                    passwordInput
+                );
+
+        const profile =
+            context.profile;
+
+        const security =
+            getLoginSecurityData();
+
+        security.failedAttempts = 0;
+        security.lockedUntil = 0;
+        security.lastLogin =
+            Date.now();
+
+        saveLoginSecurityData(
+            security
+        );
+
+        window.location.replace(
+            "dashboard.html"
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Cloud login gagal:",
+            error
+        );
+
+        showAlert(
+            "Login Cloud Gagal",
+            error &&
+            error.message
+                ? error.message
+                : "Email atau password tidak valid.",
+            "❌"
+        );
+
+    } finally {
+
+        if(submitButton){
+            submitButton.disabled =
+                false;
+
+            submitButton.textContent =
+                "Masuk";
+        }
+    }
+}
+
+async function resumeCloudLogin() {
+
+    if (
+        !window.LDMSupabase ||
+        !window.LDMSupabase.isConfigured() ||
+        !window.LDMCloudSession
+    ) {
+        return;
+    }
+
+    try {
+
+        const context =
+            await window.LDMCloudSession
+                .resume();
+
+        if(context){
+            window.location.replace(
+                "dashboard.html"
+            );
+        }
+
+    } catch (error) {
+
+        console.warn(
+            "Tidak ada session cloud yang dapat dilanjutkan:",
+            error
+        );
+
+        window.LDMCloudSession
+            .clearCompatibilityCache();
+    }
+}
+
+function showCloudAuthErrorFromUrl() {
+
+    const params =
+        new URLSearchParams(
+            window.location.search
+        );
+
+    const message =
+        params.get(
+            "cloudAuthError"
+        );
+
+    if(!message){
+        return;
+    }
+
+    history.replaceState(
+        {},
+        document.title,
+        window.location.pathname
     );
 
-
-    /*
-     * Masuk dashboard
-     */
-
-    window.location.replace(
-        "dashboard.html"
+    showAlert(
+        "Session Cloud Tidak Valid",
+        message,
+        "🔒"
     );
 }
 
@@ -1203,6 +1256,15 @@ async function handleLogin(event) {
 // =====================================================
 
 function cekSessionLogin() {
+
+    if (
+        localStorage.getItem(
+            "ldmAuthSource"
+        ) !== "supabase"
+    ) {
+        return false;
+    }
+
 
     const isLoggedIn =
         localStorage.getItem(
@@ -1455,6 +1517,15 @@ function createLoginSession(account) {
 
 function validateLoginSession() {
 
+    if (
+        localStorage.getItem(
+            "ldmAuthSource"
+        ) !== "supabase"
+    ) {
+        return false;
+    }
+
+
     const raw =
         localStorage.getItem(
             "loginSession"
@@ -1586,5 +1657,16 @@ setInterval(
     10 * 1000
 );
     </script>
+
+<script>
+document.addEventListener(
+    "DOMContentLoaded",
+    async function(){
+        showCloudAuthErrorFromUrl();
+        await resumeCloudLogin();
+    }
+);
+</script>
+
 </body>
 </html>
