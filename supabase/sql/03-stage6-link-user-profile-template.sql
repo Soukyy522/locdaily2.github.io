@@ -1,60 +1,32 @@
 -- ================================================================
 -- LocDailyMar - Tahap 6
--- TEMPLATE LINK AUTH USER -> PROFILE
+-- LINK BANYAK AUTH USER -> PROFILE
 --
--- Gunakan template ini untuk Admin/Kasir/Owner tambahan.
+-- Semua email HARUS sudah tersedia di:
+-- Supabase -> Authentication -> Users
 --
--- 1. Buat user terlebih dahulu di Supabase Authentication > Users.
--- 2. Ganti USER_EMAIL_HERE.
--- 3. Ganti USERNAME_HERE.
--- 4. Ganti ROLE_HERE menjadi owner / admin / kasir.
--- 5. Jalankan SQL.
---
--- PASSWORD TIDAK DITULIS DI SQL.
+-- PASSWORD TIDAK DITULIS DI SQL INI.
 -- ================================================================
 
 begin;
 
 do $$
 declare
-    v_email text := 'USER_EMAIL_HERE';
-    v_username text := 'USERNAME_HERE';
-    v_role text := lower('ROLE_HERE');
 
+    -- Data satu akun yang sedang diproses
+    v_account record;
+
+    -- UUID Auth User
     v_user_id uuid;
+
+    -- UUID toko LocDailyMar
     v_store_id uuid;
+
 begin
-    if v_email = 'USER_EMAIL_HERE'
-       or btrim(v_email) = '' then
-        raise exception 'Ganti USER_EMAIL_HERE.';
-    end if;
 
-    if v_username = 'USERNAME_HERE'
-       or btrim(v_username) = '' then
-        raise exception 'Ganti USERNAME_HERE.';
-    end if;
-
-    if v_role not in (
-        'owner',
-        'admin',
-        'kasir'
-    ) then
-        raise exception
-            'ROLE_HERE harus owner, admin, atau kasir.';
-    end if;
-
-    select u.id
-      into v_user_id
-    from auth.users u
-    where lower(u.email) =
-          lower(btrim(v_email))
-    limit 1;
-
-    if v_user_id is null then
-        raise exception
-            'Auth user % tidak ditemukan.',
-            v_email;
-    end if;
+    -- ============================================================
+    -- 1. AMBIL STORE LocDailyMar
+    -- ============================================================
 
     select s.id
       into v_store_id
@@ -63,70 +35,253 @@ begin
       and s.deleted_at is null
     limit 1;
 
+
     if v_store_id is null then
+
         raise exception
             'Store LDM-DEFAULT tidak ditemukan.';
+
     end if;
 
-    if exists (
-        select 1
-        from public.profiles p
-        where p.store_id = v_store_id
-          and lower(p.username) =
-              lower(btrim(v_username))
-          and p.id <> v_user_id
-          and p.deleted_at is null
-    ) then
-        raise exception
-            'Username % sudah dipakai profile lain.',
-            v_username;
-    end if;
 
-    insert into public.profiles (
-        id,
-        store_id,
-        username,
-        display_name,
-        role,
-        active,
-        deleted_at,
-        deleted_by
-    )
-    values (
-        v_user_id,
-        v_store_id,
-        btrim(v_username),
-        btrim(v_username),
-        v_role,
-        true,
-        null,
-        null
-    )
-    on conflict (id)
-    do update set
-        store_id = excluded.store_id,
-        username = excluded.username,
-        display_name = excluded.display_name,
-        role = excluded.role,
-        active = true,
-        deleted_at = null,
-        deleted_by = null;
+    -- ============================================================
+    -- 2. DAFTAR AKUN
+    --
+    -- FORMAT:
+    -- email, username, role
+    -- ============================================================
+
+    for v_account in
+
+        select *
+        from (
+            values
+
+                (
+                    'rudigamer126@gmail.com',
+                    'locdaily',
+                    'owner'
+                ),
+
+                (
+                    'admin@example.com',
+                    'admin1',
+                    'admin'
+                ),
+
+                (
+                    'kasir1@example.com',
+                    'kasir1',
+                    'kasir'
+                )
+
+        ) as daftar(
+            email,
+            username,
+            role
+        )
+
+    loop
+
+
+        -- ========================================================
+        -- 3. VALIDASI ROLE
+        -- ========================================================
+
+        if lower(v_account.role)
+           not in (
+               'owner',
+               'admin',
+               'kasir'
+           )
+        then
+
+            raise exception
+                'Role akun % tidak valid: %',
+                v_account.username,
+                v_account.role;
+
+        end if;
+
+
+        -- ========================================================
+        -- 4. CARI USER DI SUPABASE AUTH
+        -- ========================================================
+
+        select u.id
+          into v_user_id
+        from auth.users u
+        where lower(u.email) =
+              lower(
+                  btrim(
+                      v_account.email
+                  )
+              )
+        limit 1;
+
+
+        if v_user_id is null then
+
+            raise exception
+                'Auth user dengan email % tidak ditemukan.',
+                v_account.email;
+
+        end if;
+
+
+        -- ========================================================
+        -- 5. CEK USERNAME SUDAH DIPAKAI ATAU BELUM
+        -- ========================================================
+
+        if exists (
+
+            select 1
+            from public.profiles p
+
+            where p.store_id =
+                  v_store_id
+
+              and lower(p.username) =
+                  lower(
+                      btrim(
+                          v_account.username
+                      )
+                  )
+
+              and p.id <>
+                  v_user_id
+
+              and p.deleted_at is null
+
+        ) then
+
+            raise exception
+                'Username % sudah dipakai profile lain.',
+                v_account.username;
+
+        end if;
+
+
+        -- ========================================================
+        -- 6. INSERT / UPDATE PROFILE
+        -- ========================================================
+
+        insert into public.profiles (
+
+            id,
+            store_id,
+            username,
+            display_name,
+            role,
+            active,
+            deleted_at,
+            deleted_by
+
+        )
+
+        values (
+
+            v_user_id,
+            v_store_id,
+
+            btrim(
+                v_account.username
+            ),
+
+            btrim(
+                v_account.username
+            ),
+
+            lower(
+                v_account.role
+            ),
+
+            true,
+            null,
+            null
+
+        )
+
+        on conflict (id)
+
+        do update set
+
+            store_id =
+                excluded.store_id,
+
+            username =
+                excluded.username,
+
+            display_name =
+                excluded.display_name,
+
+            role =
+                excluded.role,
+
+            active =
+                true,
+
+            deleted_at =
+                null,
+
+            deleted_by =
+                null;
+
+
+        raise notice
+            'Akun % berhasil diproses sebagai %.',
+            v_account.username,
+            v_account.role;
+
+
+    end loop;
+
 end
 $$;
 
 commit;
 
+
+-- ================================================================
+-- 7. TAMPILKAN HASIL
+-- ================================================================
+
 select
+
     u.email,
     p.id,
     p.username,
     p.role,
     p.active,
-    s.code as store_code
-from auth.users u
-join public.profiles p
-  on p.id = u.id
+    s.code as store_code,
+    s.name as store_name
+
+from public.profiles p
+
+join auth.users u
+  on u.id = p.id
+
 join public.stores s
   on s.id = p.store_id
-where lower(u.email) =
-      lower('USER_EMAIL_HERE');
+
+where s.code = 'LDM-DEFAULT'
+  and p.deleted_at is null
+
+order by
+
+    case p.role
+
+        when 'owner'
+            then 1
+
+        when 'admin'
+            then 2
+
+        when 'kasir'
+            then 3
+
+        else 4
+
+    end,
+
+    p.username;
