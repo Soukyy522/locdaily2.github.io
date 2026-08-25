@@ -58,8 +58,8 @@ begin
             values
 
                 (
-                    'rudigamer126@gmail.com',
-                    'locdaily',
+                    'owner@example.com',
+                    'cornermar',
                     'owner'
                 ),
 

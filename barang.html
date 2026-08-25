@@ -2470,6 +2470,9 @@
     <script src="js/cloud-auth.js?v=5.1"></script>
     <script src="js/cloud-session.js?v=6.0"></script>
     <script src="js/cloud-session-guard.js?v=6.0"></script>
+    <!-- Live Sync Tahap 7: Cloud Master Barang -->
+    <script src="js/products-service.js?v=7.0"></script>
+    <script src="js/products-bootstrap.js?v=7.0"></script>
 
 </head>
 <body>
@@ -3287,7 +3290,29 @@ const loggedUser =
     ];
 
     function simpanKeStorage(data) {
-        localStorage.setItem("dataBarang", JSON.stringify(data));
+        localStorage.setItem(
+            "dataBarang",
+            JSON.stringify(data)
+        );
+
+        /*
+         * Tahap 7:
+         * dataBarang tetap cache kompatibilitas.
+         * Jika Master Barang sudah dimigrasikan,
+         * perubahan dari halaman Barang akan
+         * dikirim ke public.products.
+         */
+        if (
+            window.LDMProducts
+            &&
+            window.LDMProducts.isEnabled()
+        ) {
+            window.LDMProducts
+                .scheduleSync(
+                    data,
+                    250
+                );
+        }
     }
 
     function tampilkanNotifikasi(judul, pesan, icon = "ℹ️") {
@@ -4337,17 +4362,85 @@ function catatKartuStokMutasi(payload = {}) {
     }
 
     function hapusBarang(index) {
-        let data = JSON.parse(localStorage.getItem("dataBarang")) || defaultBarang;
-        let namaItem = data[index].nama;
+        let data =
+            JSON.parse(
+                localStorage.getItem(
+                    "dataBarang"
+                )
+            ) || defaultBarang;
+
+        const item =
+            data[index];
+
+        if(!item){
+            return tampilkanNotifikasi(
+                "Data Tidak Ditemukan",
+                "Barang tidak ditemukan.",
+                "⚠️"
+            );
+        }
+
+        let namaItem =
+            item.nama;
+
+        const cloudProductId =
+            item.id || null;
 
         tampilkanKonfirmasi(
-            "Konfirmasi Hapus", 
-            `Apakah Anda yakin ingin menghapus barang '${namaItem}'?`, 
+            "Konfirmasi Hapus",
+            `Apakah Anda yakin ingin menghapus barang '${namaItem}'?`,
             function() {
-                data.splice(index, 1);
-                simpanKeStorage(data);
+
+                data.splice(
+                    index,
+                    1
+                );
+
+                /*
+                 * Hindari schedule upsert item yang sedang dihapus.
+                 * Cache lokal ditulis langsung, lalu cloud memakai
+                 * soft delete berdasarkan UUID.
+                 */
+                localStorage.setItem(
+                    "dataBarang",
+                    JSON.stringify(data)
+                );
+
+                if(
+                    cloudProductId
+                    &&
+                    window.LDMProducts
+                    &&
+                    window.LDMProducts.isEnabled()
+                ){
+                    window.LDMProducts
+                        .softDelete(
+                            cloudProductId
+                        )
+                        .catch(
+                            error => {
+                                console.error(
+                                    "Cloud soft delete gagal:",
+                                    error
+                                );
+
+                                tampilkanNotifikasi(
+                                    "Cloud Belum Terhapus",
+                                    error.message
+                                    || "Gagal menghapus barang di Supabase.",
+                                    "⚠️"
+                                );
+                            }
+                        );
+                }
+
                 muatBarang();
-                tampilkanNotifikasi("Dihapus", `Barang '${namaItem}' telah dihapus.`, "🗑️");
+
+                tampilkanNotifikasi(
+                    "Dihapus",
+                    `Barang '${namaItem}' telah dihapus.`,
+                    "🗑️"
+                );
             },
             "🗑️"
         );
@@ -6149,6 +6242,21 @@ document.addEventListener(
         }
     },2000);
 })();
+</script>
+
+
+<script>
+window.addEventListener(
+    "ldm-products-cache-updated",
+    function(){
+        if(
+            typeof muatBarang ===
+            "function"
+        ){
+            muatBarang();
+        }
+    }
+);
 </script>
 
 </body>

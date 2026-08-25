@@ -119,3 +119,18 @@ File utama:
 - `supabase/sql/03-stage6-verify.sql`
 
 Edit Akun tetap Owner-only.
+
+
+## Tahap 7 - Cloud Master Barang
+
+Master Barang sekarang mempunyai backend `public.products` dengan UUID stabil, RLS, soft delete, dan Realtime.
+
+`localStorage.dataBarang` masih dipertahankan sebagai compatibility cache untuk modul lama. Stok masih berupa `legacy_stock_snapshot` sampai tahap ledger stok atomic.
+
+File utama:
+- `js/products-service.js`
+- `js/products-bootstrap.js`
+- `supabase-stage7-products-migration.html`
+- `supabase-stage7-realtime-test.html`
+- `supabase/sql/04-stage7-products-cloud.sql`
+- `supabase/sql/04-stage7-verify.sql`

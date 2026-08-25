@@ -1,10 +1,14 @@
 LocDailyMar
 Roadmap: Live Sync
-Tahap: 6 - Main Supabase Auth
-Baseline: Tahap 5 Auth Loader Fixed
+Tahap: 7 - Cloud Master Barang
+Baseline: Tahap 6 Main Supabase Auth
 Main Login: Supabase Auth
 Role Authority: public.profiles.role
-Local Role: Compatibility Cache Only
+Products Authority: public.products
+Products Realtime: Enabled
+Products Cache: localStorage.dataBarang
+Product IDs: Stable UUID
+Product Delete: Soft Delete
+Stock Authority: Legacy Snapshot Transition
 Edit Akun: Owner Only
 Shift Management: Removed
-Business Data Migration: Not Started
