@@ -2216,6 +2216,9 @@
     <script src="js/cloud-auth.js?v=5.1"></script>
     <script src="js/cloud-session.js?v=6.0"></script>
     <script src="js/cloud-session-guard.js?v=6.0"></script>
+    <!-- Live Sync Tahap 9: Cloud Absensi -->
+    <script src="js/attendance-service.js?v=9.0"></script>
+    <script src="js/attendance-bootstrap.js?v=9.0"></script>
     <!-- Live Sync Tahap 7: Cloud Master Barang -->
     <script src="js/products-service.js?v=7.0"></script>
     <script src="js/products-bootstrap.js?v=7.0"></script>
@@ -3137,16 +3140,38 @@ const loggedUser =
         }
 
         function getDatabaseAkun() {
-            let akunList = JSON.parse(localStorage.getItem("daftarAkun")) || null;
-            if (!akunList) {
-                akunList = [
-                    { id: 1, username: "owner", password: "123", role: "owner" },
-                    { id: 2, username: "admin", password: "123", role: "admin" },
-                    { id: 3, username: "cornermar", password: "CM123456", role: "owner" }
-                ];
-                localStorage.setItem("daftarAkun", JSON.stringify(akunList));
+            try {
+                const cloudProfiles =
+                    JSON.parse(
+                        localStorage.getItem(
+                            "ldmAttendanceProfiles"
+                        ) || "[]"
+                    );
+
+                if (
+                    Array.isArray(cloudProfiles) &&
+                    cloudProfiles.length > 0
+                ) {
+                    return cloudProfiles;
+                }
+            } catch (error) {
+                console.warn(
+                    "Cache profile Absensi tidak dapat dibaca:",
+                    error
+                );
             }
-            return akunList;
+
+            // Compatibility fallback selama bootstrap cloud belum selesai.
+            let akunList =
+                JSON.parse(
+                    localStorage.getItem(
+                        "daftarAkun"
+                    )
+                ) || [];
+
+            return Array.isArray(akunList)
+                ? akunList
+                : [];
         }
 
         function getTanggalWITA(dateObj = new Date()) {
@@ -3281,28 +3306,79 @@ const loggedUser =
         }
 
         function populateSelectAkun() {
-            const select = document.getElementById("selectAkunAbsen");
-            const akunList = getDatabaseAkun();
+            const select =
+                document.getElementById(
+                    "selectAkunAbsen"
+                );
 
-            select.innerHTML = "";
-            akunList.forEach(acc => {
-                const opt = document.createElement("option");
-                opt.value = acc.username;
-                opt.innerText = acc.username;
-                select.appendChild(opt);
-            });
+            const akunList =
+                getDatabaseAkun();
 
             const session =
-    requireLogin();
+                requireLogin();
 
-if (!session) {
-    return;
-}
+            if (!session) {
+                return;
+            }
 
-const loggedUser =
-    session.username;
-            if (loggedUser) select.value = loggedUser;
-            
+            const loggedUser =
+                session.username;
+
+            const role =
+                String(
+                    localStorage.getItem(
+                        "userRole"
+                    ) || ""
+                )
+                    .trim()
+                    .toLowerCase();
+
+            const visibleAccounts =
+                role === "owner"
+                    ? akunList
+                    : akunList.filter(
+                        account =>
+                            String(
+                                account.username || ""
+                            )
+                                .trim()
+                                .toLowerCase() ===
+                            String(
+                                loggedUser || ""
+                            )
+                                .trim()
+                                .toLowerCase()
+                    );
+
+            select.innerHTML = "";
+
+            visibleAccounts.forEach(
+                account => {
+                    const opt =
+                        document.createElement(
+                            "option"
+                        );
+
+                    opt.value =
+                        account.username;
+
+                    opt.innerText =
+                        account.username;
+
+                    select.appendChild(
+                        opt
+                    );
+                }
+            );
+
+            if (loggedUser) {
+                select.value =
+                    loggedUser;
+            }
+
+            select.disabled =
+                role !== "owner";
+
             cekStatusAutoIsi();
         }
 
@@ -3343,75 +3419,218 @@ const loggedUser =
             renderTableLog();
         }
 
-        function submitAbsensi(e) {
+        async function submitAbsensi(e) {
             e.preventDefault();
 
-            const username = document.getElementById("selectAkunAbsen").value;
-            const jenis = document.getElementById("selectJenisAbsen").value;
-            const shift = (jenis === "Masuk" || jenis === "Keluar") ? document.getElementById("selectShift").value : "-";
-            const catatan = document.getElementById("txtCatatanAbsen").value.trim();
-            const tglToday = getTanggalWITA();
+            const username =
+                document.getElementById(
+                    "selectAkunAbsen"
+                ).value;
 
-            let logAbsensi = JSON.parse(localStorage.getItem("dataAbsensi")) || [];
-            const userTodayLogs = logAbsensi.filter(a => a.username.toString().trim().toLowerCase() === username.toString().trim().toLowerCase() && a.tanggal === tglToday);
+            const jenis =
+                document.getElementById(
+                    "selectJenisAbsen"
+                ).value;
 
-            if (userTodayLogs.some(a => a.jenis === "Sakit" || a.jenis === "Izin")) {
-                tampilkanAlertCustom("Presensi Dibatasi", `Akun "${username}" telah menyelesaikan presensi hari ini. Presensi hanya diperbolehkan 1x sehari.`, "warning");
+            const shift =
+                (jenis === "Masuk" || jenis === "Keluar")
+                    ? document.getElementById(
+                        "selectShift"
+                    ).value
+                    : null;
+
+            const catatan =
+                document.getElementById(
+                    "txtCatatanAbsen"
+                ).value.trim();
+
+            const tglToday =
+                getTanggalWITA();
+
+            const logAbsensi =
+                JSON.parse(
+                    localStorage.getItem(
+                        "dataAbsensi"
+                    ) || "[]"
+                );
+
+            const userTodayLogs =
+                logAbsensi.filter(
+                    item =>
+                        String(item.username || "")
+                            .trim()
+                            .toLowerCase() ===
+                        String(username || "")
+                            .trim()
+                            .toLowerCase()
+                        && item.tanggal === tglToday
+                );
+
+            if (
+                userTodayLogs.some(
+                    item =>
+                        item.jenis === "Sakit" ||
+                        item.jenis === "Izin"
+                )
+            ) {
+                tampilkanAlertCustom(
+                    "Presensi Dibatasi",
+                    `Akun "${username}" telah menyelesaikan presensi hari ini.`,
+                    "warning"
+                );
                 return;
             }
 
-            if (jenis === "Masuk" && userTodayLogs.some(a => a.jenis === "Masuk" || a.jenis === "Hadir")) {
-                tampilkanAlertCustom("Presensi Dibatasi", `Akun "${username}" sudah melakukan Absen Masuk hari ini!`, "warning");
+            if (
+                jenis === "Masuk" &&
+                userTodayLogs.some(
+                    item =>
+                        item.jenis === "Masuk" ||
+                        item.jenis === "Hadir"
+                )
+            ) {
+                tampilkanAlertCustom(
+                    "Presensi Dibatasi",
+                    `Akun "${username}" sudah melakukan Absen Masuk hari ini!`,
+                    "warning"
+                );
                 return;
             }
 
-            if (jenis === "Keluar" && userTodayLogs.some(a => a.jenis === "Keluar")) {
-                tampilkanAlertCustom("Presensi Dibatasi", `Akun "${username}" sudah melakukan Absen Keluar hari ini!`, "warning");
+            if (
+                jenis === "Keluar" &&
+                userTodayLogs.some(
+                    item => item.jenis === "Keluar"
+                )
+            ) {
+                tampilkanAlertCustom(
+                    "Presensi Dibatasi",
+                    `Akun "${username}" sudah melakukan Absen Keluar hari ini!`,
+                    "warning"
+                );
                 return;
             }
 
-            if ((jenis === "Masuk" || jenis === "Keluar") && !tempBase64Selfie) {
-                tampilkanAlertCustom("Selfie Wajib", "Anda WAJIB mengambil foto selfie langsung dari kamera saat absen Masuk atau Keluar!", "warning");
+            if (
+                (jenis === "Masuk" || jenis === "Keluar") &&
+                !tempBase64Selfie
+            ) {
+                tampilkanAlertCustom(
+                    "Selfie Wajib",
+                    "Anda WAJIB mengambil foto selfie langsung dari kamera saat absen Masuk atau Keluar!",
+                    "warning"
+                );
                 return;
             }
 
-            if ((jenis === "Sakit" || jenis === "Izin") && !tempBase64Surat) {
-                tampilkanAlertCustom("Surat Wajib Diambil", "Absen Sakit atau Izin WAJIB mengambil foto surat keterangan secara langsung dari kamera!", "warning");
+            if (
+                (jenis === "Sakit" || jenis === "Izin") &&
+                !tempBase64Surat
+            ) {
+                tampilkanAlertCustom(
+                    "Surat Wajib Diambil",
+                    "Absen Sakit atau Izin WAJIB mengambil foto surat keterangan secara langsung dari kamera!",
+                    "warning"
+                );
                 return;
             }
 
-            const now = new Date();
-            const utcTime = now.getTime() + (now.getTimezoneOffset() * 60000);
-            const witaNow = new Date(utcTime + (3600000 * 8));
+            if (
+                !window.LDMAttendance ||
+                typeof window.LDMAttendance.recordAttendance !==
+                    "function"
+            ) {
+                tampilkanAlertCustom(
+                    "Cloud Absensi Belum Siap",
+                    "attendance-service.js belum termuat.",
+                    "danger"
+                );
+                return;
+            }
 
-            const dataAbsen = {
-                id: Date.now(),
-                tanggal: tglToday,
-                waktu: String(witaNow.getHours()).padStart(2, '0') + ":" + String(witaNow.getMinutes()).padStart(2, '0'),
-                username: username,
-                jenis: jenis,
-                shift: shift,
-                surat: (jenis === "Sakit" || jenis === "Izin") ? tempBase64Surat : tempBase64Selfie,
-                catatan: catatan
-            };
+            const button =
+                document.getElementById(
+                    "btnSubmitAbsen"
+                );
 
-            logAbsensi.push(dataAbsen);
-            localStorage.setItem("dataAbsensi", JSON.stringify(logAbsensi));
+            const oldHTML =
+                button.innerHTML;
 
-            // Simpan status akun aktif
-            localStorage.setItem("activeUsername", username);
-            localStorage.setItem("loggedInUser", username);
+            button.disabled = true;
+            button.innerHTML =
+                "☁️ Menyimpan Presensi...";
 
-            tempBase64Surat = "";
-            tempBase64Selfie = "";
-            document.getElementById("previewSuratBox").style.display = "none";
-            document.getElementById("previewSelfieBox").style.display = "none";
-            document.getElementById("txtCatatanAbsen").value = "";
+            try {
+                const proofDataURL =
+                    (jenis === "Sakit" || jenis === "Izin")
+                        ? tempBase64Surat
+                        : tempBase64Selfie;
 
-            tampilkanAlertCustom("Berhasil", `Presensi (${jenis}) untuk akun "${username}" berhasil disimpan!`, "success");
-            
-            renderStatusAkun();
-            cekStatusAutoIsi();
+                await window.LDMAttendance
+                    .recordAttendance({
+                        username,
+                        type: jenis,
+                        shift,
+                        note: catatan,
+                        proofDataURL
+                    });
+
+                localStorage.setItem(
+                    "activeUsername",
+                    username
+                );
+
+                localStorage.setItem(
+                    "loggedInUser",
+                    username
+                );
+
+                tempBase64Surat = "";
+                tempBase64Selfie = "";
+
+                document
+                    .getElementById(
+                        "previewSuratBox"
+                    )
+                    .style.display = "none";
+
+                document
+                    .getElementById(
+                        "previewSelfieBox"
+                    )
+                    .style.display = "none";
+
+                document
+                    .getElementById(
+                        "txtCatatanAbsen"
+                    ).value = "";
+
+                tampilkanAlertCustom(
+                    "Berhasil",
+                    `Presensi (${jenis}) untuk akun "${username}" berhasil disimpan ke cloud!`,
+                    "success"
+                );
+
+                renderStatusAkun();
+                cekStatusAutoIsi();
+
+            } catch (error) {
+                console.error(
+                    "Cloud Attendance gagal:",
+                    error
+                );
+
+                tampilkanAlertCustom(
+                    "Presensi Gagal",
+                    error.message || String(error),
+                    "danger"
+                );
+
+            } finally {
+                button.disabled = false;
+                button.innerHTML = oldHTML;
+                cekStatusAutoIsi();
+            }
         }
 
         function renderStatusAkun() {
@@ -3519,16 +3738,13 @@ const loggedUser =
             "absensi.history"
         )
     ) {
-
         return;
-
     }
-
 
     if (
         !await ldmDialog.confirm(
             "Hapus Data Presensi",
-            "Apakah Anda yakin ingin menghapus data presensi ini?",
+            "Apakah Anda yakin ingin menghapus data presensi ini? Data cloud akan di-soft-delete.",
             "danger",
             {
                 okText: "Hapus"
@@ -3538,40 +3754,49 @@ const loggedUser =
         return;
     }
 
+    if (
+        !window.LDMAttendance ||
+        typeof window.LDMAttendance.softDelete !==
+            "function"
+    ) {
+        tampilkanAlertCustom(
+            "Cloud Absensi Belum Siap",
+            "attendance-service.js belum termuat.",
+            "danger"
+        );
+        return;
+    }
 
-    let logAbsensi =
-        JSON.parse(
-            localStorage.getItem(
-                "dataAbsensi"
-            )
-        ) || [];
+    try {
+        await window.LDMAttendance
+            .softDelete(id);
 
-
-    logAbsensi =
-        logAbsensi.filter(
-            a => a.id != id
+        tampilkanAlertCustom(
+            "Terhapus",
+            "Data presensi berhasil di-soft-delete dari cloud.",
+            "success"
         );
 
+        renderStatusAkun();
+        cekStatusAutoIsi();
 
-    localStorage.setItem(
-        "dataAbsensi",
-        JSON.stringify(
-            logAbsensi
-        )
-    );
+        if (
+            typeof cekRiwayatAbsensiOwner ===
+                "function" &&
+            hasPermission(
+                "absensi.history"
+            )
+        ) {
+            cekRiwayatAbsensiOwner();
+        }
 
-
-    tampilkanAlertCustom(
-        "Terhapus",
-        "Data presensi berhasil dihapus.",
-        "success"
-    );
-
-
-    renderStatusAkun();
-
-    cekStatusAutoIsi();
-
+    } catch (error) {
+        tampilkanAlertCustom(
+            "Gagal Menghapus",
+            error.message || String(error),
+            "danger"
+        );
+    }
 }
 
         function bukaModalSurat(idAbsen) {
@@ -5728,6 +5953,51 @@ document.addEventListener(
         }
     },2000);
 })();
+</script>
+
+
+<script>
+window.addEventListener(
+    "ldm-attendance-profiles-updated",
+    function(){
+        if(typeof populateSelectAkun === "function"){
+            populateSelectAkun();
+        }
+
+        if(typeof renderStatusAkun === "function"){
+            renderStatusAkun();
+        }
+    }
+);
+
+window.addEventListener(
+    "ldm-attendance-cache-updated",
+    function(){
+        if(typeof renderStatusAkun === "function"){
+            renderStatusAkun();
+        }
+
+        if(typeof cekStatusAutoIsi === "function"){
+            cekStatusAutoIsi();
+        }
+
+        if(
+            typeof updateOwnerNotificationBadge === "function" &&
+            typeof hasPermission === "function" &&
+            hasPermission("absensi.history")
+        ){
+            updateOwnerNotificationBadge();
+        }
+
+        if(
+            typeof updateOwnerHistoryNotification === "function" &&
+            typeof hasPermission === "function" &&
+            hasPermission("absensi.history")
+        ){
+            updateOwnerHistoryNotification();
+        }
+    }
+);
 </script>
 
 </body>

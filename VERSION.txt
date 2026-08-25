@@ -1,16 +1,16 @@
 LocDailyMar
 Roadmap: Live Sync
-Tahap: 8 - Cloud Transactions + Atomic Stock
-Baseline: Tahap 7 Cloud Master Barang Multi-User
+Tahap: 9 - Cloud Attendance
+Baseline: Tahap 8 Transactions Loader Fixed
 Main Login: Supabase Auth
 Role Authority: public.profiles.role
 Products Authority: public.products
 Transactions Authority: public.transactions
-Transaction Items: public.transaction_items
 Sales Stock Ledger: public.stock_movements
-Checkout: Atomic RPC
-Offline Checkout: Blocked when server unavailable
-Product IDs: Stable UUID
+Attendance Authority: public.attendance
+Attendance Proof Storage: Private Supabase Storage
+Attendance Realtime: Enabled
+Attendance Shift Mode: Label Only, No Shift Management
+Transaction Attendance Guard: Enabled
 Edit Akun: Owner Only
 Shift Management: Removed
-Full Inventory Migration: In Progress

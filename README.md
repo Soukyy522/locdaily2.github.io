@@ -155,3 +155,18 @@ File utama:
 - `supabase/sql/05-stage8-verify.sql`
 
 Atomic stock saat ini berlaku untuk SALE Kasir. Inventory flow lain masih dimigrasikan bertahap.
+
+
+## Tahap 9 - Cloud Absensi
+
+Presensi sekarang memakai `public.attendance`, private Storage untuk foto, Realtime, dan server-side attendance guard untuk transaksi.
+
+Shift tetap hanya label (`Shift 1`, `Shift 2`, `Full Day`). Shift Management tidak digunakan.
+
+File utama:
+- `js/attendance-service.js`
+- `js/attendance-bootstrap.js`
+- `supabase-stage9-attendance-migration.html`
+- `supabase-stage9-attendance-test.html`
+- `supabase/sql/06-stage9-cloud-attendance.sql`
+- `supabase/sql/06-stage9-verify.sql`
