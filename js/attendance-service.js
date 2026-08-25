@@ -67,6 +67,15 @@
         ].join("-");
     }
 
+    function normalizeUsername(value){
+        return String(value || "")
+            .normalize("NFKC")
+            .replace(/[\u200B-\u200D\u2060\uFEFF]/g, "")
+            .replace(/\s+/g, " ")
+            .trim()
+            .toLowerCase();
+    }
+
     function readCache(){
         try{
             const parsed = JSON.parse(
@@ -605,16 +614,11 @@
         const profiles =
             await fetchProfiles();
 
-        const wanted = String(username || "")
-            .trim()
-            .toLowerCase();
+        const wanted = normalizeUsername(username);
 
         const target = profiles.find(
             profile =>
-                String(profile.username || "")
-                    .trim()
-                    .toLowerCase() ===
-                    wanted
+                normalizeUsername(profile.username) === wanted
         );
 
         if(!target){
@@ -754,9 +758,7 @@
         const profileMap = new Map(
             profiles.map(
                 profile => [
-                    String(profile.username || "")
-                        .trim()
-                        .toLowerCase(),
+                    normalizeUsername(profile.username),
                     profile
                 ]
             )
@@ -782,11 +784,7 @@
         try{
             for(let index = 0; index < legacy.length; index++){
                 const item = legacy[index];
-                const usernameKey = String(
-                    item.username || ""
-                )
-                    .trim()
-                    .toLowerCase();
+                const usernameKey = normalizeUsername(item.username);
 
                 const profile =
                     profileMap.get(
@@ -1001,6 +999,7 @@
 
     window.LDMAttendance =
         Object.freeze({
+            normalizeUsername,
             readCache,
             readProfilesCache,
             isEnabled,
