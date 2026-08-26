@@ -223,3 +223,8 @@ File utama:
 - `docs/TAHAP-13.md`
 
 Backup/Restore localStorage lama sekarang diberi label sebagai compatibility cache, bukan cloud authority.
+
+
+## Tahap 14 - Cloud Account Management
+
+Account authority sekarang menggunakan Supabase Auth + `public.profiles`. Owner mengelola profile melalui `account-management.html`. Auth User baru tetap dibuat melalui Supabase Dashboard agar `service_role` tidak pernah masuk frontend. Password sendiri dan recovery email memakai Supabase Auth.

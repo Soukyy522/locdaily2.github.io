@@ -652,6 +652,11 @@
 </div>
 
             <button type="submit" class="btn-login">Masuk</button>
+            <button
+                type="button"
+                onclick="requestPasswordReset()"
+                style="width:100%;margin-top:8px;border:none;background:transparent;color:#475569;font-weight:700;cursor:pointer;padding:8px;"
+            >Lupa Password?</button>
         </form>
     </div>
 
@@ -1185,6 +1190,64 @@ async function handleLogin(event) {
             submitButton.textContent =
                 "Masuk";
         }
+    }
+}
+
+async function requestPasswordReset() {
+    const email = String(
+        document.getElementById("username").value || ""
+    )
+        .trim()
+        .toLowerCase();
+
+    if (!email) {
+        showAlert(
+            "Email Diperlukan",
+            "Isi Email Auth Supabase terlebih dahulu, lalu tekan Lupa Password.",
+            "✉️"
+        );
+        return;
+    }
+
+    try {
+        const client =
+            window.LDMSupabase.createClient();
+
+        const redirectTo =
+            new URL(
+                "account-password-reset.html",
+                window.location.href
+            ).href;
+
+        const { error } =
+            await client.auth.resetPasswordForEmail(
+                email,
+                { redirectTo }
+            );
+
+        if (error) {
+            throw error;
+        }
+
+        showAlert(
+            "Permintaan Dikirim",
+            "Jika email terdaftar dan pengiriman email Supabase aktif, link reset password akan dikirim. Periksa inbox dan folder spam.",
+            "✅"
+        );
+
+    } catch (error) {
+        console.error(
+            "Password recovery gagal:",
+            error
+        );
+
+        showAlert(
+            "Reset Password Gagal",
+            error && error.message
+                ? error.message
+                : "Permintaan reset password gagal.",
+            "❌"
+        );
     }
 }
 

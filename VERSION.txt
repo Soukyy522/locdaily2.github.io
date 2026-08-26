@@ -1,6 +1,6 @@
 LocDailyMar
 Roadmap: Live Sync + Production Hardening
-Tahap: 13 - Production Hardening + Audit + Cloud Snapshot
+Tahap: 14 - Cloud Account Management + User Lifecycle
 Baseline: Tahap 12 Final Cloud Reporting Authority
 Main Login: Supabase Auth
 Role Authority: public.profiles.role
@@ -23,3 +23,9 @@ Cloud Snapshot: ldm_export_store_snapshot
 Production Readiness: Enabled
 Edit Akun: Owner Only
 Shift Management: Removed
+
+Account Authority: auth.users + public.profiles
+Account Management: Owner RPC + Existing Auth Link
+Password Management: Self Update + Recovery Email
+Legacy daftarAkun: Compatibility Cache Only
+Profiles Realtime: Enabled
