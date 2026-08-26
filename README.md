@@ -170,3 +170,8 @@ File utama:
 - `supabase-stage9-attendance-test.html`
 - `supabase/sql/06-stage9-cloud-attendance.sql`
 - `supabase/sql/06-stage9-verify.sql`
+
+
+## Tahap 10 - Cloud Retur & Stock Opname
+
+Retur dan Stock Opname baru memakai Supabase sebagai authority. Retur approval/cancel dan Stock Opname approval/cancel mengubah `products.legacy_stock_snapshot` bersama `stock_movements` secara atomik. Histori legacy dapat dimigrasikan tanpa menerapkan stok ulang.

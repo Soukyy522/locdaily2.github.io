@@ -14,3 +14,12 @@ Attendance Shift Mode: Label Only, No Shift Management
 Transaction Attendance Guard: Enabled
 Edit Akun: Owner Only
 Shift Management: Removed
+
+Stage: 10 - Cloud Retur + Stock Opname
+Returns Authority: public.sales_returns
+Return Items Authority: public.sales_return_items
+Cloud Cash Movement: public.cash_movements
+Stock Opname Authority: public.stock_opname_entries
+Return Stock: Atomic RPC
+Stock Opname Apply: Delta on Latest Stock
+Shift Management: Removed

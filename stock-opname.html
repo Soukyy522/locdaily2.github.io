@@ -1655,6 +1655,9 @@
     <!-- Live Sync Tahap 7: Cloud Master Barang -->
     <script src="js/products-service.js?v=7.0"></script>
     <script src="js/products-bootstrap.js?v=7.0"></script>
+    <!-- Live Sync Tahap 10: Cloud Stock Opname -->
+    <script src="js/stock-opname-service.js?v=10.0"></script>
+    <script src="js/stock-opname-bootstrap.js?v=10.0"></script>
 
 </head>
 <body>
@@ -2362,6 +2365,9 @@ if (
             Date.now() +
             Math.random(),
 
+        productId:
+            barang.id || null,
+
         tanggal:
             tanggal,
 
@@ -2612,7 +2618,11 @@ else if (
                 )
             "
         >
-            Hapus
+            ${
+                item.status === "Tervalidasi"
+                    ? "Batalkan"
+                    : "Arsipkan"
+            }
         </button>
     `;
 
@@ -3149,7 +3159,7 @@ const usernameOwner =
 
 }
 
-        function simpanFinalStockOpname() {
+        async function simpanFinalStockOpname() {
 
     if (
         !requirePermission(
@@ -3159,144 +3169,105 @@ const usernameOwner =
         return;
     }
 
-
     if (
         daftarItemSementara.length === 0
     ) {
-
         showAlert(
             "Informasi",
             "Belum ada barang di lembar opname yang ditambahkan!"
         );
-
         return;
-
     }
 
-
-    let dataOpname =
-        JSON.parse(
-            localStorage.getItem(
-                "dataStockOpname"
-            )
-        ) || [];
-
-
-    let dataBarang =
-        JSON.parse(
-            localStorage.getItem(
-                "dataBarang"
-            )
-        ) || [];
-
+    if (
+        !window.LDMStockOpname ||
+        typeof window.LDMStockOpname.submit !==
+            "function"
+    ) {
+        showAlert(
+            "Cloud Stock Opname Belum Siap",
+            "stock-opname-service.js belum termuat."
+        );
+        return;
+    }
 
     const bolehApprove =
         hasPermission(
             "stockopname.approve"
         );
 
+    const tanggal =
+        document.getElementById(
+            "inputTanggalOpname"
+        ).value;
 
-    daftarItemSementara.forEach(
-        item => {
+    const dataBarang =
+        JSON.parse(
+            localStorage.getItem(
+                "dataBarang"
+            ) || "[]"
+        );
 
-            /*
-             * OWNER:
-             * langsung tervalidasi.
-             */
-            if (bolehApprove) {
-
-                item.status =
-                    "Tervalidasi";
-
-
-                if (
+    const payload =
+        daftarItemSementara.map(
+            item => {
+                const barang =
                     dataBarang[
                         item.barangIndex
-                    ]
-                ) {
+                    ];
 
-                    dataBarang[
-                        item.barangIndex
-                    ].stok =
-                        item.stokFisik;
-
-                }
-
+                return {
+                    ...item,
+                    productId:
+                        item.productId ||
+                        barang?.id ||
+                        null
+                };
             }
+        );
 
+    try {
+        await window.LDMStockOpname
+            .submit({
+                businessDate:
+                    tanggal,
+                items:
+                    payload,
+                directApprove:
+                    bolehApprove
+            });
 
-            /*
-             * ADMIN / KASIR:
-             * harus menunggu Owner.
-             */
-            else {
+        daftarItemSementara = [];
 
-                item.status =
-                    "Pending";
+        renderTabelOpname();
 
-            }
-
-
-            dataOpname.unshift(
-                item
+        if (bolehApprove) {
+            showAlert(
+                "Berhasil",
+                "Stock Opname disimpan ke Supabase dan stok cloud diperbarui secara atomik."
             );
-
+        } else {
+            showAlert(
+                "Berhasil Disimpan",
+                "Stock Opname tersimpan sebagai PENDING di Supabase. Stok belum berubah sampai Owner melakukan approval."
+            );
         }
-    );
 
-
-    /*
-     * Stok permanen hanya berubah
-     * jika role mempunyai approval.
-     */
-
-    if (bolehApprove) {
-
-        localStorage.setItem(
-            "dataBarang",
-            JSON.stringify(
-                dataBarang
-            )
+    } catch (error) {
+        console.error(
+            "Cloud Stock Opname gagal:",
+            error
         );
-
-    }
-
-
-    localStorage.setItem(
-        "dataStockOpname",
-        JSON.stringify(
-            dataOpname
-        )
-    );
-
-
-    daftarItemSementara = [];
-
-
-    renderTabelOpname();
-
-
-    if (bolehApprove) {
 
         showAlert(
-            "Berhasil",
-            "Stock opname berhasil disimpan dan stok permanen diperbarui."
+            "Stock Opname Gagal",
+            error.message ||
+            String(error)
         );
-
     }
-
-    else {
-
-        showAlert(
-            "Berhasil Disimpan",
-            "Stock opname disimpan sebagai PENDING dan menunggu validasi Owner sebelum stok permanen diperbarui."
-        );
-
-    }
-
 }
 
-        function terimaPendingOpname(
+        async function terimaPendingOpname(
     idItem
 ) {
 
@@ -3305,29 +3276,44 @@ const usernameOwner =
             "stockopname.approve"
         )
     ) {
-
         return;
-
     }
 
-            let dataOpname = JSON.parse(localStorage.getItem("dataStockOpname")) || [];
-            let dataBarang = JSON.parse(localStorage.getItem("dataBarang")) || [];
+    if (
+        !window.LDMStockOpname ||
+        typeof window.LDMStockOpname.approve !==
+            "function"
+    ) {
+        showAlert(
+            "Cloud Stock Opname Belum Siap",
+            "stock-opname-service.js belum termuat."
+        );
+        return;
+    }
 
-            const indexOpname = dataOpname.findIndex(i => i.id == idItem);
-            if (indexOpname !== -1) {
-                let item = dataOpname[indexOpname];
-                item.status = "Tervalidasi";
-                if (dataBarang[item.barangIndex]) {
-                    dataBarang[item.barangIndex].stok = item.stokFisik;
-                }
-                localStorage.setItem("dataStockOpname", JSON.stringify(dataOpname));
-                localStorage.setItem("dataBarang", JSON.stringify(dataBarang));
-                renderTabelOpname();
-                showAlert("Berhasil", "Pending stock opname diterima dan stok permanen berhasil diperbarui.");
-            }
-        }
+    try {
+        await window.LDMStockOpname
+            .approve(
+                idItem
+            );
 
-        function hapusAtauTolakOpname(
+        renderTabelOpname();
+
+        showAlert(
+            "Berhasil",
+            "Pending Stock Opname diterima. Delta hasil hitung diterapkan ke stok cloud terbaru secara atomik."
+        );
+
+    } catch (error) {
+        showAlert(
+            "Approval Gagal",
+            error.message ||
+            String(error)
+        );
+    }
+}
+
+        async function hapusAtauTolakOpname(
     idItem
 ) {
 
@@ -3339,73 +3325,190 @@ const usernameOwner =
         return;
     }
 
+    const idxSmt =
+        daftarItemSementara
+            .findIndex(
+                i => i.id == idItem
+            );
 
-    showAlert(
-        "Konfirmasi Hapus",
-        "Apakah Anda yakin ingin menghapus atau menolak hasil stock opname ini?",
-        function() {
+    if (
+        idxSmt !== -1
+    ) {
+        const ok =
+            await ldmDialog.confirm(
+                "Hapus Item Sementara",
+                "Hapus item dari lembar Stock Opname yang belum dikirim?",
+                "warning",
+                {
+                    okText:
+                        "Hapus"
+                }
+            );
 
-            const idxSmt =
-                daftarItemSementara
-                    .findIndex(
-                        i =>
-                            i.id ==
-                            idItem
-                    );
+        if (!ok) {
+            return;
+        }
 
+        daftarItemSementara
+            .splice(
+                idxSmt,
+                1
+            );
 
-            if (
-                idxSmt !== -1
-            ) {
+        renderTabelOpname();
+        return;
+    }
 
-                daftarItemSementara
-                    .splice(
-                        idxSmt,
-                        1
-                    );
+    const dataOpname =
+        JSON.parse(
+            localStorage.getItem(
+                "dataStockOpname"
+            ) || "[]"
+        );
 
-            }
+    const item =
+        dataOpname.find(
+            i => String(i.id) === String(idItem)
+        );
 
-            else {
+    if (!item) {
+        showAlert(
+            "Tidak Ditemukan",
+            "Record Stock Opname tidak ditemukan."
+        );
+        return;
+    }
 
-                let dataOpname =
-                    JSON.parse(
-                        localStorage.getItem(
-                            "dataStockOpname"
-                        )
-                    ) || [];
+    if (
+        !window.LDMStockOpname
+    ) {
+        showAlert(
+            "Cloud Stock Opname Belum Siap",
+            "stock-opname-service.js belum termuat."
+        );
+        return;
+    }
 
+    const status =
+        String(
+            item.status || ""
+        ).toLowerCase();
 
-                dataOpname =
-                    dataOpname.filter(
-                        i =>
-                            i.id !=
-                            idItem
-                    );
+    try {
 
+        if (status === "pending") {
 
-                localStorage.setItem(
-                    "dataStockOpname",
-                    JSON.stringify(
-                        dataOpname
-                    )
+            const ok =
+                await ldmDialog.confirm(
+                    "Tolak Stock Opname",
+                    "Tolak Stock Opname PENDING ini? Stok cloud tidak akan berubah.",
+                    "warning",
+                    {
+                        okText:
+                            "Tolak"
+                    }
                 );
 
+            if (!ok) {
+                return;
             }
 
-
-            renderTabelOpname();
-
+            await window.LDMStockOpname
+                .reject(
+                    idItem,
+                    "Ditolak Owner"
+                );
 
             showAlert(
-                "Berhasil",
-                "Hasil stock opname berhasil dihapus / ditolak."
+                "Ditolak",
+                "Stock Opname PENDING berhasil ditolak."
             );
 
         }
-    );
 
+        else if (
+            status === "tervalidasi" ||
+            status === "approved"
+        ) {
+
+            const ok =
+                await ldmDialog.confirm(
+                    "Batalkan Stock Opname",
+                    "Stock Opname ini sudah mengubah stok. Pembatalan akan melakukan reverse delta pada stok cloud.",
+                    "danger",
+                    {
+                        okText:
+                            "Batalkan & Reverse"
+                    }
+                );
+
+            if (!ok) {
+                return;
+            }
+
+            await window.LDMStockOpname
+                .cancel(
+                    idItem,
+                    "Dibatalkan Owner"
+                );
+
+            showAlert(
+                "Dibatalkan",
+                "Stock Opname berhasil dibatalkan dan perubahan stok dibalik secara atomik."
+            );
+
+        }
+
+        else {
+
+            const ok =
+                await ldmDialog.confirm(
+                    "Arsipkan Stock Opname",
+                    "Arsipkan record Stock Opname ini dari daftar aktif? Database menggunakan soft delete.",
+                    "danger",
+                    {
+                        okText:
+                            "Arsipkan"
+                    }
+                );
+
+            if (!ok) {
+                return;
+            }
+
+            await window.LDMStockOpname
+                .softDelete(
+                    idItem
+                );
+
+            showAlert(
+                "Diarsipkan",
+                "Record Stock Opname berhasil di-soft-delete."
+            );
+        }
+
+        renderTabelOpname();
+
+    } catch (error) {
+        showAlert(
+            "Proses Gagal",
+            error.message ||
+            String(error)
+        );
+    }
 }
+
+window.addEventListener(
+    "ldm-stock-opname-cache-updated",
+    function() {
+        if (
+            typeof renderTabelOpname ===
+            "function"
+        ) {
+            renderTabelOpname();
+        }
+    }
+);
 
         function bukaScannerKamera() {
             document.getElementById("modalScanner").style.display = "flex";

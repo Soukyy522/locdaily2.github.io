@@ -1393,6 +1393,11 @@
     <!-- Live Sync Tahap 7: Cloud Master Barang -->
     <script src="js/products-service.js?v=7.0"></script>
     <script src="js/products-bootstrap.js?v=7.0"></script>
+    <!-- Live Sync Tahap 10: Return/Opname compatibility cache -->
+    <script src="js/returns-service.js?v=10.0"></script>
+    <script src="js/returns-bootstrap.js?v=10.0"></script>
+    <script src="js/stock-opname-service.js?v=10.0"></script>
+    <script src="js/stock-opname-bootstrap.js?v=10.0"></script>
 
 </head><body><div class="app-layout"><div class="nav-overlay" id="navOverlay" onclick="tutupMenu()"></div><nav class="nav-bar" id="navSidebar"><div class="nav-header-mobile"><span>☰ Menu</span><button class="btn-close-menu" onclick="tutupMenu()">✕</button></div><a href="dashboard.html" class="nav-item"><span>📊</span> Dashboard</a><a href="absensi.html" class="nav-item"><span>📝</span> Absensi</a><a href="kasir.html" class="nav-item"><span>💵</span> Kasir</a><a href="retur.html" class="nav-item"><span>↩️</span> Retur</a><a href="barang.html" class="nav-item"><span>📦</span> Barang</a><a href="supplier.html" class="nav-item" data-role-access="owner,admin"><span>🏢</span> Supplier</a><a href="Purchase-Order.html" class="nav-item" data-role-access="owner,admin"><span>🛒</span> Purchase Order</a><a href="goods.receipt.html" class="nav-item" data-role-access="owner,admin"><span>📥</span> Goods Receipt</a><a href="kartu-stok.html" class="nav-item active"><span>📒</span> Kartu Stok</a><a href="stock-opname.html" class="nav-item"><span>📋</span> Stock Opname</a><a href="laporan.html" class="nav-item"><span>📋</span> Laporan</a><a href="shift-closing.html" class="nav-item" data-role-access="owner,admin"><span>🔒</span> Closing Shift</a><a href="eod.html" class="nav-item" data-role-access="owner,admin"><span>🌙</span> End of Day</a><a href="pengeluaran.html" class="nav-item" data-role-access="owner,admin"><span>💸</span> Pengeluaran</a><a href="backup%20%26%20restore.html" class="nav-item" data-role-access="owner,admin"><span>💾</span> Backup & Restore</a></nav><main class="main-content">
 <header class="header-app" id="headerApp">
@@ -2155,44 +2160,109 @@ function stockOpnameMovements(selected){
 
 function manualMovements(selected){
     return safeArray('kartuStokMutasi')
-        .filter(log=>itemMatches(log,selected,selectedStockIndex))
-        .map(log=>({
-            id:`manual-${log.id}`,
-            source:
-                String(log.jenis||'').toLowerCase()==='retur_penjualan'
-                    ? 'retur'
-                    : 'manual',
-            sourceClass:
-                String(log.jenis||'').toLowerCase()==='retur_penjualan'
-                    ? 'retur'
-                    : 'manual',
-            sourceLabel:
-                String(log.jenis||'').toLowerCase()==='stok_awal'
-                    ? 'Stok Awal'
-                    : String(log.jenis||'').toLowerCase()==='retur_penjualan'
-                        ? 'Retur Penjualan'
-                        : 'Penyesuaian Manual',
-            icon:
-                String(log.jenis||'').toLowerCase()==='stok_awal'
-                    ? '🆕'
-                    : String(log.jenis||'').toLowerCase()==='retur_penjualan'
-                        ? '↩️'
-                        : '✏️',
-            reference:String(log.referensi||'MANUAL'),
-            subReference:String(log.keterangan||'Data Barang'),
-            date:String(log.tanggal||'').slice(0,10),
-            time:String(log.waktu||''),
-            timestamp:toTimestamp(log.timestamp||log.createdAt||log.tanggal,0),
-            delta:Number(log.delta||0),
-            petugas:String(log.petugas||'-'),
-            status:'Tercatat',
-            description:String(log.keterangan||'Penyesuaian stok manual'),
-            knownBefore:Number(log.stokSebelum),
-            knownAfter:Number(log.stokSesudah),
-            rawType:'manual',
-            raw:log
-        }));
+        .filter(
+            log=>
+                itemMatches(
+                    log,
+                    selected,
+                    selectedStockIndex
+                )
+        )
+        .map(log=>{
+            const type=
+                String(
+                    log.jenis||''
+                ).toLowerCase();
 
+            const isReturn=
+                type==='retur_penjualan';
+
+            const isReturnCancel=
+                type==='retur_cancelled'
+                ||
+                type==='retur_cancel';
+
+            return {
+                id:`manual-${log.id}`,
+                source:
+                    isReturn
+                        ? 'retur'
+                        : isReturnCancel
+                            ? 'retur_cancel'
+                            : 'manual',
+                sourceClass:
+                    isReturn
+                        ? 'retur'
+                        : isReturnCancel
+                            ? 'retur'
+                            : 'manual',
+                sourceLabel:
+                    type==='stok_awal'
+                        ? 'Stok Awal'
+                        : isReturn
+                            ? 'Retur Penjualan'
+                            : isReturnCancel
+                                ? 'Pembatalan Retur'
+                                : 'Penyesuaian Manual',
+                icon:
+                    type==='stok_awal'
+                        ? '🆕'
+                        : isReturn
+                            ? '↩️'
+                            : isReturnCancel
+                                ? '↪️'
+                                : '✏️',
+                reference:
+                    String(
+                        log.referensi||
+                        'MANUAL'
+                    ),
+                subReference:
+                    String(
+                        log.keterangan||
+                        'Data Barang'
+                    ),
+                date:
+                    String(
+                        log.tanggal||''
+                    ).slice(0,10),
+                time:
+                    String(
+                        log.waktu||''
+                    ),
+                timestamp:
+                    toTimestamp(
+                        log.timestamp||
+                        log.createdAt||
+                        log.tanggal,
+                        0
+                    ),
+                delta:
+                    Number(
+                        log.delta||0
+                    ),
+                petugas:
+                    String(
+                        log.petugas||'-'
+                    ),
+                status:'Tercatat',
+                description:
+                    String(
+                        log.keterangan||
+                        'Penyesuaian stok manual'
+                    ),
+                knownBefore:
+                    Number(
+                        log.stokSebelum
+                    ),
+                knownAfter:
+                    Number(
+                        log.stokSesudah
+                    ),
+                rawType:'manual',
+                raw:log
+            };
+        });
 }
 
 function buildAllMovements(selected){
