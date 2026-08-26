@@ -58,21 +58,9 @@ begin
             values
 
                 (
-                    'owner@example.com',
-                    'cornermar',
+                    'rudigamer126@gmail.com',
+                    'locdaily',
                     'owner'
-                ),
-
-                (
-                    'admin@example.com',
-                    'admin1',
-                    'admin'
-                ),
-
-                (
-                    'kasir1@example.com',
-                    'kasir1',
-                    'kasir'
                 )
 
         ) as daftar(
