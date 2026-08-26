@@ -64,6 +64,11 @@
                     : "Session cloud tidak valid."
             );
 
+        root.classList.remove(
+            "ldm-cloud-auth-pending",
+            "secure-page-pending"
+        );
+
         window.location.replace(
             `index.html?cloudAuthError=${message}`
         );
@@ -146,10 +151,49 @@
             );
         }
 
+        const pageName =
+            String(
+                window.location.pathname
+                    .split("/")
+                    .pop() || ""
+            ).toLowerCase();
+
+        if(
+            pageName !== "device-access.html" &&
+            window.LDMCloudAuth &&
+            typeof window.LDMCloudAuth.getCurrentDeviceAccess ===
+                "function"
+        ){
+            const deviceAccess =
+                await window.LDMCloudAuth
+                    .getCurrentDeviceAccess();
+
+            const deviceStatus =
+                String(
+                    deviceAccess &&
+                    deviceAccess.status ||
+                    "unknown"
+                ).toLowerCase();
+
+            if(deviceStatus !== "active"){
+                root.classList.remove(
+                    "ldm-cloud-auth-pending",
+                    "secure-page-pending"
+                );
+
+                window.location.replace(
+                    "device-access.html"
+                );
+
+                return context;
+            }
+        }
+
         patchLogoutFunctions();
 
         root.classList.remove(
-            "ldm-cloud-auth-pending"
+            "ldm-cloud-auth-pending",
+            "secure-page-pending"
         );
 
         window.dispatchEvent(

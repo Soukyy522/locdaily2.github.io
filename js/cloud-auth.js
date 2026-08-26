@@ -266,6 +266,41 @@
         );
     }
 
+    async function getCurrentDeviceAccess(){
+        const client =
+            getClient();
+
+        const clientDeviceId =
+            getOrCreateDeviceId();
+
+        const {
+            data,
+            error
+        } = await client.rpc(
+            "ldm_current_device_access",
+            {
+                p_client_device_id:
+                    clientDeviceId
+            }
+        );
+
+        if(error){
+            throw error;
+        }
+
+        const access =
+            Array.isArray(data)
+                ? data[0]
+                : data;
+
+        return access || {
+            client_device_id:
+                clientDeviceId,
+            status:
+                "unknown"
+        };
+    }
+
     function watchAuth(callback){
         const client =
             getClient();
@@ -306,6 +341,7 @@
             getContext,
             registerCurrentDevice,
             listDevices,
+            getCurrentDeviceAccess,
             getOrCreateDeviceId,
             watchAuth
         });
