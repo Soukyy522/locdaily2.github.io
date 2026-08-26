@@ -59,7 +59,7 @@ begin
 
                 (
                     'rudigamer126@gmail.com',
-                    'locdaily',
+                    'owner',
                     'owner'
                 )
 
