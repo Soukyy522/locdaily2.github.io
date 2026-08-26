@@ -12,8 +12,8 @@
 <script src="js/supabase-client.js"></script>
 <script src="js/cloud-auth.js?v=5.1"></script>
 <script src="js/cloud-session.js?v=6.0"></script>
-<script src="js/cloud-session-guard.js?v=14.1"></script>
-<script src="js/account-service.js?v=14.1"></script>
+<script src="js/cloud-session-guard.js?v=6.0"></script>
+<script src="js/account-service.js?v=14.0"></script>
 </head>
 <body>
 <div class="wrap">
@@ -77,56 +77,13 @@
 let currentContext=null;
 let accounts=[];
 let selected=null;
-
-function revealPage(){
-    document.documentElement.classList.remove("secure-page-pending");
-}
-
-function accountRuntimeReady(){
-    return !!(
-        window.LDMCloudSession &&
-        typeof window.LDMCloudSession.ensureAuthenticated === "function" &&
-        window.LDMAccounts &&
-        typeof window.LDMAccounts.ownerContext === "function"
-    );
-}
 function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[c]))}
 function fmt(v){if(!v)return "-";try{return new Intl.DateTimeFormat("id-ID",{timeZone:"Asia/Makassar",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"}).format(new Date(v))+" WITA"}catch{return String(v)}}
 function showMessage(text,type="success"){const box=document.getElementById("message");box.style.display="block";box.className="card "+(type==="error"?"error":"successbox");box.textContent=text;box.scrollIntoView({behavior:"smooth",block:"nearest"})}
 function stat(label,value){return `<div class="stat"><span>${esc(label)}</span><strong>${esc(value)}</strong></div>`}
 function renderHealth(h){document.getElementById("stats").innerHTML=[stat("Total Profile",h.total_profiles),stat("Aktif",h.active_profiles),stat("Nonaktif",h.inactive_profiles),stat("Owner Aktif",h.active_owners),stat("Admin Aktif",h.active_admins),stat("Kasir Aktif",h.active_cashiers)].join("")}
 function renderAccounts(){const body=document.getElementById("accountBody");if(!accounts.length){body.innerHTML='<tr><td colspan="7" class="muted">Belum ada profile cloud.</td></tr>';return}body.innerHTML=accounts.map((a,i)=>`<tr><td><strong>${esc(a.username)}</strong><br><span class="muted">${esc(a.display_name||"")}</span></td><td>${esc(a.email||"-")}<br><span class="muted">${a.email_confirmed_at?"Confirmed":"Belum confirmed"}</span></td><td><span class="badge role">${esc(String(a.role||"").toUpperCase())}</span></td><td><span class="badge ${a.active?"on":"off"}">${a.active?"AKTIF":"NONAKTIF"}</span></td><td>${esc(fmt(a.last_sign_in_at))}</td><td>${esc(a.profile_version)}</td><td><div class="row-actions"><button onclick="openEdit(${i})">Edit</button><button class="secondary" onclick="sendReset(${i})">Reset Password</button></div></td></tr>`).join("")}
-async function refreshAll(){
-    document.body.classList.add("spin");
-    try{
-        if(!accountRuntimeReady()){
-            throw new Error("Komponen Cloud Account belum termuat. Periksa js/cloud-session.js dan js/account-service.js di GitHub Pages.");
-        }
-        const sessionContext = await LDMCloudSession.ensureAuthenticated({registerDevice:false});
-        if(!sessionContext || !sessionContext.profile){
-            throw new Error("Profile cloud tidak tersedia. Login ulang melalui index.html.");
-        }
-        const role = String(sessionContext.profile.role || "").trim().toLowerCase();
-        if(role !== "owner"){
-            revealPage();
-            showMessage("❌ Akses Akun Cloud penuh hanya untuk Owner. Role saat ini: " + (role || "tidak diketahui"),"error");
-            setTimeout(()=>location.replace("dashboard.html"),1400);
-            return;
-        }
-        currentContext = await LDMAccounts.ownerContext();
-        revealPage();
-        document.getElementById("identity").textContent = `${currentContext.profile.store_name||"LocDailyMar"} • ${currentContext.profile.store_code||"-"} • ${currentContext.profile.username} (OWNER)`;
-        const [list,h] = await Promise.all([LDMAccounts.listAccounts(),LDMAccounts.health()]);
-        accounts = list;
-        renderAccounts();
-        renderHealth(h);
-    }catch(e){
-        revealPage();
-        showMessage("❌ " + (e.message || String(e)),"error");
-    }finally{
-        document.body.classList.remove("spin");
-    }
-}
+async function refreshAll(){document.body.classList.add("spin");try{currentContext=await LDMAccounts.ownerContext();document.getElementById("identity").textContent=`${currentContext.profile.store_name||"LocDailyMar"} • ${currentContext.profile.store_code||"-"} • ${currentContext.profile.username} (OWNER)`;const [list,h]=await Promise.all([LDMAccounts.listAccounts(),LDMAccounts.health()]);accounts=list;renderAccounts();renderHealth(h)}catch(e){showMessage("❌ "+(e.message||String(e)),"error");if(String(e.message||"").includes("Owner")){setTimeout(()=>location.replace("dashboard.html"),900)}}finally{document.body.classList.remove("spin")}}
 async function linkAccount(){const btn=document.getElementById("btnLink");btn.disabled=true;try{await LDMAccounts.linkExistingAuth({email:document.getElementById("linkEmail").value,username:document.getElementById("linkUsername").value,displayName:document.getElementById("linkDisplay").value,role:document.getElementById("linkRole").value});document.getElementById("linkEmail").value="";document.getElementById("linkUsername").value="";document.getElementById("linkDisplay").value="";showMessage("✅ Auth User berhasil dihubungkan ke profile LocDailyMar.");await refreshAll()}catch(e){showMessage("❌ "+(e.message||String(e)),"error")}finally{btn.disabled=false}}
 function openEdit(i){selected=accounts[i];if(!selected)return;document.getElementById("editUserId").value=selected.user_id;document.getElementById("editEmail").textContent=selected.email||"";document.getElementById("editUsername").value=selected.username||"";document.getElementById("editDisplay").value=selected.display_name||"";document.getElementById("editRole").value=selected.role||"kasir";document.getElementById("editActive").value=selected.active?"true":"false";document.getElementById("editModal").classList.add("open")}
 function closeEdit(){document.getElementById("editModal").classList.remove("open");selected=null}
@@ -134,30 +91,7 @@ async function saveEdit(){if(!selected)return;try{await LDMAccounts.updateProfil
 async function sendReset(i){selected=accounts[i];await sendResetSelected();selected=null}
 async function sendResetSelected(){if(!selected||!selected.email)return;try{await LDMAccounts.sendPasswordReset(selected.email);showMessage("✅ Permintaan reset password dikirim. Jika email Auth valid dan pengiriman email Supabase aktif, user akan menerima link recovery.")}catch(e){showMessage("❌ "+(e.message||String(e)),"error")}}
 async function changePassword(){const a=document.getElementById("ownPassword").value;const b=document.getElementById("ownPassword2").value;if(a!==b){showMessage("❌ Konfirmasi password tidak sama.","error");return}try{await LDMAccounts.changeOwnPassword(a);document.getElementById("ownPassword").value="";document.getElementById("ownPassword2").value="";showMessage("✅ Password Supabase Auth akun ini berhasil diubah.")}catch(e){showMessage("❌ "+(e.message||String(e)),"error")}}
-async function boot(){
-    const revealTimer = setTimeout(revealPage, 3500);
-    try{
-        await refreshAll();
-        if(!currentContext){ return; }
-        if(window.LDMAccounts && typeof window.LDMAccounts.startRealtime === "function"){
-            try{
-                await LDMAccounts.startRealtime(async()=>{
-                    document.getElementById("realtime").textContent="Realtime: aktif";
-                    await refreshAll();
-                });
-                document.getElementById("realtime").textContent="Realtime: aktif";
-            }catch(e){
-                document.getElementById("realtime").textContent="Realtime: gagal";
-                console.warn(e);
-            }
-        }else{
-            document.getElementById("realtime").textContent="Realtime: service belum termuat";
-        }
-    }finally{
-        clearTimeout(revealTimer);
-        revealPage();
-    }
-}
+async function boot(){await refreshAll();try{await LDMAccounts.startRealtime(async()=>{document.getElementById("realtime").textContent="Realtime: aktif";await refreshAll()});document.getElementById("realtime").textContent="Realtime: aktif"}catch(e){document.getElementById("realtime").textContent="Realtime: gagal";console.warn(e)}}
 document.addEventListener("DOMContentLoaded",boot);
 </script>
 </body>
