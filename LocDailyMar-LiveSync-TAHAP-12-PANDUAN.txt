@@ -1,0 +1,299 @@
+LocDailyMar - LIVE SYNC TAHAP 12
+=================================
+
+FINAL CLOUD REPORTING AUTHORITY
+- Closing Cloud
+- End of Day Cloud
+- Laporan Cloud
+- Dashboard Cloud
+- Pengeluaran Cloud
+- Final Cross-Device Reporting
+
+TANPA SHIFT MANAGEMENT
+
+==================================================
+1. PRASYARAT
+==================================================
+
+Pastikan Tahap 11 sudah berhasil:
+- Supplier cloud
+- Purchase Order cloud
+- Goods Receipt cloud
+- stock_movements konsisten
+
+Tahap 12 dibuat dari baseline Tahap 11.
+
+==================================================
+2. JALANKAN SQL TAHAP 12
+==================================================
+
+Supabase Dashboard
+→ SQL Editor
+→ New query
+
+Jalankan:
+supabase/sql/09-stage12-closing-eod-reporting.sql
+
+SQL membuat:
+- public.shift_closings
+- public.end_of_day_closings
+- public.operating_expenses
+- public.legacy_transactions
+- bucket private ldm-expense-receipts
+- RPC Closing / EOD / Expense / Reporting Void
+- financial-period guards
+- Realtime
+
+Metadata ideal:
+live_sync_stage = 12
+schema_status = final_cloud_reporting_ready
+closing_authority = public.shift_closings
+eod_authority = public.end_of_day_closings
+operating_expense_authority = public.operating_expenses
+legacy_reporting_authority = public.legacy_transactions
+reporting_realtime = enabled
+shift_management = removed
+
+==================================================
+3. JALANKAN VERIFY
+==================================================
+
+Jalankan:
+supabase/sql/09-stage12-verify.sql
+
+Pastikan:
+- RLS true pada semua tabel Tahap 12
+- bucket ldm-expense-receipts public = false
+- duplicate FINAL Closing = 0 rows
+- duplicate FINAL EOD = 0 rows
+- cash movement linked ke Closing non-FINAL = 0 rows
+- transaksi setelah Closing FINAL = 0 rows
+- product snapshot vs latest stock ledger ideal = 0 rows
+
+==================================================
+4. UPDATE GITHUB
+==================================================
+
+Upload/merge ZIP Tahap 12 ke repository GitHub Pages.
+
+PENTING:
+JANGAN menimpa js/supabase-config.js yang sudah berisi
+Project URL dan Publishable Key project kamu.
+
+Lakukan hard refresh setelah deploy:
+Ctrl + Shift + R
+
+==================================================
+5. MIGRASI DATA LEGACY
+==================================================
+
+Jika masih ada histori lokal sebelum full cloud, gunakan perangkat
+dengan localStorage PALING LENGKAP dan login sebagai OWNER.
+
+Buka:
+supabase-stage12-reporting-migration.html
+
+Klik:
+Periksa Data
+→ Migrasikan Tahap 12
+
+Yang dimigrasikan:
+- transaksi lokal lama → history only
+- Closing lama → snapshot history
+- EOD lama → snapshot history
+- Pengeluaran lama
+- Mutasi Kas manual lama
+
+PENTING:
+Transaksi Tahap 8+ yang sudah mempunyai cloudId tidak diimport ulang.
+Migrasi history TIDAK menerapkan efek stok ulang.
+
+Jika Pengeluaran lama mempunyai Nota Base64, Nota dipindahkan ke
+Supabase Storage private.
+
+==================================================
+6. CLOSING SHIFT CLOUD
+==================================================
+
+Buka:
+shift-closing.html
+
+Owner/Admin dapat Closing.
+
+Browser hanya mengirim:
+- kasir
+- shift label
+- modal awal
+- tunai fisik
+- catatan
+
+SERVER menghitung:
+- gross sales
+- approved returns
+- net sales
+- cash sales
+- noncash sales
+- cash in/out
+- expected cash
+- selisih
+
+Jadi angka Closing bukan lagi hasil localStorage yang dipercaya mentah.
+
+Closing FINAL mengunci financial period akun + shift tersebut.
+
+Owner dapat VOID Closing jika EOD belum FINAL.
+
+==================================================
+7. MUTASI KAS CLOUD
+==================================================
+
+Kas Keluar manual dari halaman Closing sekarang masuk:
+public.cash_movements
+
+Mutasi yang sudah masuk Closing FINAL terkunci.
+Mutasi dari Retur tidak dapat dihapus manual dari Closing.
+
+==================================================
+8. END OF DAY CLOUD
+==================================================
+
+Buka:
+eod.html
+
+Owner/Admin dapat finalisasi EOD.
+
+Server memastikan:
+- Shift 1 FINAL tersedia
+- Shift 2 FINAL tersedia
+- semua akun yang punya transaksi sudah Closing
+- EOD belum FINAL
+
+Full Day opsional dan tidak dihitung dobel jika user yang sama sudah
+mempunyai Shift 1/Shift 2.
+
+Jika ada selisih omzet/tunai, catatan wajib.
+
+Owner dapat VOID EOD bila perlu koreksi.
+
+==================================================
+9. LAPORAN CLOUD
+==================================================
+
+Buka:
+laporan.html
+
+Transaksi Tahap 8+ dibaca dari:
+public.transactions
+public.transaction_items
+
+Transaksi lama hasil migrasi dibaca dari:
+public.legacy_transactions
+
+Tombol hapus transaksi cloud sekarang berarti VOID, bukan delete hard.
+Server akan menolak void jika:
+- ada Retur PENDING/APPROVED
+- Closing terkait sudah FINAL
+- EOD tanggal tersebut sudah FINAL
+
+Bulk Reset laporan dinonaktifkan pada cloud authority.
+
+==================================================
+10. PENGELUARAN CLOUD
+==================================================
+
+Buka:
+pengeluaran.html
+
+Owner/Admin dapat simpan Pengeluaran.
+Owner dapat soft-delete.
+
+Nota disimpan private di:
+ldm-expense-receipts
+
+Jika tanggal sudah mempunyai EOD FINAL, tambah/hapus Pengeluaran ditolak.
+
+Dashboard memakai cache Pengeluaran cloud yang sama.
+
+==================================================
+11. DASHBOARD CLOUD
+==================================================
+
+Dashboard sekarang memakai compatibility cache yang disegarkan dari
+Supabase untuk:
+- transaksi
+- Retur
+- Pengeluaran
+- Closing/EOD terkait reporting
+
+Jadi Device A dan Device B tidak lagi memiliki laporan finansial sendiri-sendiri.
+
+==================================================
+12. REALTIME TEST
+==================================================
+
+Device A:
+buka supabase-stage12-reporting-test.html
+
+Device B lakukan salah satu:
+- transaksi Kasir
+- Retur
+- Mutasi Kas
+- Closing
+- EOD
+- tambah/hapus Pengeluaran
+
+Device A harus menerima event dan cache reporting ikut berubah.
+
+==================================================
+13. FINANCIAL LOCK
+==================================================
+
+SETELAH CLOSING FINAL:
+- sale akun/shift terkait ditolak
+- Mutasi Kas baru terkait ditolak
+- Retur yang mengubah financial result ditolak
+- void transaksi terkait ditolak
+
+SETELAH EOD FINAL:
+- financial activity tanggal tersebut dikunci
+- Pengeluaran tanggal tersebut dikunci
+- transaksi/void/Retur yang mengubah hasil EOD ditolak
+
+Tujuannya supaya laporan yang sudah ditutup tidak berubah diam-diam.
+
+==================================================
+14. SECURITY
+==================================================
+
+Tidak ada service_role, sb_secret, database password, atau JWT secret
+di frontend.
+
+Browser tidak diberi direct write untuk tabel Tahap 12.
+Write dilakukan melalui SECURITY DEFINER RPC + RLS.
+
+==================================================
+15. SHIFT
+==================================================
+
+Tidak ada Shift Management.
+Shift 1 / Shift 2 / Full Day tetap hanya shift_label.
+
+==================================================
+16. STATUS ROADMAP
+==================================================
+
+[x] 0  Baseline/Audit
+[x] 1  GitHub Repo
+[x] 2  GitHub Pages
+[x] 3  Supabase Connection
+[x] 4  Cloud Foundation
+[x] 5  Auth Foundation
+[x] 6  Main Cloud Auth
+[x] 7  Cloud Master Barang
+[x] 8  Cloud Transactions + Atomic Sale Stock
+[x] 9  Cloud Absensi
+[x] 10 Cloud Retur + Stock Opname
+[x] 11 Cloud Supplier + PO + Goods Receipt
+[x] 12 Closing + EOD + Laporan + Dashboard Cloud
+
+Tahap 12 menutup roadmap migrasi Live Sync utama.

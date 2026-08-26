@@ -1,7 +1,7 @@
 LocDailyMar
 Roadmap: Live Sync
-Tahap: 11 - Cloud Supplier + PO + Goods Receipt
-Baseline: Tahap 10 Cloud Retur + Stock Opname
+Tahap: 12 - Final Cloud Reporting Authority
+Baseline: Tahap 11 Cloud Supplier + PO + Goods Receipt
 Main Login: Supabase Auth
 Role Authority: public.profiles.role
 Products Authority: public.products
@@ -13,8 +13,12 @@ Stock Opname Authority: public.stock_opname_entries
 Supplier Authority: public.suppliers
 Purchase Order Authority: public.purchase_orders
 Goods Receipt Authority: public.goods_receipts
-Goods Receipt Stock: Atomic RPC
-Procurement Realtime: Enabled
-Legacy PO/GR: History Only
+Closing Authority: public.shift_closings
+End of Day Authority: public.end_of_day_closings
+Operating Expense Authority: public.operating_expenses
+Legacy Reporting Authority: public.legacy_transactions
+Reporting Realtime: Enabled
+Financial Close Guard: Enabled
+Full Live Sync Core: Complete
 Edit Akun: Owner Only
 Shift Management: Removed

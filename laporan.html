@@ -2059,6 +2059,10 @@
     <script src="js/returns-service.js?v=10.0"></script>
     <script src="js/returns-bootstrap.js?v=10.0"></script>
 
+
+    <!-- Live Sync Tahap 12: Final Cloud Reporting Authority -->
+    <script src="js/reporting-service.js?v=12.0"></script>
+    <script src="js/reporting-bootstrap.js?v=12.0"></script>
 </head>
 <body>
 
@@ -6062,5 +6066,82 @@ function batasiTampilanOmzetLaporan() {
 </script>
 
 <script id="laporanReturStorageSync">window.addEventListener("storage",e=>{if(e.key==="dataRetur"&&typeof loadLaporan==="function")loadLaporan();});</script>
+
+<script id="ldmStage12LaporanCloudOverride">
+(function(){
+    "use strict";
+
+    window.eksekusiResetSemua = function(){
+        if(!requirePermission("laporan.delete")) return;
+        tutupModal("modalConfirmReset");
+        tampilkanNotifikasi(
+            "Reset Massal Dinonaktifkan",
+            "Tahap 12 memakai laporan cloud. Transaksi tidak boleh dihapus massal dari localStorage. Void transaksi satu per satu agar audit stok dan retur tetap konsisten.",
+            "🔒"
+        );
+    };
+
+    window.eksekusiHapusSatu = async function(){
+        if(!requirePermission("laporan.delete")) return;
+        if(selectedIndex === null) return;
+
+        const selectedItem = dataLaporan.find(row => row.realIndex === selectedIndex);
+        if(!selectedItem){
+            tutupModal("modalConfirmHapusSatu");
+            loadLaporan();
+            return;
+        }
+
+        if(!window.LDMReporting){
+            tampilkanNotifikasi("Cloud Reporting Belum Siap","reporting-service.js belum termuat.","⚠️");
+            return;
+        }
+
+        try{
+            if(selectedItem.cloudId){
+                await window.LDMReporting.voidSale(
+                    selectedItem.cloudId,
+                    "Void Owner dari Laporan Tahap 12"
+                );
+            }else if(selectedItem.cloudLegacyId){
+                await window.LDMReporting.archiveLegacyTransaction(
+                    selectedItem.cloudLegacyId
+                );
+            }else{
+                tampilkanNotifikasi(
+                    "Transaksi Legacy Belum Cloud",
+                    "Migrasikan Laporan lama melalui halaman Migrasi Tahap 12 terlebih dahulu.",
+                    "⚠️"
+                );
+                return;
+            }
+
+            selectedIndex = null;
+            tutupModal("modalConfirmHapusSatu");
+            tutupDetail();
+            loadLaporan();
+
+            tampilkanNotifikasi(
+                "Transaksi Diproses",
+                selectedItem.cloudId
+                    ? "Transaksi cloud berhasil di-void dan stok dibalik secara atomik."
+                    : "Transaksi legacy berhasil diarsipkan.",
+                "🗑️"
+            );
+        }catch(error){
+            tampilkanNotifikasi(
+                "Tidak Dapat Diproses",
+                error?.message || String(error),
+                "⚠️"
+            );
+        }
+    };
+
+    window.addEventListener("ldm-reporting-cache-updated",function(){
+        if(typeof loadLaporan === "function") loadLaporan();
+    });
+})();
+</script>
+
 </body>
 </html>

@@ -188,3 +188,24 @@ File utama:
 - `supabase-stage11-procurement-test.html`
 - `supabase/sql/08-stage11-suppliers-po-goods-receipt.sql`
 - `supabase/sql/08-stage11-verify.sql`
+
+
+## Tahap 12 - Final Cloud Reporting
+
+Tahap 12 menyelesaikan roadmap Live Sync utama dengan cloud authority untuk Closing Shift, End of Day, Laporan, Dashboard reporting, Pengeluaran, dan Mutasi Kas manual.
+
+Tabel authority baru:
+- `public.shift_closings`
+- `public.end_of_day_closings`
+- `public.operating_expenses`
+- `public.legacy_transactions`
+
+File utama:
+- `js/reporting-service.js`
+- `js/reporting-bootstrap.js`
+- `supabase-stage12-reporting-migration.html`
+- `supabase-stage12-reporting-test.html`
+- `supabase/sql/09-stage12-closing-eod-reporting.sql`
+- `supabase/sql/09-stage12-verify.sql`
+
+Shift 1 / Shift 2 / Full Day tetap label saja. Shift Management tidak digunakan.

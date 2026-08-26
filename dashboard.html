@@ -3123,6 +3123,10 @@ body.dark-mode
     <!-- Live Sync Tahap 10: Cloud Stock Opname cache -->
     <script src="js/stock-opname-service.js?v=10.0"></script>
     <script src="js/stock-opname-bootstrap.js?v=10.0"></script>
+
+    <!-- Live Sync Tahap 12: Final Cloud Reporting Authority -->
+    <script src="js/reporting-service.js?v=12.0"></script>
+    <script src="js/reporting-bootstrap.js?v=12.0"></script>
 </head>
 <body>
 
@@ -11295,6 +11299,91 @@ window.addEventListener(
             sync();
         }
     },2000);
+})();
+</script>
+
+
+<script id="ldmStage12DashboardCloudOverride">
+(function(){
+    "use strict";
+
+    window.tambahOperasional = async function(){
+        const ketInput = document.getElementById("ketOperasional");
+        const nominalInput = document.getElementById("nominalOperasional");
+        const ket = String(ketInput?.value || "").trim();
+        const nominal = Number(nominalInput?.value || 0);
+
+        if(!ket){
+            tampilkanAlertCustom("Peringatan","Silakan isi keterangan operasional!","warning");
+            return;
+        }
+        if(!(nominal > 0)){
+            tampilkanAlertCustom("Peringatan","Masukkan nominal operasional yang valid!","warning");
+            return;
+        }
+        if(!window.LDMReporting){
+            tampilkanAlertCustom("Cloud Reporting Belum Siap","reporting-service.js belum termuat.","danger");
+            return;
+        }
+
+        try{
+            await window.LDMReporting.saveExpense({
+                businessDate:getTargetDateToFilter(),
+                description:ket,
+                category:"Operasional",
+                target:"",
+                reference:"Dashboard",
+                amount:nominal,
+                receiptDataURL:"",
+                receiptName:"",
+                receiptOriginalSize:0
+            });
+
+            ketInput.value = "";
+            nominalInput.value = "";
+            renderOwner();
+            renderStatistikBulanan();
+        }catch(error){
+            tampilkanAlertCustom("Pengeluaran Gagal",error?.message || String(error),"danger");
+        }
+    };
+
+    window.hapusOperasional = async function(indexDalamTanggal){
+        const all = JSON.parse(localStorage.getItem("operasional") || "[]");
+        const targetDate = getTargetDateToFilter();
+        const rows = all.filter(row => parseTanggalData(row) === targetDate);
+        const target = rows[indexDalamTanggal];
+        if(!target) return;
+
+        if(!target.cloudId){
+            tampilkanAlertCustom(
+                "Pengeluaran Legacy",
+                "Data ini belum dimigrasikan ke cloud Tahap 12.",
+                "warning"
+            );
+            return;
+        }
+
+        try{
+            await window.LDMReporting.deleteExpense(target.cloudId);
+            renderOwner();
+            renderStatistikBulanan();
+        }catch(error){
+            tampilkanAlertCustom("Hapus Pengeluaran Gagal",error?.message || String(error),"danger");
+        }
+    };
+
+    window.addEventListener("ldm-reporting-cache-updated",function(){
+        const role = String(localStorage.getItem("userRole") || "").toLowerCase();
+        if(role === "owner" && typeof renderOwner === "function"){
+            renderOwner();
+            if(typeof renderStatistikBulanan === "function") renderStatistikBulanan();
+        }else if(role === "admin" && typeof renderAdmin === "function"){
+            renderAdmin();
+        }else if(role === "kasir" && typeof renderKasir === "function"){
+            renderKasir();
+        }
+    });
 })();
 </script>
 
