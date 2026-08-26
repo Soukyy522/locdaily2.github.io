@@ -115,6 +115,81 @@ Deno.serve(async (req) => {
       });
     }
 
+    if (action === "reactivate") {
+      const targetUserId = String(body.user_id || "").trim();
+      if (!targetUserId) return json({ error: "user_id wajib diisi." }, 400);
+
+      const { data: target, error: targetError } = await admin
+        .from("profiles")
+        .select("id,store_id,username,display_name,role,active,deleted_at,deleted_by")
+        .eq("id", targetUserId)
+        .eq("store_id", ctx.store_id)
+        .maybeSingle();
+      if (targetError) throw targetError;
+      if (!target) return json({ error: "Profile target tidak ditemukan pada store ini." }, 404);
+      if (!target.deleted_at) {
+        return json({ error: "Akun ini tidak berada dalam arsip akun yang dihapus." }, 409);
+      }
+
+      const { data: authTarget, error: authTargetError } =
+        await admin.auth.admin.getUserById(targetUserId);
+      if (authTargetError || !authTarget?.user) {
+        return json({ error: "Auth User akun ini sudah tidak tersedia dan tidak dapat direaktivasi." }, 409);
+      }
+
+      const { error: profileReactivateError } = await admin
+        .from("profiles")
+        .update({ active: true, deleted_at: null, deleted_by: null })
+        .eq("id", targetUserId)
+        .eq("store_id", ctx.store_id);
+      if (profileReactivateError) {
+        if (profileReactivateError.code === "23505") {
+          return json({
+            error: `Username ${target.username} sudah dipakai akun aktif lain. Ubah username akun lain terlebih dahulu.`,
+          }, 409);
+        }
+        throw profileReactivateError;
+      }
+
+      const now = new Date().toISOString();
+      const existingMeta = authTarget.user.user_metadata || {};
+      const { error: authReactivateError } = await admin.auth.admin.updateUserById(
+        targetUserId,
+        {
+          ban_duration: "none",
+          user_metadata: {
+            ...existingMeta,
+            ldm_disabled: false,
+            ldm_disabled_at: null,
+            ldm_reactivated_at: now,
+            ldm_reactivated_by: actor.id,
+          },
+        },
+      );
+
+      if (authReactivateError) {
+        await admin
+          .from("profiles")
+          .update({
+            active: target.active,
+            deleted_at: target.deleted_at,
+            deleted_by: target.deleted_by,
+          })
+          .eq("id", targetUserId)
+          .eq("store_id", ctx.store_id);
+        throw authReactivateError;
+      }
+
+      return json({
+        ok: true,
+        mode: "reactivated_preserved_history",
+        user_id: targetUserId,
+        username: target.username,
+        role: target.role,
+        devices_require_owner_approval: true,
+      });
+    }
+
     if (action === "delete") {
       const targetUserId = String(body.user_id || "").trim();
       if (!targetUserId) return json({ error: "user_id wajib diisi." }, 400);
