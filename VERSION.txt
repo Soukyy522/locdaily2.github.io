@@ -29,3 +29,9 @@ Account Management: Owner RPC + Existing Auth Link
 Password Management: Self Update + Recovery Email
 Legacy daftarAkun: Compatibility Cache Only
 Profiles Realtime: Enabled
+
+Tahap: 15 - Cloud Devices + Account Automation
+Account Management Access: Owner full / Admin read-only / Kasir self
+Device Management: Owner-only groups + approve/revoke
+P2P PeerJS Transfer: Removed
+Auth User Create/Delete: Supabase Edge Function

@@ -17,10 +17,7 @@
 <!-- Library Chart.js untuk Grafik -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <!-- Library PeerJS untuk P2P Direct Connection -->
-    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-
-    <!-- Google Fonts Lengkap -->
+<!-- Google Fonts Lengkap -->
     <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Fira+Code:wght@500;700&family=Fredoka:wght@600;700&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&family=Lato:wght@400;700&family=Lobster&family=Merriweather:wght@400;700&family=Montserrat:wght@400;600;700&family=Nunito:wght@400;700&family=Open+Sans:wght@400;600;700&family=Oswald:wght@500;700&family=Pacifico&family=Playfair+Display:wght@600;800&family=Poppins:wght@400;600;700&family=Raleway:wght@500;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     
     <style>
@@ -978,18 +975,6 @@ body.dark-mode
             transition: 0.2s;
         }
         .btn-copy-code:hover { background: #e0a800; }
-        .status-badge-p2p {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 0.75rem;
-            padding: 4px 10px;
-            border-radius: 20px;
-            background: rgba(22, 163, 74, 0.1);
-            color: #16a34a;
-            font-weight: 600;
-            margin-bottom: 10px;
-        }
         .status-pulse {
             width: 8px;
             height: 8px;
@@ -3107,9 +3092,9 @@ body.dark-mode
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase-config.js"></script>
     <script src="js/supabase-client.js"></script>
-    <script src="js/cloud-auth.js?v=5.1"></script>
+    <script src="js/cloud-auth.js?v=15.0"></script>
     <script src="js/cloud-session.js?v=6.0"></script>
-    <script src="js/cloud-session-guard.js?v=6.0"></script>
+    <script src="js/cloud-session-guard.js?v=15.0"></script>
     <!-- Live Sync Tahap 9: Cloud Absensi -->
     <script src="js/attendance-service.js?v=9.1"></script>
     <script src="js/attendance-bootstrap.js?v=9.0"></script>
@@ -3192,17 +3177,11 @@ body.dark-mode
                 </div>
             </div>
 
-            <!-- ACTION BAR: TOMBOL TRANSFER DATA KASIR/OWNER & EKSPOR -->
-            <div class="action-bar-container">
+            <!-- TAHAP 15: OWNER CLOUD DEVICE MANAGEMENT -->
+            <div class="action-bar-container" id="cloudDeviceActionBar" style="display:none;">
                 <div class="btn-action-group">
-                    <!-- Tombol dikirim oleh Admin/Kasir atau Owner agar data dua arah sinkron -->
-                    <button type="button" class="btn-transfer-owner" id="btnKirimOwner" onclick="kirimDataKeOwner()">
-                        <span>📲</span> Transfer Data
-                    </button>
-                    
-                    <!-- Tombol ditarik oleh Owner / Admin -->
-                    <button type="button" class="btn-pull-owner" id="btnTarikKasir" onclick="bukaModalTarikData()" style="display: none;">
-                        <span>📥</span> Tarik Data
+                    <button type="button" class="btn-transfer-owner" onclick="window.location.href='device-management.html'">
+                        <span>🔗</span> Perangkat Cloud
                     </button>
                 </div>
             </div>
@@ -4329,48 +4308,6 @@ body.dark-mode
         </div>
     </div>
 
-    <!-- MODAL POP-UP KODE P2P SINKRONISASI -->
-    <div class="modal-alert" id="modalKodeKasir">
-        <div class="modal-alert-content">
-            <div class="modal-alert-icon">📲</div>
-            <div class="modal-alert-title">Kode Sinkronisasi P2P</div>
-            <div class="status-badge-p2p">
-                <span class="status-pulse"></span> Sinyal P2P Siap Berbagi Data Otomatis
-            </div>
-            <div class="modal-alert-msg" style="margin-bottom: 8px;">
-                Berikan Kode ID ini ke perangkat lain (Admin/Owner) agar data transaksi kedua belah pihak langsung menyatu otomatis:
-            </div>
-            
-            <div class="code-display-box">
-                <span id="txtKodeKasir">pos-ldm-XXXX</span>
-                <button class="btn-copy-code" onclick="salinKodeKasir()">📋 Salin</button>
-            </div>
-
-            <button class="btn-modal-ok" id="btnOkKodeKasir" onclick="tutupModalKodeKasir()">Selesai / Tutup</button>
-        </div>
-    </div>
-
-    <!-- MODAL POP-UP INPUT KODE P2P SINKRONISASI -->
-    <div class="modal-alert" id="modalInputOwner">
-        <div class="modal-alert-content">
-            <div class="modal-alert-icon">📥</div>
-            <div class="modal-alert-title">Tarik & Satukan Data</div>
-            <div class="modal-alert-msg" style="margin-bottom: 12px;">
-                Masukkan Kode Peer ID Perangkat Lain untuk melakukan sinkronisasi dua arah secara otomatis:
-            </div>
-            
-            <div style="margin-bottom: 18px;">
-                <input type="text" id="inputTargetPeerId" placeholder="Contoh: pos-ldm-1234" 
-                       style="width:100%; padding: 10px; border: 2px solid var(--border-color); border-radius: 8px; font-family: monospace; font-size: 0.95rem; text-align: center; outline: none; background: var(--input-bg); color: var(--text-color);">
-            </div>
-
-            <div style="display: flex; gap: 8px;">
-                <button type="button" class="btn-modal-ok" style="background:#e2e8f0; color:#475569;" onclick="tutupModalInputOwner()">Batal</button>
-                <button type="button" class="btn-modal-ok" id="btnSubmitInputOwner" style="background:#16a34a;" onclick="prosesTarikDataP2P()">Hubungkan & Sinkronkan</button>
-            </div>
-        </div>
-    </div>
-
     <!-- MODAL EDIT TAMPILAN & TEMA -->
     <div class="modal" id="modalEditHeader">
         <div class="modal-content">
@@ -4505,10 +4442,6 @@ body.dark-mode
     </div>
 
     <script>
-        let peer = null;
-        let myPeerId = "";
-        let activePeerConn = null;
-
         let isModeKemarin = false;
         let selectedDateCustom = null;
         let monthlyChartInstance = null;
@@ -4676,7 +4609,6 @@ function logout() {
             proteksiHalamanKasir();
             populateFontSelectors();
             startCountdownWITA();
-            initPeerJS();
             
             const tglSkg = getTanggalWITA();
             const inputTgl = document.getElementById("inputTanggalLaporan");
@@ -4772,20 +4704,6 @@ function logout() {
                     e.preventDefault();
                     const primaryBtn = customAlertModal.querySelector(".btn-modal-ok");
                     if (primaryBtn) primaryBtn.click();
-                    return;
-                }
-
-                const modalKodeKasir = document.getElementById("modalKodeKasir");
-                if (modalKodeKasir && modalKodeKasir.style.display === "flex") {
-                    e.preventDefault();
-                    tutupModalKodeKasir();
-                    return;
-                }
-
-                const modalInputOwner = document.getElementById("modalInputOwner");
-                if (modalInputOwner && modalInputOwner.style.display === "flex") {
-                    e.preventDefault();
-                    prosesTarikDataP2P();
                     return;
                 }
 
@@ -5228,19 +5146,6 @@ function escapeHtml(value) {
 }
 
         function bukaModalEditAkun() {
-            const role = String(
-                localStorage.getItem("userRole") || ""
-            ).toLowerCase();
-
-            if (role !== "owner") {
-                tampilkanAlertCustom(
-                    "Akses Ditolak",
-                    "Hanya Owner yang dapat mengakses Akun Cloud.",
-                    "danger"
-                );
-                return;
-            }
-
             window.location.href =
                 "account-management.html";
         }
@@ -6279,12 +6184,12 @@ function hapusAkun(idx) {
         }
 
         function aturTombolTransfer() {
-            const role = localStorage.getItem("userRole") || "admin";
-            const btnTarik = document.getElementById("btnTarikKasir");
+            const role = String(localStorage.getItem("userRole") || "").toLowerCase();
             const inputTgl = document.getElementById("inputTanggalLaporan");
+            const deviceBar = document.getElementById("cloudDeviceActionBar");
 
-            if (btnTarik) {
-                btnTarik.style.display = (role === "owner") ? "inline-flex" : "none";
+            if (deviceBar) {
+                deviceBar.style.display = (role === "owner") ? "block" : "none";
             }
             if (inputTgl) {
                 inputTgl.style.display = (role === "owner") ? "inline-block" : "none";
@@ -6901,6 +6806,11 @@ function renderOwnerPendingNotifications(
     muatHeaderToko();
 
     aturTombolTransfer();
+
+    // Tahap 15: Akun Cloud tersedia untuk Owner/Admin/Kasir dengan hak berbeda.
+    if (btnEditAkunOwner && ["owner", "admin", "kasir"].includes(role)) {
+        btnEditAkunOwner.style.display = "inline-flex";
+    }
 
 
     // =========================================
@@ -9672,156 +9582,6 @@ function batasiTampilanOmzetDashboard() {
                         }
                     }
                 }
-            });
-        }
-
-        /* ----------------------------------------------------
-           LOGIKA REVISI P2P: SINKRONISASI TRANSFER & TARIK DATA
-        ---------------------------------------------------- */
-        function initPeerJS() {
-            if (peer) return;
-            const randomCode = Math.floor(1000 + Math.random() * 9000);
-            myPeerId = "pos-ldm-" + randomCode;
-
-            peer = new Peer(myPeerId);
-
-            peer.on('open', function(id) {
-                myPeerId = id;
-                const txtKode = document.getElementById("txtKodeKasir");
-                if (txtKode) txtKode.innerText = id;
-            });
-
-            peer.on('connection', function(conn) {
-                activePeerConn = conn;
-                setupConnectionListeners(conn);
-            });
-
-            peer.on('error', function(err) {
-                console.error("PeerJS Error:", err);
-            });
-        }
-
-        function setupConnectionListeners(conn) {
-            conn.on('data', function(data) {
-                if (data.type === "REQUEST_DATA") {
-                    const localData = getSemuaDataLokal();
-                    conn.send({
-                        type: "SYNC_DATA_RESPONSE",
-                        payload: localData
-                    });
-                } else if (data.type === "SYNC_DATA_RESPONSE" || data.type === "PUSH_DATA") {
-                    gabungkanDataMasuk(data.payload);
-                    tampilkanAlertCustom("Berhasil Sinkronisasi", "Data berhasil ditarik dan disatukan!", "success");
-                    muatDashboard();
-                }
-            });
-        }
-
-        function getSemuaDataLokal() {
-            return {
-                laporan: JSON.parse(localStorage.getItem("laporan")) || JSON.parse(localStorage.getItem("dataLaporan")) || [],
-                operasional: JSON.parse(localStorage.getItem("operasional")) || [],
-                dataBarang: JSON.parse(localStorage.getItem("dataBarang")) || []
-            };
-        }
-
-        function gabungkanDataMasuk(remoteData) {
-            if (!remoteData) return;
-
-            if (Array.isArray(remoteData.laporan)) {
-                let localLaporan = JSON.parse(localStorage.getItem("laporan")) || JSON.parse(localStorage.getItem("dataLaporan")) || [];
-                const mergedLaporan = [...localLaporan];
-
-                remoteData.laporan.forEach(itemRemote => {
-                    const idx = mergedLaporan.findIndex(l => l.id && l.id === itemRemote.id);
-                    if (idx === -1) {
-                        mergedLaporan.push(itemRemote);
-                    } else {
-                        mergedLaporan[idx] = itemRemote;
-                    }
-                });
-
-                localStorage.setItem("laporan", JSON.stringify(mergedLaporan));
-                localStorage.setItem("dataLaporan", JSON.stringify(mergedLaporan));
-            }
-
-            if (Array.isArray(remoteData.operasional)) {
-                let localOperasional = JSON.parse(localStorage.getItem("operasional")) || [];
-                const mergedOp = [...localOperasional];
-
-                remoteData.operasional.forEach(itemRemote => {
-                    const idx = mergedOp.findIndex(o => o.id && o.id === itemRemote.id);
-                    if (idx === -1) {
-                        mergedOp.push(itemRemote);
-                    }
-                });
-
-                localStorage.setItem("operasional", JSON.stringify(mergedOp));
-            }
-
-            if (Array.isArray(remoteData.dataBarang) && remoteData.dataBarang.length > 0) {
-                let localBarang = JSON.parse(localStorage.getItem("dataBarang")) || [];
-                const mergedBarang = [...localBarang];
-
-                remoteData.dataBarang.forEach(itemRemote => {
-                    const idx = mergedBarang.findIndex(b => (b.id && b.id === itemRemote.id) || (b.nama && itemRemote.nama && b.nama.toLowerCase().trim() === itemRemote.nama.toLowerCase().trim()));
-                    if (idx === -1) {
-                        mergedBarang.push(itemRemote);
-                    } else {
-                        mergedBarang[idx] = itemRemote;
-                    }
-                });
-
-                localStorage.setItem("dataBarang", JSON.stringify(mergedBarang));
-            }
-        }
-
-        function kirimDataKeOwner() {
-            document.getElementById("modalKodeKasir").style.display = "flex";
-        }
-
-        function salinKodeKasir() {
-            const txtKode = document.getElementById("txtKodeKasir").innerText;
-            navigator.clipboard.writeText(txtKode).then(() => {
-                tampilkanAlertCustom("Tersalin", "Kode ID P2P berhasil disalin!", "success");
-            });
-        }
-
-        function tutupModalKodeKasir() {
-            document.getElementById("modalKodeKasir").style.display = "none";
-        }
-
-        function bukaModalTarikData() {
-            document.getElementById("modalInputOwner").style.display = "flex";
-        }
-
-        function tutupModalInputOwner() {
-            document.getElementById("modalInputOwner").style.display = "none";
-        }
-
-        function prosesTarikDataP2P() {
-            const targetId = document.getElementById("inputTargetPeerId").value.trim();
-            if (!targetId) {
-                tampilkanAlertCustom("Peringatan", "Masukkan Kode ID Perangkat Lawan!", "warning");
-                return;
-            }
-
-            if (targetId === myPeerId) {
-                tampilkanAlertCustom("Peringatan", "Kode ID tidak boleh sama dengan perangkat sendiri!", "warning");
-                return;
-            }
-
-            const conn = peer.connect(targetId);
-
-            conn.on('open', function() {
-                activePeerConn = conn;
-                setupConnectionListeners(conn);
-                conn.send({ type: "REQUEST_DATA" });
-                tutupModalInputOwner();
-            });
-
-            conn.on('error', function(err) {
-                tampilkanAlertCustom("Gagal Hubung", "Gagal menghubungkan ke Peer ID lawan. Pastikan lawan terhubung!", "danger");
             });
         }
 
