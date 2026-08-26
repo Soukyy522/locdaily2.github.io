@@ -12,8 +12,8 @@
 <script src="js/supabase-client.js"></script>
 <script src="js/cloud-auth.js?v=5.1"></script>
 <script src="js/cloud-session.js?v=6.0"></script>
-<script src="js/cloud-session-guard.js?v=6.0"></script>
-<script src="js/production-service.js?v=13.0"></script>
+<script src="js/cloud-session-guard.js?v=13.1"></script>
+<script src="js/production-service.js?v=13.1"></script>
 </head>
 <body>
 <div class="wrap">
@@ -54,6 +54,9 @@
 </div>
 <script>
 let currentContext=null;
+function revealPage(){
+  document.documentElement.classList.remove("secure-page-pending");
+}
 function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[c]))}
 function fmtTime(v){if(!v)return "-";try{return new Intl.DateTimeFormat("id-ID",{timeZone:"Asia/Makassar",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",second:"2-digit"}).format(new Date(v))+" WITA"}catch{return String(v)}}
 function showError(e){const box=document.getElementById("errorBox");box.style.display="block";box.textContent="❌ "+(e&&e.message?e.message:String(e))}
@@ -63,9 +66,70 @@ function check(label,value){const n=Number(value)||0;return `<div class="check">
 function pending(label,value){return `<div class="check"><span>${esc(label)}</span><strong>${esc(Number(value)||0)}</strong></div>`}
 function renderHealth(h){const badge=document.getElementById("healthBadge");const status=String(h.status||"warning").toLowerCase();badge.className="status "+status;badge.textContent=status.toUpperCase();const s=h.store||{};document.getElementById("identity").textContent=`${s.name||"LocDailyMar"} • ${s.code||"-"} • ${currentContext.profile.username} (${currentContext.profile.role}) • ${fmtTime(h.generated_at)}`;const c=h.counts||{};document.getElementById("summaryGrid").innerHTML=[stat("Profile Aktif",c.profiles_active),stat("Barang Aktif",c.products_active),stat("Transaksi",c.transactions),stat("Stock Movement",c.stock_movements),stat("Absensi",c.attendance),stat("Retur",c.returns),stat("Stock Opname",c.stock_opname),stat("Supplier",c.suppliers),stat("Purchase Order",c.purchase_orders),stat("Goods Receipt",c.goods_receipts),stat("Closing",c.shift_closings),stat("End of Day",c.end_of_day),stat("Pengeluaran",c.operating_expenses),stat("Audit Events",c.audit_events)].join("");const x=h.checks||{};document.getElementById("checkGrid").innerHTML=[check("Stock vs Ledger",x.stock_ledger_mismatch),check("Orphan Transaction Items",x.orphan_transaction_items),check("Orphan Return Items",x.orphan_return_items),check("Orphan GR Items",x.orphan_goods_receipt_items),check("Duplicate Final Closing",x.duplicate_final_closing),check("Duplicate Final EOD",x.duplicate_final_eod),check("RLS Disabled",x.rls_disabled_tables),check("Realtime Missing",x.realtime_missing_tables)].join("");const p=h.pending||{};document.getElementById("pendingGrid").innerHTML=[pending("Retur Pending",p.returns),pending("Stock Opname Pending",p.stock_opname),pending("PO Draft/Pending",p.purchase_orders),pending("GR Draft/Pending",p.goods_receipts)].join("")}
 function renderAudit(rows){const body=document.getElementById("auditBody");if(!rows.length){body.innerHTML='<tr><td colspan="6" class="muted">Belum ada audit event. Event baru mulai tercatat setelah SQL Tahap 13 aktif.</td></tr>';return}body.innerHTML=rows.map(r=>`<tr><td>${esc(fmtTime(r.created_at))}</td><td><strong>${esc(r.actor_username||"system")}</strong><br><span class="muted">${esc(String(r.actor_role||"").toUpperCase())}</span></td><td>${esc(r.action)}</td><td>${esc(r.entity_type)}</td><td>${esc(r.entity_id||"-")}</td><td><code>${esc(JSON.stringify(r.details||{}))}</code></td></tr>`).join("")}
-async function refreshAll(){clearError();document.body.classList.add("spin");try{currentContext=await LDMCloudSession.ensureAuthenticated({registerDevice:false});const role=String(currentContext.profile.role||"").toLowerCase();if(!["owner","admin"].includes(role)){location.replace("dashboard.html");return}document.getElementById("btnExport").style.display=role==="owner"?"inline-flex":"none";const [h,a]=await Promise.all([LDMProduction.health(),LDMProduction.recentAudit(150)]);renderHealth(h);renderAudit(a)}catch(e){showError(e)}finally{document.body.classList.remove("spin")}}
+async function refreshAll(){
+  clearError();
+  document.body.classList.add("spin");
+  try{
+    if(!window.LDMCloudSession || typeof window.LDMCloudSession.ensureAuthenticated !== "function"){
+      throw new Error("cloud-session.js belum termuat atau gagal dimuat.");
+    }
+    if(!window.LDMProduction || typeof window.LDMProduction.health !== "function"){
+      throw new Error("production-service.js belum termuat atau gagal dimuat.");
+    }
+
+    currentContext = await LDMCloudSession.ensureAuthenticated({registerDevice:false});
+
+    if(!currentContext || !currentContext.profile){
+      throw new Error("Profile cloud tidak tersedia. Login ulang melalui index.html.");
+    }
+
+    const role = String(currentContext.profile.role || "").toLowerCase();
+    if(!["owner","admin"].includes(role)){
+      location.replace("dashboard.html");
+      return;
+    }
+
+    // Jangan lagi bergantung penuh pada cloud-session-guard.js untuk membuka UI.
+    revealPage();
+
+    document.getElementById("btnExport").style.display =
+      role === "owner" ? "inline-flex" : "none";
+
+    const [h,a] = await Promise.all([
+      LDMProduction.health(),
+      LDMProduction.recentAudit(150)
+    ]);
+
+    renderHealth(h);
+    renderAudit(a);
+  }catch(e){
+    // Error harus terlihat, bukan berubah menjadi layar putih abadi.
+    revealPage();
+    showError(e);
+  }finally{
+    document.body.classList.remove("spin");
+  }
+}
 async function exportSnapshot(){clearError();const btn=document.getElementById("btnExport");const old=btn.textContent;btn.disabled=true;btn.textContent="Membuat Snapshot...";try{const r=await LDMProduction.exportSnapshot();alert(`Cloud Snapshot berhasil dibuat.\n\nFile: ${r.filename}\nUkuran JSON: ${(r.bytes/1024/1024).toFixed(2)} MB`);await refreshAll()}catch(e){showError(e)}finally{btn.disabled=false;btn.textContent=old}}
-async function boot(){await refreshAll();try{await LDMProduction.startRealtime(async()=>{document.getElementById("auditRealtime").textContent="Realtime: aktif";const rows=await LDMProduction.recentAudit(150);renderAudit(rows)}) ;document.getElementById("auditRealtime").textContent="Realtime: aktif"}catch(e){document.getElementById("auditRealtime").textContent="Realtime: gagal";console.warn(e)}}
+async function boot(){
+  await refreshAll();
+
+  if(!currentContext){
+    return;
+  }
+
+  try{
+    await LDMProduction.startRealtime(async()=>{
+      document.getElementById("auditRealtime").textContent = "Realtime: aktif";
+      const rows = await LDMProduction.recentAudit(150);
+      renderAudit(rows);
+    });
+    document.getElementById("auditRealtime").textContent = "Realtime: aktif";
+  }catch(e){
+    document.getElementById("auditRealtime").textContent = "Realtime: gagal";
+    console.warn(e);
+  }
+}
 document.addEventListener("DOMContentLoaded",boot);
 </script>
 </body>
