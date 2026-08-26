@@ -1,7 +1,7 @@
 LocDailyMar
-Roadmap: Live Sync
-Tahap: 12 - Final Cloud Reporting Authority
-Baseline: Tahap 11 Cloud Supplier + PO + Goods Receipt
+Roadmap: Live Sync + Production Hardening
+Tahap: 13 - Production Hardening + Audit + Cloud Snapshot
+Baseline: Tahap 12 Final Cloud Reporting Authority
 Main Login: Supabase Auth
 Role Authority: public.profiles.role
 Products Authority: public.products
@@ -17,8 +17,9 @@ Closing Authority: public.shift_closings
 End of Day Authority: public.end_of_day_closings
 Operating Expense Authority: public.operating_expenses
 Legacy Reporting Authority: public.legacy_transactions
-Reporting Realtime: Enabled
-Financial Close Guard: Enabled
-Full Live Sync Core: Complete
+Audit Authority: public.audit_events
+System Health: ldm_system_health
+Cloud Snapshot: ldm_export_store_snapshot
+Production Readiness: Enabled
 Edit Akun: Owner Only
 Shift Management: Removed

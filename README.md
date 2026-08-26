@@ -209,3 +209,17 @@ File utama:
 - `supabase/sql/09-stage12-verify.sql`
 
 Shift 1 / Shift 2 / Full Day tetap label saja. Shift Management tidak digunakan.
+
+
+## Tahap 13 - Production Hardening
+
+Tahap 12 menutup migrasi authority utama. Tahap 13 menambahkan production health check, append-only audit trail, Realtime audit, dan Owner-only Cloud Snapshot.
+
+File utama:
+- `cloud-control-center.html`
+- `js/production-service.js`
+- `supabase/sql/10-stage13-production-hardening.sql`
+- `supabase/sql/10-stage13-verify.sql`
+- `docs/TAHAP-13.md`
+
+Backup/Restore localStorage lama sekarang diberi label sebagai compatibility cache, bukan cloud authority.
