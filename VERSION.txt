@@ -1,25 +1,20 @@
 LocDailyMar
 Roadmap: Live Sync
-Tahap: 9 - Cloud Attendance
-Baseline: Tahap 8 Transactions Loader Fixed
+Tahap: 11 - Cloud Supplier + PO + Goods Receipt
+Baseline: Tahap 10 Cloud Retur + Stock Opname
 Main Login: Supabase Auth
 Role Authority: public.profiles.role
 Products Authority: public.products
 Transactions Authority: public.transactions
 Sales Stock Ledger: public.stock_movements
 Attendance Authority: public.attendance
-Attendance Proof Storage: Private Supabase Storage
-Attendance Realtime: Enabled
-Attendance Shift Mode: Label Only, No Shift Management
-Transaction Attendance Guard: Enabled
-Edit Akun: Owner Only
-Shift Management: Removed
-
-Stage: 10 - Cloud Retur + Stock Opname
 Returns Authority: public.sales_returns
-Return Items Authority: public.sales_return_items
-Cloud Cash Movement: public.cash_movements
 Stock Opname Authority: public.stock_opname_entries
-Return Stock: Atomic RPC
-Stock Opname Apply: Delta on Latest Stock
+Supplier Authority: public.suppliers
+Purchase Order Authority: public.purchase_orders
+Goods Receipt Authority: public.goods_receipts
+Goods Receipt Stock: Atomic RPC
+Procurement Realtime: Enabled
+Legacy PO/GR: History Only
+Edit Akun: Owner Only
 Shift Management: Removed

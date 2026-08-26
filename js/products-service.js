@@ -73,6 +73,8 @@
                 ),
             satuan:
                 row.unit || "Pcs",
+            expiredTerakhir:
+                row.last_expiry_date || "",
             _cloud: {
                 version:
                     normalizeNumber(
@@ -223,6 +225,7 @@
                         "purchase_price",
                         "sale_price",
                         "legacy_stock_snapshot",
+                        "last_expiry_date",
                         "promo_active",
                         "promo_price",
                         "promo_min_qty",

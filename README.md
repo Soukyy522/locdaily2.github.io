@@ -175,3 +175,16 @@ File utama:
 ## Tahap 10 - Cloud Retur & Stock Opname
 
 Retur dan Stock Opname baru memakai Supabase sebagai authority. Retur approval/cancel dan Stock Opname approval/cancel mengubah `products.legacy_stock_snapshot` bersama `stock_movements` secara atomik. Histori legacy dapat dimigrasikan tanpa menerapkan stok ulang.
+
+
+## Tahap 11 - Cloud Procurement
+
+Supplier, Purchase Order, dan Goods Receipt sekarang memiliki cloud authority di Supabase. Goods Receipt Accepted memperbarui stok melalui atomic RPC dan ledger `stock_movements`. Legacy PO/GR dimigrasikan sebagai history-only.
+
+File utama:
+- `js/procurement-service.js`
+- `js/procurement-bootstrap.js`
+- `supabase-stage11-procurement-migration.html`
+- `supabase-stage11-procurement-test.html`
+- `supabase/sql/08-stage11-suppliers-po-goods-receipt.sql`
+- `supabase/sql/08-stage11-verify.sql`
