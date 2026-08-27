@@ -232,3 +232,18 @@ Account authority sekarang menggunakan Supabase Auth + `public.profiles`. Owner 
 
 ## Tahap 15
 Cloud device groups, Owner approval/revoke, role-aware Akun Cloud, automatic Auth user creation/deletion through a server-side Supabase Edge Function, and account-management white-screen fix. Legacy PeerJS transfer on Dashboard has been removed.
+
+
+## Tahap 16 - Offline Queue + Reconnect
+
+Transaksi Kasir dapat disimpan sementara di IndexedDB ketika jaringan putus,
+lalu diproses kembali melalui RPC idempotent setelah koneksi, Auth, store, dan
+device aktif terverifikasi. Scope offline saat ini hanya SALE Kasir; operasi
+akun, device, serta administrasi lainnya tetap wajib online.
+
+File utama:
+- `js/offline-queue.js`
+- `service-worker.js`
+- `supabase/sql/14-stage16-offline-queue-reconnect.sql`
+- `supabase/sql/14-stage16-verify.sql`
+- `docs/TAHAP-16.md`

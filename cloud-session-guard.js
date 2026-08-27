@@ -35,6 +35,25 @@
 
     addPendingStyle();
 
+    function hasCachedOfflineLease(){
+        try{
+            const lease = JSON.parse(
+                localStorage.getItem("ldmOfflineLeaseV16") || "null"
+            );
+            return Boolean(
+                lease &&
+                lease.version === 16 &&
+                lease.device_status === "active" &&
+                Number(lease.expires_at_ms || 0) > Date.now() &&
+                String(lease.user_id || "") === String(localStorage.getItem("ldmCloudUserId") || "") &&
+                String(lease.store_id || "") === String(localStorage.getItem("ldmCloudStoreId") || "") &&
+                String(lease.client_device_id || "") === String(localStorage.getItem("ldmCloudDeviceId") || "")
+            );
+        }catch(error){
+            return false;
+        }
+    }
+
     function failAuth(
         error
     ){
@@ -43,17 +62,37 @@
             error
         );
 
-        try{
-            if(
-                window.LDMCloudSession
-            ){
-                window.LDMCloudSession
-                    .clearCompatibilityCache();
+        const retryableNetworkFailure =
+            window.LDMOfflineQueue &&
+            typeof window.LDMOfflineQueue.isRetryableNetworkError === "function"
+                ? window.LDMOfflineQueue.isRetryableNetworkError(error)
+                : navigator.onLine === false || /failed to fetch|network|offline|connection|timeout/i.test(String(error && error.message || error || ""));
+
+        const preserveOfflineLease = Boolean(
+            retryableNetworkFailure &&
+            (
+                (
+                    window.LDMOfflineQueue &&
+                    typeof window.LDMOfflineQueue.validLease === "function" &&
+                    window.LDMOfflineQueue.validLease()
+                )
+                || hasCachedOfflineLease()
+            )
+        );
+
+        if(!preserveOfflineLease){
+            try{
+                if(
+                    window.LDMCloudSession
+                ){
+                    window.LDMCloudSession
+                        .clearCompatibilityCache();
+                }
+            }catch(cacheError){
+                console.warn(
+                    cacheError
+                );
             }
-        }catch(cacheError){
-            console.warn(
-                cacheError
-            );
         }
 
         const message =
@@ -68,6 +107,13 @@
             "ldm-cloud-auth-pending",
             "secure-page-pending"
         );
+
+        if(preserveOfflineLease){
+            window.location.replace(
+                "kasir.html?offlineFallback=1"
+            );
+            return;
+        }
 
         window.location.replace(
             `index.html?cloudAuthError=${message}`
@@ -187,6 +233,16 @@
 
                 return context;
             }
+
+            if(
+                window.LDMOfflineQueue &&
+                typeof window.LDMOfflineQueue.rememberVerifiedContext === "function"
+            ){
+                window.LDMOfflineQueue.rememberVerifiedContext(
+                    context,
+                    deviceAccess
+                );
+            }
         }
 
         patchLogoutFunctions();
@@ -209,6 +265,53 @@
         return context;
     }
 
+    async function bootWithOfflineFallback(){
+        try{
+            return await boot();
+        }catch(error){
+            const offlineContext =
+                window.LDMOfflineQueue &&
+                typeof window.LDMOfflineQueue.offlineContextForError === "function"
+                    ? window.LDMOfflineQueue.offlineContextForError(error)
+                    : null;
+
+            if(!offlineContext){
+                throw error;
+            }
+
+            patchLogoutFunctions();
+
+            root.classList.remove(
+                "ldm-cloud-auth-pending",
+                "secure-page-pending"
+            );
+
+            window.dispatchEvent(
+                new CustomEvent(
+                    "ldm-cloud-auth-ready",
+                    {
+                        detail:offlineContext
+                    }
+                )
+            );
+
+            window.dispatchEvent(
+                new CustomEvent(
+                    "ldm-cloud-auth-offline-ready",
+                    {
+                        detail:offlineContext
+                    }
+                )
+            );
+
+            console.warn(
+                "LocDailyMar berjalan dalam mode offline terbatas. Data transaksi akan masuk antrean perangkat."
+            );
+
+            return offlineContext;
+        }
+    }
+
     window.LDMCloudGuard =
         Object.freeze({
             boot,
@@ -220,7 +323,7 @@
      * Ini membantu cache kompatibilitas tersedia sebelum
      * guard legacy halaman ikut berjalan.
      */
-    boot()
+    bootWithOfflineFallback()
         .then(
             () => {
                 if(

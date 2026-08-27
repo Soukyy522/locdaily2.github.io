@@ -35,3 +35,11 @@ Account Management Access: Owner full / Admin read-only / Kasir self
 Device Management: Owner-only groups + approve/revoke
 P2P PeerJS Transfer: Removed
 Auth User Create/Delete: Supabase Edge Function
+
+Tahap: 16 - Offline Queue + Reconnect
+Offline Scope: Kasir SALE only
+Offline Storage: IndexedDB
+Reconnect RPC: ldm_sync_offline_sale
+Idempotency: store_id + client_transaction_id
+Offline Lease: Active device, maximum 12 hours
+Queue Maximum Age: 7 days

@@ -1523,15 +1523,16 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase-config.js"></script>
     <script src="js/supabase-client.js"></script>
+    <script src="js/offline-queue.js?v=16.0"></script>
     <script src="js/cloud-auth.js?v=15.0"></script>
-    <script src="js/cloud-session.js?v=6.0"></script>
-    <script src="js/cloud-session-guard.js?v=15.0"></script>
+    <script src="js/cloud-session.js?v=16.0"></script>
+    <script src="js/cloud-session-guard.js?v=16.0"></script>
     <!-- Live Sync Tahap 9: Cloud Absensi -->
     <script src="js/attendance-service.js?v=9.1"></script>
     <script src="js/attendance-bootstrap.js?v=9.0"></script>
     <!-- Live Sync Tahap 7: Cloud Master Barang -->
-    <script src="js/products-service.js?v=7.0"></script>
-    <script src="js/transactions-service.js?v=8.1"></script>
+    <script src="js/products-service.js?v=16.0"></script>
+    <script src="js/transactions-service.js?v=16.0"></script>
     <script src="js/products-bootstrap.js?v=7.0"></script>
     <!-- Live Sync Tahap 10: Cloud Retur compatibility -->
     <script src="js/returns-service.js?v=10.0"></script>
@@ -1868,7 +1869,7 @@
     <div class="popup" id="popupKembali">
         <div class="popup-box">
             <div style="font-size: 2.5rem;">🎉</div>
-            <h4 style="color:#64748b; font-size:0.8rem; text-transform:uppercase; margin-top:5px;">Kembalian</h4>
+            <h4 id="judulPopupKembali" style="color:#64748b; font-size:0.8rem; text-transform:uppercase; margin-top:5px;">Kembalian</h4>
             <h2 style="color:#10b981; font-size:1.8rem; margin: 5px 0 15px 0; word-break: break-word;">Rp <span id="teksKembali">0</span></h2>
             
             <div class="modal-buttons">
@@ -3503,6 +3504,16 @@ function tambahItem() {
                 cloudId: cloudResult ? cloudResult.id : null,
                 clientTransactionId: cloudResult ? cloudResult.client_transaction_id : null,
                 cloudStatus: cloudResult ? cloudResult.status : null,
+                offlineQueueId: cloudResult && cloudResult.offline_queue_id
+                    ? cloudResult.offline_queue_id
+                    : null,
+                offlineQueueStatus: cloudResult && cloudResult.offline_queued
+                    ? "pending"
+                    : null,
+                offlineQueuedAt: cloudResult && cloudResult.queued_at
+                    ? cloudResult.queued_at
+                    : null,
+                offlineSyncedAt: null,
                 kodeTransaksi,
                 tanggal: tglToday,
                 waktu_teks: waktuTeks,
@@ -3557,6 +3568,120 @@ function tambahItem() {
             hapusDraftKasirOtomatis();
         }
 
+        function perbaruiLaporanHasilReconnect(clientTransactionId, cloudResult) {
+            if (!clientTransactionId || !cloudResult) return;
+
+            const cloudItems = Array.isArray(cloudResult.items)
+                ? cloudResult.items.map(item => ({
+                    productId: item.product_id || null,
+                    barcode: item.barcode || "",
+                    nama: item.nama || "",
+                    hargaBeli: Number(item.hargaBeli) || 0,
+                    harga: Number(item.harga) || 0,
+                    hargaNormal: Number(item.hargaNormal) || Number(item.harga) || 0,
+                    isPromo: (Number(item.harga) || 0) < (Number(item.hargaNormal) || Number(item.harga) || 0),
+                    qty: Number(item.qty) || 0,
+                    satuan: item.satuan || "Pcs",
+                    subtotal: Number(item.subtotal) || 0,
+                    diskon: Number(item.diskon) || 0
+                }))
+                : null;
+
+            ["laporan", "dataLaporan", "laporanHistory"].forEach(key => {
+                let rows;
+                try {
+                    rows = JSON.parse(localStorage.getItem(key) || "[]");
+                } catch (error) {
+                    rows = [];
+                }
+                if (!Array.isArray(rows)) return;
+
+                let changed = false;
+                rows.forEach(row => {
+                    if (String(row.clientTransactionId || "") !== String(clientTransactionId)) return;
+
+                    row.cloudId = cloudResult.id || row.cloudId || null;
+                    row.kodeTransaksi = cloudResult.transaction_code || row.kodeTransaksi;
+                    row.cloudStatus = cloudResult.status || "completed";
+                    row.offlineQueueStatus = "synced";
+                    row.offlineSyncedAt = cloudResult.synced_at || new Date().toISOString();
+                    row.tanggal = cloudResult.business_date || row.tanggal;
+                    row.total = Number(cloudResult.grand_total) || row.total;
+                    row.subtotal = Number(cloudResult.subtotal) || row.subtotal;
+                    row.normalSubtotal = Number(cloudResult.normal_subtotal) || row.normalSubtotal;
+                    row.productDiscount = Number(cloudResult.product_discount) || 0;
+                    row.manualDiscount = Number(cloudResult.manual_discount) || 0;
+                    row.totalDiskon = Number(cloudResult.total_discount) || 0;
+                    row.diskon = row.totalDiskon;
+                    row.bayar = Number(cloudResult.cash_received) ||
+                        (Number(cloudResult.cash_amount) || 0) + (Number(cloudResult.qris_amount) || 0);
+                    row.kembali = Number(cloudResult.change_amount) || 0;
+                    row.cash = Number(cloudResult.cash_amount) || 0;
+                    row.qris = Number(cloudResult.qris_amount) || 0;
+                    if (cloudItems) {
+                        row.keranjang = cloudItems;
+                        row.barang = cloudItems.map(item => `${item.nama} (${item.qty} ${item.satuan})`).join(", ");
+                    }
+                    changed = true;
+                });
+
+                if (changed) {
+                    localStorage.setItem(key, JSON.stringify(rows));
+                }
+            });
+
+            if (
+                lastTransaksiData &&
+                String(lastTransaksiData.clientTransactionId || "") === String(clientTransactionId)
+            ) {
+                lastTransaksiData.cloudId = cloudResult.id || null;
+                lastTransaksiData.kodeTransaksi = cloudResult.transaction_code || lastTransaksiData.kodeTransaksi;
+                lastTransaksiData.cloudStatus = cloudResult.status || "completed";
+                lastTransaksiData.offlineQueueStatus = "synced";
+                lastTransaksiData.offlineSyncedAt = cloudResult.synced_at || new Date().toISOString();
+            }
+
+            window.dispatchEvent(new Event("storage"));
+        }
+
+        function tandaiLaporanReconnectBermasalah(clientTransactionId, status, message) {
+            ["laporan", "dataLaporan", "laporanHistory"].forEach(key => {
+                let rows;
+                try {
+                    rows = JSON.parse(localStorage.getItem(key) || "[]");
+                } catch (error) {
+                    rows = [];
+                }
+                if (!Array.isArray(rows)) return;
+                let changed = false;
+                rows.forEach(row => {
+                    if (String(row.clientTransactionId || "") === String(clientTransactionId || "")) {
+                        row.offlineQueueStatus = status || "failed";
+                        row.offlineSyncError = String(message || "Sinkronisasi gagal");
+                        changed = true;
+                    }
+                });
+                if (changed) localStorage.setItem(key, JSON.stringify(rows));
+            });
+        }
+
+        window.addEventListener("ldm-offline-sale-synced", event => {
+            const detail = event.detail || {};
+            perbaruiLaporanHasilReconnect(
+                detail.queueItem && detail.queueItem.client_transaction_id,
+                detail.cloudResult
+            );
+        });
+
+        window.addEventListener("ldm-offline-sale-sync-error", event => {
+            const detail = event.detail || {};
+            tandaiLaporanReconnectBermasalah(
+                detail.queueItem && detail.queueItem.client_transaction_id,
+                detail.status,
+                detail.message
+            );
+        });
+
         let transactionsServiceLoadingPromise = null;
 
         function pastikanTransactionsService() {
@@ -3589,7 +3714,7 @@ function tambahItem() {
                         document.createElement("script");
 
                     script.src =
-                        "js/transactions-service.js?v=8.1&reload=" +
+                        "js/transactions-service.js?v=16.0&reload=" +
                         Date.now();
 
                     script.async = true;
@@ -3687,7 +3812,13 @@ function tambahItem() {
                         detailKombinasi
                     );
 
-                await potongStokDatabase();
+                if (cloudResult && cloudResult.offline_queued) {
+                    // Stok lokal sudah ditahan oleh IndexedDB queue.
+                    // Stok cloud baru dipotong oleh RPC saat reconnect berhasil.
+                    cekPeringatanStok();
+                } else {
+                    await potongStokDatabase();
+                }
 
                 /*
                  * Baru setelah COMMIT cloud sukses,
@@ -3733,6 +3864,16 @@ function tambahItem() {
 
                 const kembali =
                     Number(cloudResult.change_amount) || 0;
+
+                const judulKembali = document.getElementById("judulPopupKembali");
+                if (judulKembali) {
+                    judulKembali.innerText = cloudResult.offline_queued
+                        ? "Kembalian · Tersimpan Offline"
+                        : "Kembalian";
+                    judulKembali.style.color = cloudResult.offline_queued
+                        ? "#d97706"
+                        : "#64748b";
+                }
 
                 document
                     .getElementById("teksKembali")
@@ -3823,6 +3964,16 @@ function tambahItem() {
                     );
 
                 tutupPopupQris();
+
+                const judulKembali = document.getElementById("judulPopupKembali");
+                if (judulKembali) {
+                    judulKembali.innerText = cloudResult.offline_queued
+                        ? "Pembayaran · Tersimpan Offline"
+                        : "Pembayaran Berhasil";
+                    judulKembali.style.color = cloudResult.offline_queued
+                        ? "#d97706"
+                        : "#64748b";
+                }
 
                 document
                     .getElementById("teksKembali")
@@ -4068,6 +4219,14 @@ const totalDiskonHTML = totalDiskon > 0
       `
     : "";
 
+const offlineStatusHTML = trx.offlineQueueStatus && trx.offlineQueueStatus !== "synced"
+    ? `
+        <p style="margin:5px 0;padding:4px;border:1px dashed #000;font-size:9px;font-weight:bold;">
+            STATUS: MENUNGGU SINKRONISASI CLOUD
+        </p>
+      `
+    : "";
+
 
     /* =====================================================
        CETAK
@@ -4182,6 +4341,8 @@ const totalDiskonHTML = totalDiskon > 0
                             ${trx.kodeTransaksi || "-"}
                         </b>
                     </p>
+
+                    ${offlineStatusHTML}
 
                     <p
                         style="
@@ -4324,6 +4485,11 @@ ${totalDiskonHTML}
 
         function tutupPopup() {
             document.getElementById("popupKembali").style.display = "none";
+            const judulKembali = document.getElementById("judulPopupKembali");
+            if (judulKembali) {
+                judulKembali.innerText = "Kembalian";
+                judulKembali.style.color = "#64748b";
+            }
             keranjang = [];
             uang = 0;
             totalAkhir = 0;

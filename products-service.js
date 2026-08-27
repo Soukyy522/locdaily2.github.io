@@ -129,13 +129,20 @@
     function setCache(
         rows
     ){
-        const legacy =
+        let legacy =
             (
                 Array.isArray(rows)
                     ? rows
                     : []
             )
             .map(rowToLegacy);
+
+        if(
+            window.LDMOfflineQueue &&
+            typeof window.LDMOfflineQueue.applyReservationsToProducts === "function"
+        ){
+            legacy = window.LDMOfflineQueue.applyReservationsToProducts(legacy);
+        }
 
         localStorage.setItem(
             CACHE_KEY,
