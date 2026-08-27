@@ -53,7 +53,7 @@ Offline Fallback: offline.html
 Update Policy: Manual confirmation + empty offline queue
 Cache Cleanup: ldm-* runtime cache only; app shell/IndexedDB/localStorage preserved
 Persistent Storage Diagnostics: Enabled
-Tahap 17: Belum dikerjakan (sengaja dilewati atas permintaan pengguna)
+Tahap 17: Diimplementasikan setelah Tahap 19 menggunakan baseline terbaru
 
 Tahap: 19 - Full QA, Security & Performance
 Frontend Version: 19.0.0
@@ -64,10 +64,23 @@ Security Runtime: js/security-hardening.js
 Performance Runtime: js/qa-runtime.js
 Core Web Vitals Target: LCP <= 2500 ms, INP <= 200 ms, CLS <= 0.1
 Audit Policy: Read-only; no automatic database mutation
-Tahap 17: Tetap belum dikerjakan (sesuai urutan yang dipilih pengguna)
+Tahap 17: Sync Conflict & Recovery Center aktif
 
 Patch: 19.0.1 - Desktop Navigation Parity
 Desktop Mega Menu: Aplikasi & Update + QA & Security ditambahkan
 Desktop Fallback: Sidebar tetap tersedia sampai Mega Menu berhasil dibuat
 Desktop Small Height: Mega Menu dapat di-scroll
 Role Access: Tetap mengikuti Owner/Admin/Kasir
+
+Tahap: 17 - Sync Conflict & Recovery Center
+Release Version: 19.1.0
+Baseline Input: LocDailyMar-TAHAP-19.zip terbaru dari pengguna
+Conflict Authority: public.sync_conflicts
+Recovery Page: recovery-center.html
+Recovery Client: js/recovery-service.js
+Local Queue API: retryItem + discardItem + cloud conflict reporting
+Retry: Owner/Admin/user sumber; tetap idempotent
+Discard: Owner-only + alasan + audit + server guard
+Realtime: Store-scoped, mengikuti RLS
+Payload Cloud: Digest + operational summary only
+PWA Cache: release19-1-v1

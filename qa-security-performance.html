@@ -21,7 +21,7 @@
     <script src="js/cloud-session.js?v=16.0"></script>
     <script src="js/device-service.js?v=15.0"></script>
     <script src="js/offline-queue.js?v=16.0"></script>
-    <script src="js/pwa-manager.js?v=19.0"></script>
+    <script src="js/pwa-manager.js?v=19.1"></script>
 </head>
 <body>
 <main class="wrap">
@@ -79,12 +79,13 @@
         result("cloud","Konfigurasi Supabase",window.LDMSupabase&&window.LDMSupabase.isConfigured()?"PASS":"FAIL",window.LDMSupabase&&window.LDMSupabase.isConfigured()?"URL dan publishable key tersedia.":"Isi js/supabase-config.js.");
         if(context&&String(context.profile&&context.profile.role||"").toLowerCase()==="owner"){
             try{const {error}=await LDMSupabase.createClient().from("products").select("id").limit(1);if(error)throw error;result("cloud","Akses products melalui RLS","PASS","Query terbatas berhasil sebagai Owner. Ini menguji konektivitas dan akses, bukan seluruh policy.");}catch(error){result("cloud","Akses products melalui RLS","FAIL",safeError(error));}
+            try{const {error}=await LDMSupabase.createClient().from("sync_conflicts").select("id",{count:"exact",head:true});if(error)throw error;result("cloud","Recovery schema TAHAP 17","PASS","Tabel sync_conflicts dapat dibaca sesuai RLS Owner.");}catch(error){result("cloud","Recovery schema TAHAP 17","FAIL",safeError(error));}
             try{const access=await LDMCloudAuth.getCurrentDeviceAccess();const status=String(access&&access.status||"").toLowerCase();result("cloud","Status perangkat",status==="active"?"PASS":"WARN",`Status device: ${status||"belum tersedia"}.`);}catch(error){result("cloud","Status perangkat","WARN",safeError(error));}
-        }else{result("cloud","Akses products melalui RLS","WARN","Dilewati sampai login Owner.");result("cloud","Status perangkat","WARN","Dilewati sampai login Owner.");}
+        }else{result("cloud","Akses products melalui RLS","WARN","Dilewati sampai login Owner.");result("cloud","Recovery schema TAHAP 17","WARN","Dilewati sampai login Owner.");result("cloud","Status perangkat","WARN","Dilewati sampai login Owner.");}
 
         const manifest=await fetchOk("manifest.json");
         if(manifest.ok){try{const data=await manifest.response.json();const required=["name","short_name","start_url","display","icons"];const missing=required.filter(key=>!data[key]);result("pwa","Manifest PWA",missing.length?"FAIL":"PASS",missing.length?`Field hilang: ${missing.join(", ")}.`:"Manifest valid dan field utama lengkap.");}catch(error){result("pwa","Manifest PWA","FAIL","JSON manifest tidak valid.");}}else result("pwa","Manifest PWA","FAIL",`HTTP ${manifest.status||"gagal"}.`);
-        for(const path of ["service-worker.js","assets/icons/icon-192.png","assets/icons/icon-512.png"]){const checked=await fetchOk(path);result("pwa",`Asset ${path}`,checked.ok?"PASS":"FAIL",checked.ok?`HTTP ${checked.status}.`:`Tidak dapat dimuat (HTTP ${checked.status||"gagal"}).`);}
+        for(const path of ["service-worker.js","recovery-center.html","js/recovery-service.js","assets/icons/icon-192.png","assets/icons/icon-512.png"]){const checked=await fetchOk(path);result("pwa",`Asset ${path}`,checked.ok?"PASS":"FAIL",checked.ok?`HTTP ${checked.status}.`:`Tidak dapat dimuat (HTTP ${checked.status||"gagal"}).`);}
         if("serviceWorker" in navigator){const registration=await navigator.serviceWorker.getRegistration();result("pwa","Service Worker",registration?"PASS":"WARN",registration?`Scope aktif: ${registration.scope}.`:"Belum mengontrol halaman; reload setelah deploy.");}else result("pwa","Service Worker","FAIL","Browser tidak mendukung Service Worker.");
         try{const stats=window.LDMOfflineQueue&&await LDMOfflineQueue.stats();const unsynced=Number(stats&&stats.unsynced||localStorage.getItem("ldmOfflineUnsyncedCountV16")||0);result("pwa","Antrean offline",unsynced===0?"PASS":"WARN",`${unsynced} transaksi menunggu sinkronisasi.`);}catch(error){result("pwa","Antrean offline","WARN",safeError(error));}
         try{const estimate=navigator.storage&&await navigator.storage.estimate();const used=Number(estimate&&estimate.usage||0),quota=Number(estimate&&estimate.quota||0),pct=quota?used/quota*100:0;result("pwa","Kapasitas penyimpanan",pct<80?"PASS":"WARN",quota?`${pct.toFixed(1)}% digunakan (${(used/1048576).toFixed(1)} MB).`:"Estimasi storage tidak tersedia.");}catch(error){result("pwa","Kapasitas penyimpanan","WARN",safeError(error));}
@@ -96,7 +97,7 @@
         result("performance","TTFB",metric.ttfb>0&&metric.ttfb<=800?"PASS":"WARN",metric.ttfb?`${metric.ttfb} ms; target lab ≤ 800 ms.`:"Belum terekam.");
         result("performance","Error runtime",Number(metric.errors||0)+Number(metric.rejections||0)===0?"PASS":"FAIL",`${metric.errors||0} error dan ${metric.rejections||0} unhandled rejection pada halaman ini.`);
         result("performance","Long task",Number(metric.longestTask||0)<=200?"PASS":"WARN",`${metric.longTasks||0} long task; terlama ${metric.longestTask||0} ms.`);
-        render();lastReport={stage:19,version:"19.0.1",generatedAt:new Date().toISOString(),page:location.href.split(/[?#]/)[0],summary:{score:$("score").textContent,pass:$("passCount").textContent,warn:$("warnCount").textContent,fail:$("failCount").textContent},runtime:metric,groups};
+        render();lastReport={stage:19,version:"19.1.0",generatedAt:new Date().toISOString(),page:location.href.split(/[?#]/)[0],summary:{score:$("score").textContent,pass:$("passCount").textContent,warn:$("warnCount").textContent,fail:$("failCount").textContent},runtime:metric,groups};
         $("runButton").disabled=false;$("runButton").textContent="Jalankan Full QA";
     }
     $("runButton").addEventListener("click",run);

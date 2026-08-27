@@ -61,13 +61,20 @@ Jangan commit `service_role` key, password database, JWT secret, token admin, at
 ## Status terbaru
 
 - [x] Tahap 16: Offline Queue + Reconnect
-- [ ] Tahap 17: belum dikerjakan
+- [x] Tahap 17: Sync Conflict & Recovery Center
 - [x] Tahap 18: PWA Installation & Safe Update Manager
+- [x] Tahap 19: Full QA, Security & Performance
 
 Tahap 18 menambahkan manifest installable, ikon aplikasi, halaman fallback
 offline, satu Service Worker resmi, pemeriksaan update manual, serta perlindungan
 agar update/cache cleanup tidak berjalan ketika antrean offline belum aman.
 Gunakan `pwa-settings.html` untuk instalasi dan diagnostik perangkat.
+
+Tahap 17 ditambahkan setelah Tahap 19 menggunakan paket Tahap 19 terbaru sebagai
+baseline. Conflict sinkronisasi kini tercatat terpusat per store, dapat dipantau
+melalui `recovery-center.html`, dan keputusan retry/discard memiliki pembatasan
+role serta audit cloud. Discard hanya Owner dan diblokir ulang di server agar
+perangkat lama tidak dapat mengirim antrean yang sudah dibatalkan.
 
 
 ## Tahap 2 - GitHub Pages
@@ -258,6 +265,21 @@ File utama:
 - `supabase/sql/14-stage16-offline-queue-reconnect.sql`
 - `supabase/sql/14-stage16-verify.sql`
 - `docs/TAHAP-16.md`
+
+## Tahap 17 - Sync Conflict & Recovery Center
+
+Conflict dari reconnect kini dicatat per store di `public.sync_conflicts`.
+Recovery Center menyediakan retry idempotent, permintaan retry lintas perangkat,
+discard Owner-only dengan alasan dan audit, serta server guard agar queue yang
+sudah dibatalkan tidak dapat dikirim ulang.
+
+File utama:
+- `recovery-center.html`
+- `js/recovery-service.js`
+- `supabase/sql/16-stage17-sync-conflict-recovery.sql`
+- `supabase/sql/16-stage17-verify.sql`
+- `supabase-stage17-recovery-test.html`
+- `docs/TAHAP-17.md`
 
 ## Tahap 18 - PWA Installation & Safe Update
 
