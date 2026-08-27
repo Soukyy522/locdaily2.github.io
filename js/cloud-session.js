@@ -24,7 +24,8 @@
         "ldmCloudStoreId",
         "ldmCloudStoreCode",
         "ldmCloudStoreName",
-        "ldmCloudProfileVersion"
+        "ldmCloudProfileVersion",
+        "ldmOfflineLeaseV16"
     ];
 
     function normalizeRole(value){
@@ -397,6 +398,13 @@
             );
         }finally{
             clearCompatibilityCache();
+
+            if(
+                window.LDMOfflineQueue &&
+                typeof window.LDMOfflineQueue.clearLease === "function"
+            ){
+                window.LDMOfflineQueue.clearLease();
+            }
 
             window.location.replace(
                 redirectTo
