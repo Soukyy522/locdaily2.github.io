@@ -54,3 +54,14 @@ Update Policy: Manual confirmation + empty offline queue
 Cache Cleanup: ldm-* runtime cache only; app shell/IndexedDB/localStorage preserved
 Persistent Storage Diagnostics: Enabled
 Tahap 17: Belum dikerjakan (sengaja dilewati atas permintaan pengguna)
+
+Tahap: 19 - Full QA, Security & Performance
+Frontend Version: 19.0.0
+Owner QA Console: qa-security-performance.html
+Static QA: tools/qa-stage19.mjs
+Database Audit: supabase/sql/15-stage19-full-qa-security-performance-audit.sql
+Security Runtime: js/security-hardening.js
+Performance Runtime: js/qa-runtime.js
+Core Web Vitals Target: LCP <= 2500 ms, INP <= 200 ms, CLS <= 0.1
+Audit Policy: Read-only; no automatic database mutation
+Tahap 17: Tetap belum dikerjakan (sesuai urutan yang dipilih pengguna)

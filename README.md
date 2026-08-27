@@ -258,3 +258,21 @@ File utama:
 - `supabase/sql/14-stage16-offline-queue-reconnect.sql`
 - `supabase/sql/14-stage16-verify.sql`
 - `docs/TAHAP-16.md`
+
+## Tahap 18 - PWA Installation & Safe Update
+
+Aplikasi dapat dipasang sebagai PWA. Pembaruan Service Worker menunggu konfirmasi dan tidak diterapkan ketika antrean transaksi offline masih berisiko.
+
+## Tahap 19 - Full QA, Security & Performance
+
+Tahap 19 menambahkan panel diagnosis khusus Owner, audit statis Node.js, audit database baca-saja, hardening browser, dan pengukuran Core Web Vitals. Tahap ini juga memperbaiki aset lokal yang sebelumnya hilang dan menghentikan pembuatan akun lokal dengan password plaintext.
+
+File utama:
+- `qa-security-performance.html`
+- `js/security-hardening.js`
+- `js/qa-runtime.js`
+- `tools/qa-stage19.mjs`
+- `supabase/sql/15-stage19-full-qa-security-performance-audit.sql`
+- `docs/TAHAP-19.md`
+
+Jalankan audit frontend dengan `node tools/qa-stage19.mjs .`. Peringatan berbeda dari kegagalan: kegagalan harus dibereskan sebelum rilis, sedangkan peringatan perlu ditinjau dan dicatat.

@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="id">
-<head>
+<head><meta name="referrer" content="strict-origin-when-cross-origin"><link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><script src="js/security-hardening.js?v=19.0"></script><script defer src="js/qa-runtime.js?v=19.0"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - LocDailyMar POS</title>
@@ -3143,6 +3143,7 @@ body.dark-mode
             <a href="pengeluaran.html" class="nav-item" data-permission="pengeluaran.view"><span>💸</span> Pengeluaran</a>
             <a href="backup%20%26%20restore.html" class="nav-item" data-permission="backup.view"><span>💾</span> Backup & Restore</a>
             <a href="pwa-settings.html" class="nav-item"><span>📲</span> Aplikasi & Update</a>
+            <a href="qa-security-performance.html" class="nav-item" id="navStage19QA"><span>🧪</span> QA & Security</a>
         </div>
 
         <!-- Area Konten Utama -->
@@ -5417,7 +5418,7 @@ function escapeHtml(value) {
 
 }
 
-        function tambahAkunBaru() {
+        async function tambahAkunBaru() {
 
     const usernameInput =
         document.getElementById(
@@ -5588,6 +5589,8 @@ function escapeHtml(value) {
             : null;
 
 
+    const passwordHash = await hashPassword(password);
+
     akunList.push({
 
         id:
@@ -5609,8 +5612,8 @@ function escapeHtml(value) {
                 ? employee.nikKaryawan
                 : "",
 
-        password:
-            password,
+        passwordHash:
+            passwordHash,
 
         role:
             role
@@ -10472,7 +10475,8 @@ window.addEventListener(
         "eod.html":["owner","admin"],
         "pengeluaran.html":["owner","admin"],
         "backup%20%26%20restore.html":["owner","admin"],
-        "backup & restore.html":["owner","admin"]
+        "backup & restore.html":["owner","admin"],
+        "qa-security-performance.html":["owner"]
     };
 
     function baseName(value){

@@ -1,16 +1,17 @@
 "use strict";
 
-const APP_VERSION = "18.0.1";
+const APP_VERSION = "19.0.0";
 const CACHE_PREFIX = "ldm-";
-const SHELL_CACHE = `${CACHE_PREFIX}stage18-shell-v2`;
-const RUNTIME_CACHE = `${CACHE_PREFIX}stage18-runtime-v2`;
+const SHELL_CACHE = `${CACHE_PREFIX}stage19-shell-v1`;
+const RUNTIME_CACHE = `${CACHE_PREFIX}stage19-runtime-v1`;
 const SUPABASE_CDN = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
 
 const APP_SHELL = [
     "./", "./index.html", "./dashboard.html", "./kasir.html",
-    "./pwa-settings.html", "./offline.html", "./manifest.json", "./icon.png",
+    "./pwa-settings.html", "./qa-security-performance.html", "./offline.html", "./manifest.json", "./icon.png",
     "./assets/icons/icon-192.png", "./assets/icons/icon-512.png",
-    "./assets/icons/maskable-512.png", "./js/pwa-manager.js",
+    "./assets/icons/maskable-512.png", "./style.css", "./setting.js", "./employee-id.js",
+    "./js/pwa-manager.js", "./js/security-hardening.js", "./js/qa-runtime.js",
     "./js/offline-queue.js", "./js/supabase-config.js", "./js/supabase-client.js",
     "./js/cloud-auth.js", "./js/cloud-session.js", "./js/cloud-session-guard.js",
     "./js/products-service.js", "./js/products-bootstrap.js",
