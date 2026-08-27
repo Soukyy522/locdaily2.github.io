@@ -1,7 +1,7 @@
 (function(){
     "use strict";
 
-    const APP_VERSION = "18.0.1";
+    const APP_VERSION = "19.0.0";
     const SERVICE_WORKER_URL = "./service-worker.js";
     const UNSYNCED_COUNT_KEY = "ldmOfflineUnsyncedCountV16";
     const RESERVATION_KEY = "ldmOfflineStockReservationsV16";
@@ -114,7 +114,7 @@
             }catch(error){
                 state.message = `Pendaftaran PWA gagal: ${error.message || error}`;
                 emit();
-                console.warn("PWA Manager Tahap 18:", error);
+                console.warn("PWA Manager Tahap 19:", error);
                 return null;
             }
         })();
