@@ -3269,6 +3269,239 @@ body.dark-mode
     <!-- Live Sync Tahap 12: Final Cloud Reporting Authority -->
     <script src="js/reporting-service.js?v=12.0"></script>
     <script src="js/reporting-bootstrap.js?v=12.0"></script>
+<style id="ldmCompactRangeAndSalesAssistantStyle">
+    /* Rentang tanggal dibuat sebagai toolbar ringkas. */
+    #dashboardRangeFilter{
+        align-items:center;
+        gap:10px;
+        padding:9px 11px;
+        margin-bottom:12px;
+        border-radius:12px;
+    }
+    #dashboardRangeFilter .dashboard-range-header{
+        flex:0 0 auto;
+        align-items:center;
+        gap:8px;
+        margin:0;
+    }
+    #dashboardRangeFilter .dashboard-range-title{gap:7px}
+    #dashboardRangeFilter .dashboard-range-title-icon{
+        width:30px;
+        height:30px;
+        flex-basis:30px;
+        border-radius:8px;
+        font-size:.85rem;
+    }
+    #dashboardRangeFilter .dashboard-range-title strong{font-size:.72rem}
+    #dashboardRangeFilter .dashboard-range-title span{display:none}
+    #dashboardRangeFilter .dashboard-range-status{
+        padding:4px 7px;
+        font-size:.58rem;
+        white-space:nowrap;
+    }
+    #dashboardRangeFilter .dashboard-range-controls{
+        flex:1;
+        min-width:0;
+        display:flex;
+        align-items:end;
+        justify-content:flex-end;
+        gap:7px;
+    }
+    #dashboardRangeFilter .dashboard-range-field{
+        width:min(150px,24vw);
+        gap:3px;
+    }
+    #dashboardRangeFilter .dashboard-range-field label{font-size:.59rem}
+    #dashboardRangeFilter .dashboard-range-field input{
+        min-height:34px;
+        padding:5px 7px;
+        border-radius:8px;
+        font-size:.68rem;
+    }
+    #dashboardRangeFilter .dashboard-range-actions{gap:5px;flex-wrap:nowrap}
+    #dashboardRangeFilter .dashboard-range-btn{
+        min-height:34px;
+        padding:6px 9px;
+        border-radius:8px;
+        font-size:.65rem;
+        white-space:nowrap;
+    }
+    #dashboardRangeFilter .dashboard-range-note,
+    #dashboardRangeFilter .dashboard-range-chart{display:none !important}
+
+    .sales-assistant-fab{
+        position:fixed;
+        right:22px;
+        bottom:22px;
+        z-index:1350;
+        display:none;
+        align-items:center;
+        gap:7px;
+        min-height:44px;
+        padding:9px 14px;
+        border:0;
+        border-radius:999px;
+        background:linear-gradient(135deg,#0d2240,#0f9d58);
+        color:#fff;
+        box-shadow:0 12px 28px rgba(13,34,64,.28);
+        font-size:.72rem;
+        font-weight:800;
+        cursor:pointer;
+    }
+    .sales-assistant-fab.show{display:inline-flex}
+    .sales-assistant-fab span:first-child{font-size:1rem}
+    .sales-assistant-overlay{
+        position:fixed;
+        inset:0;
+        z-index:1390;
+        display:none;
+        background:rgba(15,23,42,.46);
+        backdrop-filter:blur(2px);
+    }
+    .sales-assistant-overlay.open{display:block}
+    .sales-assistant-drawer{
+        position:fixed;
+        top:0;
+        right:-440px;
+        z-index:1400;
+        width:min(420px,100vw);
+        height:100dvh;
+        display:flex;
+        flex-direction:column;
+        background:var(--bg-primary);
+        color:var(--text-color);
+        border-left:1px solid var(--border-color);
+        box-shadow:-14px 0 42px rgba(15,23,42,.2);
+        transition:right .25s ease;
+    }
+    .sales-assistant-drawer.open{right:0}
+    .sales-assistant-head{
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:12px;
+        padding:15px 16px;
+        background:var(--nav-desktop-bg);
+        color:#fff;
+    }
+    .sales-assistant-head-main{display:flex;align-items:center;gap:10px;min-width:0}
+    .sales-assistant-head-icon{
+        width:38px;
+        height:38px;
+        display:grid;
+        place-items:center;
+        flex:0 0 38px;
+        border-radius:10px;
+        background:rgba(255,193,7,.16);
+        color:#ffc107;
+    }
+    .sales-assistant-head strong{display:block;font-size:.82rem}
+    .sales-assistant-head small{display:block;margin-top:2px;color:#cbd5e1;font-size:.6rem}
+    .sales-assistant-close{
+        width:34px;
+        height:34px;
+        border:0;
+        border-radius:8px;
+        background:rgba(255,255,255,.14);
+        color:#fff;
+        cursor:pointer;
+    }
+    .sales-assistant-body{flex:1;overflow:auto;padding:13px}
+    .sales-assistant-period{
+        display:flex;
+        justify-content:space-between;
+        gap:9px;
+        margin-bottom:10px;
+        padding:9px 10px;
+        border:1px solid var(--border-color);
+        border-radius:10px;
+        background:var(--bg-secondary);
+        font-size:.65rem;
+    }
+    .sales-assistant-period strong{color:var(--heading-color)}
+    .sales-assistant-quick{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}
+    .sales-assistant-quick button{
+        min-height:38px;
+        padding:7px 8px;
+        border:1px solid var(--border-color);
+        border-radius:9px;
+        background:var(--bg-secondary);
+        color:var(--text-color);
+        font-size:.64rem;
+        font-weight:700;
+        text-align:left;
+        cursor:pointer;
+    }
+    .sales-assistant-quick button:hover{border-color:#0f9d58;color:#0f9d58}
+    .sales-assistant-output{display:flex;flex-direction:column;gap:8px}
+    .sales-assistant-welcome,
+    .sales-assistant-card{
+        padding:11px;
+        border:1px solid var(--border-color);
+        border-radius:11px;
+        background:var(--bg-secondary);
+    }
+    .sales-assistant-welcome strong,
+    .sales-assistant-card strong{display:block;color:var(--heading-color);font-size:.72rem}
+    .sales-assistant-welcome p,
+    .sales-assistant-card p{margin:4px 0 0;color:#64748b;font-size:.65rem;line-height:1.5}
+    body.dark-mode .sales-assistant-welcome p,
+    body.dark-mode .sales-assistant-card p{color:#94a3b8}
+    .sales-assistant-card{border-left:4px solid #0284c7}
+    .sales-assistant-card.good{border-left-color:#16a34a}
+    .sales-assistant-card.warn{border-left-color:#d97706}
+    .sales-assistant-card.danger{border-left-color:#dc2626}
+    .sales-assistant-stats{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px}
+    .sales-assistant-stat{
+        padding:9px;
+        border:1px solid var(--border-color);
+        border-radius:9px;
+        background:var(--bg-secondary);
+    }
+    .sales-assistant-stat span{display:block;color:#64748b;font-size:.58rem}
+    .sales-assistant-stat b{display:block;margin-top:2px;color:var(--heading-color);font-size:.76rem}
+    .sales-assistant-compose{
+        display:flex;
+        gap:7px;
+        padding:10px 12px;
+        border-top:1px solid var(--border-color);
+        background:var(--bg-secondary);
+    }
+    .sales-assistant-compose input{
+        flex:1;
+        min-width:0;
+        min-height:39px;
+        padding:8px 10px;
+        border:1px solid var(--border-color);
+        border-radius:9px;
+        background:var(--input-bg);
+        color:var(--text-color);
+        font-size:.69rem;
+    }
+    .sales-assistant-compose button{
+        min-width:42px;
+        border:0;
+        border-radius:9px;
+        background:#0f9d58;
+        color:#fff;
+        font-weight:800;
+        cursor:pointer;
+    }
+    .sales-assistant-footnote{padding:0 12px 10px;background:var(--bg-secondary);color:#64748b;font-size:.56rem;line-height:1.4}
+    @media(max-width:760px){
+        #dashboardRangeFilter{align-items:flex-end;flex-wrap:wrap}
+        #dashboardRangeFilter .dashboard-range-header{width:100%;justify-content:space-between}
+        #dashboardRangeFilter .dashboard-range-controls{width:100%;flex-wrap:wrap;justify-content:flex-start}
+        #dashboardRangeFilter .dashboard-range-field{width:calc(50% - 4px)}
+        #dashboardRangeFilter .dashboard-range-actions{width:100%}
+        #dashboardRangeFilter .dashboard-range-actions button{flex:1}
+        .sales-assistant-fab{right:14px;bottom:18px}
+    }
+    @media(max-width:430px){
+        #dashboardRangeFilter .dashboard-range-field{width:100%}
+        .sales-assistant-drawer{width:100vw}
+    }
+</style>
 </head>
 <body>
 
@@ -3361,7 +3594,6 @@ body.dark-mode
                     <div class="dashboard-range-actions">
                         <button type="button" class="dashboard-range-btn apply" onclick="terapkanRentangTanggal()">Tampilkan</button>
                         <button type="button" class="dashboard-range-btn light" onclick="tampilkanHariIniRentang()">Hari Ini</button>
-                        <button type="button" class="dashboard-range-btn light" onclick="resetRentangTanggal()">Reset</button>
                     </div>
                 </div>
                 <div class="dashboard-range-note" id="dashboardRangeNote">Maksimal 90 hari. Perhitungan menggunakan tanggal bisnis WITA dan kedua tanggal ikut dihitung.</div>
@@ -4620,6 +4852,47 @@ body.dark-mode
             </div>
         </div>
     </div>
+
+    <!-- ASISTEN STRATEGI PENJUALAN LOKAL - OWNER -->
+    <button type="button" class="sales-assistant-fab" id="salesAssistantFab" aria-controls="salesAssistantDrawer" aria-expanded="false">
+        <span>✨</span><span>Asisten Strategi</span>
+    </button>
+    <div class="sales-assistant-overlay" id="salesAssistantOverlay"></div>
+    <aside class="sales-assistant-drawer" id="salesAssistantDrawer" aria-hidden="true" aria-labelledby="salesAssistantTitle">
+        <div class="sales-assistant-head">
+            <div class="sales-assistant-head-main">
+                <div class="sales-assistant-head-icon">✨</div>
+                <div>
+                    <strong id="salesAssistantTitle">Asisten Strategi Lokal</strong>
+                    <small>Analisis offline · khusus data penjualan toko ini</small>
+                </div>
+            </div>
+            <button type="button" class="sales-assistant-close" id="salesAssistantClose" aria-label="Tutup Asisten">✕</button>
+        </div>
+        <div class="sales-assistant-body">
+            <div class="sales-assistant-period">
+                <span>Periode analisis</span>
+                <strong id="salesAssistantPeriod">Hari Ini</strong>
+            </div>
+            <div class="sales-assistant-quick">
+                <button type="button" data-sales-question="summary">📊 Ringkasan strategi</button>
+                <button type="button" data-sales-question="top">🏆 Produk terlaris</button>
+                <button type="button" data-sales-question="slow">🐢 Produk lambat</button>
+                <button type="button" data-sales-question="stock">📦 Rencana stok & promo</button>
+            </div>
+            <div class="sales-assistant-output" id="salesAssistantOutput" aria-live="polite">
+                <div class="sales-assistant-welcome">
+                    <strong>Siap menganalisis laporan toko</strong>
+                    <p>Pilih pertanyaan cepat atau ketik pertanyaan tentang omzet, produk, stok, dan promo.</p>
+                </div>
+            </div>
+        </div>
+        <form class="sales-assistant-compose" id="salesAssistantForm">
+            <input id="salesAssistantInput" type="text" maxlength="160" autocomplete="off" placeholder="Contoh: produk apa yang perlu dipromosikan?" aria-label="Pertanyaan strategi penjualan">
+            <button type="submit" aria-label="Analisis">➤</button>
+        </form>
+        <div class="sales-assistant-footnote">Rekomendasi dibuat dari aturan lokal, bukan layanan AI online. Periksa kembali sebelum menerapkan perubahan harga, stok, atau promo.</div>
+    </aside>
 
     <!-- Modal Alert Custom -->
     <div class="modal-alert" id="customAlertModal">
@@ -6606,7 +6879,7 @@ function hapusAkun(idx) {
                 inputTgl.style.display = "none";
             }
             if (rangeFilter) {
-                rangeFilter.style.display = (role === "owner") ? "block" : "none";
+                rangeFilter.style.display = (role === "owner") ? "flex" : "none";
             }
         }
 
@@ -11594,5 +11867,264 @@ window.addEventListener(
 })();
 </script>
 
+<script id="ldmLocalSalesStrategyAssistant">
+(function(){
+    "use strict";
+
+    const $=id=>document.getElementById(id);
+    let currentQuestion="summary";
+
+    function readArray(key){
+        try{
+            const value=JSON.parse(localStorage.getItem(key)||"[]");
+            return Array.isArray(value)?value:[];
+        }catch(error){
+            return [];
+        }
+    }
+
+    function reports(){
+        const primary=readArray("laporan");
+        return primary.length?primary:readArray("dataLaporan");
+    }
+
+    function products(){
+        return readArray("dataBarang").filter(item=>item&&item.deleted_at==null&&item.active!==false);
+    }
+
+    function safeNumber(value){
+        const number=Number(value||0);
+        return Number.isFinite(number)?number:0;
+    }
+
+    function itemName(item){
+        return String(item?.nama||item?.namaBarang||item?.title||item?.productName||"Barang Tanpa Nama").trim();
+    }
+
+    function productName(item){
+        return String(item?.nama||item?.namaBarang||item?.title||"Barang Tanpa Nama").trim();
+    }
+
+    function normalize(value){
+        return String(value||"").trim().toLowerCase();
+    }
+
+    function money(value){
+        return "Rp "+Math.round(safeNumber(value)).toLocaleString("id-ID");
+    }
+
+    function isoDate(value){
+        return new Date(value).toISOString().slice(0,10);
+    }
+
+    function activeRange(){
+        if(typeof getActiveDateRange==="function")return getActiveDateRange();
+        const today=typeof getTanggalWITA==="function"?getTanggalWITA():new Date().toISOString().slice(0,10);
+        return{start:today,end:today,customRange:false};
+    }
+
+    function previousRange(range){
+        const start=Date.parse(range.start+"T00:00:00Z");
+        const end=Date.parse(range.end+"T00:00:00Z");
+        const days=Math.max(1,Math.floor((end-start)/86400000)+1);
+        const previousEnd=start-86400000;
+        const previousStart=previousEnd-((days-1)*86400000);
+        return{start:isoDate(previousStart),end:isoDate(previousEnd),days};
+    }
+
+    function dateOf(item){
+        return typeof parseTanggalData==="function"?parseTanggalData(item):String(item?.tanggal||"").slice(0,10);
+    }
+
+    function inRange(item,range){
+        const date=dateOf(item);
+        return date>=range.start&&date<=range.end;
+    }
+
+    function transactionItems(transaction){
+        if(typeof getDaftarItem==="function")return getDaftarItem(transaction);
+        return transaction?.items||transaction?.cart||transaction?.keranjang||[];
+    }
+
+    function transactionTotal(transaction){
+        let total=typeof getNominalTransaksi==="function"?getNominalTransaksi(transaction):safeNumber(transaction?.total||transaction?.grandTotal);
+        if(total===0){
+            total=transactionItems(transaction).reduce((sum,item)=>{
+                const qty=Math.max(0,safeNumber(item?.qty||item?.jumlah||item?.quantity||1));
+                const price=safeNumber(item?.harga||item?.hargaJual||item?.price);
+                return sum+(safeNumber(item?.subtotal)||price*qty);
+            },0);
+        }
+        return total;
+    }
+
+    function summarize(rows,productRows,expenseRows){
+        const productByName=new Map();
+        productRows.forEach(product=>productByName.set(normalize(productName(product)),product));
+        const itemMap=new Map(),daily=new Map();
+        let revenue=0,cost=0,qty=0;
+
+        rows.forEach(transaction=>{
+            const total=transactionTotal(transaction);
+            revenue+=total;
+            const date=dateOf(transaction);
+            daily.set(date,(daily.get(date)||0)+total);
+
+            transactionItems(transaction).forEach(item=>{
+                const name=itemName(item),key=normalize(name);
+                const amount=Math.max(0,safeNumber(item?.qty||item?.jumlah||item?.quantity||1));
+                const subtotal=safeNumber(item?.subtotal||item?.subTotal||item?.lineSubtotal)||safeNumber(item?.harga||item?.hargaJual||item?.price)*amount;
+                const product=productByName.get(key);
+                const unitCost=safeNumber(item?.hargaBeli||item?.modal||item?.hpp||product?.hargaBeli||product?.modal||product?.hpp);
+                const existing=itemMap.get(key)||{name,qty:0,revenue:0,cost:0};
+                existing.qty+=amount;existing.revenue+=subtotal;existing.cost+=unitCost*amount;
+                itemMap.set(key,existing);qty+=amount;cost+=unitCost*amount;
+            });
+        });
+
+        const expenses=expenseRows.reduce((sum,item)=>sum+safeNumber(item?.nominal||item?.amount),0);
+        const items=[...itemMap.values()].sort((a,b)=>b.qty-a.qty||b.revenue-a.revenue);
+        const soldKeys=new Set(itemMap.keys());
+        const slow=productRows.filter(product=>safeNumber(product?.stok)>0&&!soldKeys.has(normalize(productName(product)))).sort((a,b)=>safeNumber(b?.stok)-safeNumber(a?.stok));
+        const lowStock=productRows.filter(product=>safeNumber(product?.stok)<=9).sort((a,b)=>safeNumber(a?.stok)-safeNumber(b?.stok));
+        const peak=[...daily.entries()].sort((a,b)=>b[1]-a[1])[0]||null;
+        return{transactions:rows.length,revenue,cost,expenses,profit:revenue-cost-expenses,qty,items,slow,lowStock,peak,daily};
+    }
+
+    function analysis(){
+        const range=activeRange(),before=previousRange(range),allReports=reports(),allProducts=products(),allExpenses=readArray("operasional");
+        const currentRows=allReports.filter(item=>inRange(item,range));
+        const previousRows=allReports.filter(item=>inRange(item,before));
+        const currentExpenses=allExpenses.filter(item=>inRange(item,range));
+        const previousExpenses=allExpenses.filter(item=>inRange(item,before));
+        const current=summarize(currentRows,allProducts,currentExpenses);
+        const previous=summarize(previousRows,allProducts,previousExpenses);
+        const growth=previous.revenue>0?((current.revenue-previous.revenue)/previous.revenue)*100:null;
+        const days=typeof jumlahHariInklusif==="function"?jumlahHariInklusif(range.start,range.end):before.days;
+        return{range,before,current,previous,growth,days:Math.max(1,days||1)};
+    }
+
+    function clearOutput(){
+        const output=$("salesAssistantOutput");
+        if(output)output.replaceChildren();
+        return output;
+    }
+
+    function addStats(output,data){
+        const grid=document.createElement("div");grid.className="sales-assistant-stats";
+        [["Omzet",money(data.current.revenue)],["Transaksi",String(data.current.transactions)],["Item terjual",String(data.current.qty)],["Estimasi profit",money(data.current.profit)]].forEach(([label,value])=>{
+            const box=document.createElement("div");box.className="sales-assistant-stat";
+            const span=document.createElement("span");span.textContent=label;
+            const strong=document.createElement("b");strong.textContent=value;
+            box.append(span,strong);grid.appendChild(box);
+        });
+        output.appendChild(grid);
+    }
+
+    function addCard(output,title,message,type="info"){
+        const card=document.createElement("div");card.className="sales-assistant-card "+type;
+        const heading=document.createElement("strong");heading.textContent=title;
+        const text=document.createElement("p");text.textContent=message;
+        card.append(heading,text);output.appendChild(card);
+    }
+
+    function fullRecommendations(output,data){
+        if(data.current.transactions===0){
+            addCard(output,"Belum ada data penjualan",`Tidak ditemukan transaksi pada ${data.days} hari yang dipilih. Coba perluas periode atau pastikan laporan cloud sudah tersinkron.`,"warn");
+            return;
+        }
+
+        if(data.growth===null){
+            addCard(output,"Perbandingan periode",`Omzet periode ini ${money(data.current.revenue)}. Belum ada data cukup pada periode sebelumnya untuk menghitung pertumbuhan.`,"info");
+        }else if(data.growth>=5){
+            addCard(output,"Tren penjualan meningkat",`Omzet naik ${Math.abs(data.growth).toFixed(1)}% dibanding ${data.days} hari sebelumnya. Pertahankan ketersediaan produk terlaris dan pola promo yang sedang berjalan.`,"good");
+        }else if(data.growth<=-5){
+            addCard(output,"Tren penjualan menurun",`Omzet turun ${Math.abs(data.growth).toFixed(1)}% dibanding ${data.days} hari sebelumnya. Periksa hari sepi, ketersediaan stok, dan tampilkan promo pada produk yang jarang bergerak.`,"warn");
+        }else{
+            addCard(output,"Tren penjualan stabil",`Perubahan omzet ${data.growth.toFixed(1)}% dibanding periode sebelumnya. Fokus pada peningkatan nilai transaksi melalui bundling yang relevan.`,"info");
+        }
+
+        const top=data.current.items[0];
+        if(top)addCard(output,"Produk terlaris",`${top.name} terjual ${top.qty} unit dengan kontribusi ${money(top.revenue)}. Pastikan stoknya cukup sebelum hari penjualan berikutnya.`,"good");
+
+        const slow=data.current.slow.slice(0,3).map(product=>productName(product)).join(", ");
+        if(slow)addCard(output,"Produk belum bergerak",`${slow} belum tercatat terjual pada periode ini. Periksa penempatan barang, harga, dan peluang bundling tanpa langsung menurunkan harga.`,"warn");
+
+        const low=data.current.lowStock.slice(0,3).map(product=>`${productName(product)} (${safeNumber(product?.stok)})`).join(", ");
+        if(low)addCard(output,"Perhatian stok saat ini",`${low}. Prioritaskan pemeriksaan fisik dan pemesanan ulang terutama jika termasuk produk terlaris.`,"danger");
+
+        if(top&&data.current.slow[0])addCard(output,"Ide bundling",`Uji paket ${top.name} + ${productName(data.current.slow[0])} dalam jumlah kecil. Bandingkan jumlah transaksi sebelum dan sesudah promo agar keputusan tetap berbasis data.`,"info");
+
+        if(data.current.peak)addCard(output,"Hari omzet tertinggi",`${formatTanggalRentang(data.current.peak[0])} menghasilkan ${money(data.current.peak[1])}. Jadwalkan stok dan tenaga operasional lebih siap pada pola hari serupa.`,"good");
+    }
+
+    function render(question="summary"){
+        currentQuestion=question;const data=analysis(),output=clearOutput();if(!output)return;
+        $("salesAssistantPeriod").textContent=typeof getLabelPeriodeAktif==="function"?getLabelPeriodeAktif():`${data.range.start} – ${data.range.end}`;
+        addStats(output,data);
+
+        if(question==="top"){
+            if(!data.current.items.length){addCard(output,"Belum ada produk terjual","Tidak ada detail item penjualan pada periode yang dipilih.","warn");return;}
+            data.current.items.slice(0,5).forEach((item,index)=>addCard(output,`${index+1}. ${item.name}`,`${item.qty} unit terjual · kontribusi ${money(item.revenue)}.`,index===0?"good":"info"));
+            return;
+        }
+
+        if(question==="slow"){
+            if(!data.current.slow.length){addCard(output,"Pergerakan produk baik","Semua produk berstok tercatat memiliki penjualan pada periode ini.","good");return;}
+            data.current.slow.slice(0,6).forEach(product=>addCard(output,productName(product),`Belum terjual pada periode ini · stok saat ini ${safeNumber(product?.stok)} ${product?.satuan||"unit"}.`,"warn"));
+            return;
+        }
+
+        if(question==="stock"){
+            const top=data.current.items[0],slow=data.current.slow[0];
+            if(data.current.lowStock.length){data.current.lowStock.slice(0,5).forEach(product=>addCard(output,productName(product),`Stok saat ini ${safeNumber(product?.stok)} ${product?.satuan||"unit"}. Cocokkan dengan penjualan sebelum melakukan pemesanan.`,"danger"));}
+            else addCard(output,"Stok kritis tidak ditemukan","Tidak ada produk dengan stok 9 atau kurang pada data saat ini.","good");
+            if(top&&slow)addCard(output,"Saran promo uji coba",`Pertimbangkan bundling ${top.name} dengan ${productName(slow)}. Mulai dari periode pendek dan ukur perubahan transaksi.`,"info");
+            return;
+        }
+
+        fullRecommendations(output,data);
+    }
+
+    function classifyQuestion(value){
+        const text=normalize(value);
+        if(/terlaris|paling laku|laris/.test(text))return"top";
+        if(/lambat|tidak laku|belum terjual|sepi/.test(text))return"slow";
+        if(/stok|restock|pemesanan|promo|bundl|diskon/.test(text))return"stock";
+        return"summary";
+    }
+
+    function open(){
+        const drawer=$("salesAssistantDrawer"),overlay=$("salesAssistantOverlay"),fab=$("salesAssistantFab");
+        drawer?.classList.add("open");overlay?.classList.add("open");drawer?.setAttribute("aria-hidden","false");fab?.setAttribute("aria-expanded","true");document.body.style.overflow="hidden";render(currentQuestion);
+    }
+
+    function close(){
+        const drawer=$("salesAssistantDrawer"),overlay=$("salesAssistantOverlay"),fab=$("salesAssistantFab");
+        drawer?.classList.remove("open");overlay?.classList.remove("open");drawer?.setAttribute("aria-hidden","true");fab?.setAttribute("aria-expanded","false");document.body.style.overflow="";fab?.focus();
+    }
+
+    function syncVisibility(){
+        const role=normalize(localStorage.getItem("userRole"));
+        $("salesAssistantFab")?.classList.toggle("show",role==="owner");
+        if(role!=="owner")close();
+    }
+
+    function init(){
+        $("salesAssistantFab")?.addEventListener("click",open);
+        $("salesAssistantClose")?.addEventListener("click",close);
+        $("salesAssistantOverlay")?.addEventListener("click",close);
+        document.querySelectorAll("[data-sales-question]").forEach(button=>button.addEventListener("click",()=>render(button.dataset.salesQuestion)));
+        $("salesAssistantForm")?.addEventListener("submit",event=>{event.preventDefault();const input=$("salesAssistantInput");const value=String(input?.value||"").trim();render(classifyQuestion(value));if(input)input.value="";});
+        document.addEventListener("keydown",event=>{if(event.key==="Escape"&&$("salesAssistantDrawer")?.classList.contains("open"))close();});
+        window.addEventListener("storage",event=>{if(event.key==="userRole")syncVisibility();});
+        window.addEventListener("ldm-reporting-cache-updated",()=>{if($("salesAssistantDrawer")?.classList.contains("open"))render(currentQuestion);});
+        syncVisibility();
+    }
+
+    window.LDMSalesAssistant={open,close,refresh:()=>render(currentQuestion),analyze:analysis};
+    if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init,{once:true});else init();
+})();
+</script>
 </body>
 </html>
