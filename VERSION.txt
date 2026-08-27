@@ -84,3 +84,10 @@ Discard: Owner-only + alasan + audit + server guard
 Realtime: Store-scoped, mengikuti RLS
 Payload Cloud: Digest + operational summary only
 PWA Cache: release19-1-v1
+
+Patch: 19.1.1 - Compact Responsive Date Range
+Assistant Mode: Local Rule-based Only (tanpa layanan AI online)
+Mobile Date Filter: Collapsible single-row summary
+Mobile Form: Two date inputs + two compact actions
+Auto Collapse: Setelah Tampilkan atau Hari Ini
+PWA Cache: release19-1-compact-date-v1
