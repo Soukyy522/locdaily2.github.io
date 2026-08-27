@@ -41,4 +41,4 @@ Content Security Policy ketat belum diaktifkan karena halaman lama masih memakai
 - WARN: data belum tersedia atau ada risiko yang harus ditinjau.
 - FAIL: masalah yang harus diperbaiki sebelum rilis.
 
-TAHAP 17 tetap belum dikerjakan sesuai urutan yang dipilih pengguna.
+TAHAP 17 kemudian diimplementasikan di atas paket TAHAP 19 terbaru sebagai release 19.1.0.

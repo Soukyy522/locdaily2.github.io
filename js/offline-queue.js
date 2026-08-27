@@ -410,7 +410,7 @@
             String(row.user_id) === String(identity.userId || "") &&
             String(row.client_device_id) === String(currentClientDeviceId())
         );
-        const counts = {total:current.length,pending:0,syncing:0,synced:0,failed:0,conflict:0,blocked:0};
+        const counts = {total:current.length,pending:0,syncing:0,synced:0,failed:0,conflict:0,blocked:0,discarded:0};
         current.forEach(row => {
             if(Object.prototype.hasOwnProperty.call(counts, row.status)){
                 counts[row.status] += 1;
@@ -459,6 +459,67 @@
         return updated;
     }
 
+    async function payloadDigest(value){
+        const text = JSON.stringify(value || {});
+        if(window.crypto && window.crypto.subtle && window.TextEncoder){
+            const bytes = new TextEncoder().encode(text);
+            const digest = await window.crypto.subtle.digest("SHA-256", bytes);
+            return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2,"0")).join("");
+        }
+        let hash = 2166136261;
+        for(let index=0; index<text.length; index+=1){
+            hash ^= text.charCodeAt(index);
+            hash = Math.imul(hash,16777619);
+        }
+        return `fnv1a-${(hash>>>0).toString(16).padStart(8,"0")}`;
+    }
+
+    function conflictTypeForStatus(status){
+        if(status === "conflict") return "business_conflict";
+        if(status === "blocked") return "blocked";
+        return "failed";
+    }
+
+    async function recordCloudConflict(item,status,error){
+        if(!navigator.onLine || !["conflict","blocked","failed"].includes(status)) return item;
+        const supabase = window.LDMSupabase && window.LDMSupabase.createClient();
+        if(!supabase) return item;
+        const snapshot = item.display_snapshot || {};
+        const {data,error:rpcError} = await supabase.rpc("ldm_record_sync_conflict",{
+            p_client_device_id:item.client_device_id,
+            p_queue_id:item.queue_id,
+            p_client_transaction_id:item.client_transaction_id,
+            p_conflict_type:conflictTypeForStatus(status),
+            p_error_message:errorText(error).slice(0,1000),
+            p_queued_at:item.queued_at,
+            p_payload_digest:await payloadDigest(item.rpc_payload),
+            p_snapshot:{
+                transaction_code:snapshot.transaction_code || null,
+                grand_total:Number(snapshot.grand_total || item.rpc_payload?.p_expected_grand_total || 0),
+                item_count:Array.isArray(item.rpc_payload?.p_items) ? item.rpc_payload.p_items.length : 0,
+                payment_method:item.rpc_payload?.p_payment_method || null,
+                attempt_count:Number(item.attempt_count || 0)
+            }
+        });
+        if(rpcError) throw rpcError;
+        const updated = Object.assign({},item,{cloud_conflict_id:String(data || item.cloud_conflict_id || "")});
+        await put(updated);
+        return updated;
+    }
+
+    async function markCloudRecovered(item){
+        if(!navigator.onLine || !window.LDMSupabase) return;
+        try{
+            const {error} = await window.LDMSupabase.createClient().rpc("ldm_mark_sync_conflict_recovered",{
+                p_client_transaction_id:item.client_transaction_id,
+                p_cloud_transaction_id:item.cloud_transaction_id || null
+            });
+            if(error && !/ldm_mark_sync_conflict_recovered|schema cache/i.test(errorText(error))) throw error;
+        }catch(error){
+            console.warn("Penutupan conflict cloud ditunda:",errorText(error));
+        }
+    }
+
     async function verifyReconnectIdentity(){
         if(!navigator.onLine){
             throw new Error("Perangkat masih offline.");
@@ -504,7 +565,7 @@
     }
 
     async function refreshProductsAfterSync(){
-        const pending = (await currentRows()).filter(row => row.status !== "synced");
+        const pending = (await currentRows()).filter(row => !["synced","discarded"].includes(row.status));
         rebuildReservations(pending);
 
         if(!window.LDMProducts || typeof window.LDMProducts.refreshCache !== "function"){
@@ -521,7 +582,7 @@
         const cutoff = now() - SYNCED_RETENTION_MS;
         const rows = await all();
         for(const row of rows){
-            if(row.status === "synced" && Number(row.updated_at_ms || 0) < cutoff){
+            if(["synced","discarded"].includes(row.status) && Number(row.updated_at_ms || 0) < cutoff){
                 await remove(row.queue_id);
             }
         }
@@ -529,14 +590,32 @@
 
     async function performSync(options){
         const force = Boolean(options && options.force);
-        const verified = await verifyReconnectIdentity();
+        let verified;
+        try{
+            verified = await verifyReconnectIdentity();
+        }catch(identityError){
+            const identity = cachedIdentity();
+            const affected = (await all()).filter(row =>
+                String(row.store_id) === String(identity.storeId || "") &&
+                String(row.user_id) === String(identity.userId || "") &&
+                String(row.client_device_id) === String(currentClientDeviceId()) &&
+                !["synced","discarded"].includes(row.status)
+            );
+            for(const row of affected){
+                let blocked = await mark(row,"blocked",identityError);
+                try{ blocked = await recordCloudConflict(blocked,"blocked",identityError); }
+                catch(recordError){ console.warn("Conflict identity belum tercatat di cloud:",errorText(recordError)); }
+            }
+            await notifyChanged();
+            throw identityError;
+        }
         const identity = cachedIdentity();
         const rows = (await all())
             .filter(row =>
                 String(row.store_id) === String(identity.storeId || "") &&
                 String(row.user_id) === String(identity.userId || "") &&
                 String(row.client_device_id) === String(currentClientDeviceId()) &&
-                row.status !== "synced"
+                !["synced","discarded"].includes(row.status)
             )
             .sort((a,b) => Number(a.created_at_ms) - Number(b.created_at_ms));
 
@@ -575,13 +654,22 @@
                     last_error:null
                 });
                 await put(completed);
+                await markCloudRecovered(completed);
                 synced += 1;
                 window.dispatchEvent(new CustomEvent("ldm-offline-sale-synced", {
                     detail:{queueItem:clone(completed),cloudResult:clone(cloudResult)}
                 }));
             }catch(error){
                 const status = classifyFailure(error);
-                const failed = await mark(item, status, error);
+                let failed = await mark(item, status, error);
+                if(["conflict","blocked","failed"].includes(status)){
+                    try{
+                        failed = await recordCloudConflict(failed,status,error);
+                    }catch(recordError){
+                        failed = Object.assign({},failed,{cloud_record_error:errorText(recordError).slice(0,500)});
+                        await put(failed);
+                    }
+                }
                 window.dispatchEvent(new CustomEvent("ldm-offline-sale-sync-error", {
                     detail:{queueItem:clone(failed),status,message:errorText(error)}
                 }));
@@ -599,6 +687,82 @@
         await cleanup();
         await notifyChanged();
         return {synced,stoppedByNetwork,remaining:(await stats()).unsynced};
+    }
+
+    async function rowForCurrentIdentity(queueId){
+        const rows = await currentRows();
+        const row = rows.find(item => String(item.queue_id) === String(queueId));
+        if(!row) throw new Error("Antrean tidak ditemukan pada akun dan perangkat ini.");
+        return row;
+    }
+
+    async function ensureConflictRecorded(item){
+        if(item.cloud_conflict_id) return item;
+        return recordCloudConflict(item,["conflict","blocked","failed"].includes(item.status)?item.status:"failed",item.last_error || "Pemulihan manual diminta.");
+    }
+
+    async function retryItem(queueId,options={}){
+        if(!navigator.onLine) throw new Error("Retry membutuhkan koneksi internet.");
+        let item = await rowForCurrentIdentity(queueId);
+        if(["synced","discarded","syncing"].includes(item.status)) throw new Error(`Status ${item.status} tidak dapat di-retry.`);
+        if(["conflict","blocked","failed"].includes(item.status)){
+            item = await ensureConflictRecorded(item);
+            if(item.cloud_conflict_id && options.skipCloudAction !== true){
+                const {error} = await window.LDMSupabase.createClient().rpc("ldm_sync_conflict_action",{
+                    p_conflict_id:item.cloud_conflict_id,p_action:"retry",p_note:"Retry dari perangkat sumber."
+                });
+                if(error) throw error;
+            }
+        }
+        item = Object.assign({},item,{status:"pending",last_error:null,next_attempt_at_ms:now(),updated_at_ms:now(),recovery_requested_at:new Date().toISOString()});
+        await put(item);await notifyChanged();
+        if(options.sync === false) return item;
+        return syncNow({force:true});
+    }
+
+    async function retryByClientTransactionId(clientTransactionId,options={}){
+        const item = (await currentRows()).find(row => String(row.client_transaction_id) === String(clientTransactionId));
+        if(!item) return {ok:false,reason:"not-on-this-device"};
+        return retryItem(item.queue_id,options);
+    }
+
+    async function discardItem(queueId,reason){
+        const note = String(reason || "").trim();
+        if(note.length < 5) throw new Error("Alasan discard minimal 5 karakter.");
+        if(!navigator.onLine) throw new Error("Discard harus dilakukan saat online agar tercatat di cloud.");
+        const verified = await verifyReconnectIdentity();
+        if(String(verified.context.profile.role || "").toLowerCase() !== "owner") throw new Error("Hanya Owner yang dapat membatalkan antrean konflik.");
+        let item = await rowForCurrentIdentity(queueId);
+        if(["synced","discarded","syncing"].includes(item.status)) throw new Error(`Status ${item.status} tidak dapat di-discard.`);
+        item = await ensureConflictRecorded(item);
+        if(!item.cloud_conflict_id) throw new Error("Conflict cloud belum berhasil dibuat.");
+        const {error} = await window.LDMSupabase.createClient().rpc("ldm_sync_conflict_action",{
+            p_conflict_id:item.cloud_conflict_id,p_action:"discard",p_note:note
+        });
+        if(error) throw error;
+        const discarded = Object.assign({},item,{status:"discarded",discard_reason:note,discarded_at:new Date().toISOString(),updated_at_ms:now(),last_error:null});
+        await put(discarded);
+        await refreshProductsAfterSync();
+        await notifyChanged();
+        return discarded;
+    }
+
+    async function applyRemoteDiscard(clientTransactionId,reason){
+        const item = (await currentRows()).find(row => String(row.client_transaction_id) === String(clientTransactionId));
+        if(!item) return {ok:false,reason:"not-on-this-device"};
+        if(item.status === "synced") return {ok:false,reason:"already-synced"};
+        if(item.status === "discarded") return {ok:true,item};
+        const discarded = Object.assign({},item,{
+            status:"discarded",
+            discard_reason:String(reason||"Dibatalkan Owner melalui Recovery Center.").slice(0,500),
+            discarded_at:new Date().toISOString(),
+            updated_at_ms:now(),
+            last_error:null
+        });
+        await put(discarded);
+        await refreshProductsAfterSync();
+        await notifyChanged();
+        return {ok:true,item:discarded};
     }
 
     async function syncNow(options){
@@ -727,7 +891,7 @@
         const panel = document.createElement("div");
         panel.id = "ldmOfflinePanel";
         panel.className = "ldm-offline-panel";
-        panel.innerHTML = `<div class="ldm-offline-card"><h2 style="margin:0 0 6px">Offline Queue + Reconnect</h2><p class="ldm-offline-muted" style="margin:0">Data berstatus tersinkron disimpan 7 hari sebagai jejak lokal.</p><div id="ldmOfflineRows"></div><div class="ldm-offline-actions"><button class="ldm-sync-btn" id="ldmSyncNow">Sinkronkan Sekarang</button><button class="ldm-close-btn" id="ldmClosePanel">Tutup</button></div></div>`;
+        panel.innerHTML = `<div class="ldm-offline-card"><h2 style="margin:0 0 6px">Offline Queue + Reconnect</h2><p class="ldm-offline-muted" style="margin:0">Data berstatus tersinkron/discarded disimpan 7 hari sebagai jejak lokal.</p><div id="ldmOfflineRows"></div><div class="ldm-offline-actions"><button class="ldm-sync-btn" id="ldmSyncNow">Sinkronkan Sekarang</button><button class="ldm-close-btn" id="ldmRecoveryCenter">Recovery Center</button><button class="ldm-close-btn" id="ldmClosePanel">Tutup</button></div></div>`;
         document.body.appendChild(panel);
         const list = panel.querySelector("#ldmOfflineRows");
         list.innerHTML = rows.length ? rows.map(row => {
@@ -736,6 +900,7 @@
             return `<div class="ldm-offline-row"><strong>${escapeHtml(snapshot.transaction_code || row.client_transaction_id)}</strong><br><span>Status: ${escapeHtml(row.status)} · Total Rp ${total} · Percobaan ${Number(row.attempt_count)||0}</span>${row.last_error ? `<div class="ldm-offline-error">${escapeHtml(row.last_error)}</div>` : ""}</div>`;
         }).join("") : '<p class="ldm-offline-muted">Tidak ada transaksi dalam antrean perangkat ini.</p>';
         panel.querySelector("#ldmClosePanel").onclick = () => panel.remove();
+        panel.querySelector("#ldmRecoveryCenter").onclick = () => { window.location.href="recovery-center.html"; };
         panel.querySelector("#ldmSyncNow").onclick = async event => {
             const button = event.currentTarget;
             button.disabled = true;
@@ -824,6 +989,11 @@
         applyReservationsToProducts,
         stats,
         list:currentRows,
+        retryItem,
+        retryByClientTransactionId,
+        discardItem,
+        applyRemoteDiscard,
+        recordCloudConflict,
         syncNow,
         scheduleReconnect,
         showPanel,

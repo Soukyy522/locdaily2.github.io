@@ -4,8 +4,8 @@ Tahap 18 membuat LocDailyMar dapat dipasang seperti aplikasi dari browser yang
 mendukung PWA. Update tidak diaktifkan otomatis ketika masih ada transaksi
 offline atau reservasi stok lokal.
 
-> Catatan urutan: paket ini dibangun langsung dari Tahap 16. Tahap 17 belum
-> dikerjakan dan tidak dianggap selesai.
+> Catatan historis: Tahap 18 awalnya dibangun langsung dari Tahap 16. Tahap 17 kemudian
+> ditambahkan setelah Tahap 19 menggunakan baseline terbaru.
 
 ## Alur update aman
 
