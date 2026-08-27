@@ -298,6 +298,138 @@
             cursor: pointer;
         }
 
+        /* FILTER RENTANG TANGGAL LAPORAN OWNER */
+        .dashboard-range-filter {
+            display: none;
+            margin-bottom: 12px;
+            padding: 14px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            box-shadow: 0 2px 8px var(--card-shadow);
+        }
+        .dashboard-range-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        .dashboard-range-title {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+        }
+        .dashboard-range-title-icon {
+            width: 38px;
+            height: 38px;
+            display: grid;
+            place-items: center;
+            flex: 0 0 38px;
+            border-radius: 10px;
+            background: rgba(2,132,199,.12);
+            color: #0284c7;
+        }
+        .dashboard-range-title strong {
+            display: block;
+            color: var(--heading-color);
+            font-size: .82rem;
+        }
+        .dashboard-range-title span {
+            display: block;
+            margin-top: 2px;
+            color: #64748b;
+            font-size: .66rem;
+        }
+        body.dark-mode .dashboard-range-title span { color: #94a3b8; }
+        .dashboard-range-status {
+            padding: 5px 9px;
+            border-radius: 999px;
+            background: rgba(22,163,74,.12);
+            color: #15803d;
+            font-size: .66rem;
+            font-weight: 800;
+            text-align: center;
+        }
+        body.dark-mode .dashboard-range-status { color: #86efac; }
+        .dashboard-range-controls {
+            display: grid;
+            grid-template-columns: minmax(150px,1fr) minmax(150px,1fr) auto;
+            gap: 10px;
+            align-items: end;
+        }
+        .dashboard-range-field {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .dashboard-range-field label {
+            color: var(--text-color);
+            font-size: .68rem;
+            font-weight: 700;
+        }
+        .dashboard-range-field input {
+            width: 100%;
+            min-height: 40px;
+            padding: 8px 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 9px;
+            background: var(--input-bg);
+            color: var(--text-color);
+            font-size: .75rem;
+            font-weight: 600;
+        }
+        .dashboard-range-actions {
+            display: flex;
+            gap: 7px;
+            flex-wrap: wrap;
+        }
+        .dashboard-range-btn {
+            min-height: 40px;
+            padding: 8px 12px;
+            border: 0;
+            border-radius: 9px;
+            background: #0d2240;
+            color: #fff;
+            font-size: .72rem;
+            font-weight: 750;
+            cursor: pointer;
+        }
+        .dashboard-range-btn.apply { background: #0f9d58; }
+        .dashboard-range-btn.light {
+            border: 1px solid var(--border-color);
+            background: var(--bg-primary);
+            color: var(--text-color);
+        }
+        .dashboard-range-note {
+            margin-top: 9px;
+            color: #64748b;
+            font-size: .64rem;
+            line-height: 1.45;
+        }
+        .dashboard-range-chart {
+            display: none;
+            height: 230px;
+            margin-top: 12px;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 11px;
+            background: var(--bg-primary);
+        }
+        .dashboard-range-chart canvas { width: 100% !important; height: 100% !important; }
+        @media (max-width: 760px) {
+            .dashboard-range-header { flex-direction: column; }
+            .dashboard-range-controls { grid-template-columns: 1fr 1fr; }
+            .dashboard-range-actions { grid-column: 1 / -1; }
+            .dashboard-range-actions button { flex: 1; }
+        }
+        @media (max-width: 480px) {
+            .dashboard-range-controls { grid-template-columns: 1fr; }
+            .dashboard-range-actions { grid-column: auto; display: grid; grid-template-columns: 1fr 1fr; }
+            .dashboard-range-actions .apply { grid-column: 1 / -1; }
+            .dashboard-range-chart { height: 205px; }
+        }
+
         .action-bar-container {
             display: flex;
             justify-content: space-between;
@@ -3184,7 +3316,7 @@ body.dark-mode
                 </div>
                 <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
                     <!-- Tombol Edit Akun (Hanya muncul jika ROLE OWNER) -->
-                    <button class="btn-header-action" id="btnEditAkunOwner" onclick="bukaModalEditAkun()" style="display: none; background: #16a34a;">👤 Edit Akun</button>
+                    <button class="btn-header-action" id="btnEditAkunOwner" onclick="bukaModalEditAkun()" style="display: none; background: #16a34a;">👤 Akun Cloud</button>
                     <button class="btn-header-action" id="btnEditHeader" onclick="bukaModalHeader()">🎨 Tema</button>
                     <button class="btn-header-action btn-header-logout" onclick="konfirmasiLogout()">🚪 Log out</button>
                 </div>
@@ -3205,11 +3337,44 @@ body.dark-mode
                 </div>
             </div>
 
+            <!-- FILTER RENTANG TANGGAL LAPORAN (OWNER) -->
+            <section class="dashboard-range-filter" id="dashboardRangeFilter" aria-labelledby="dashboardRangeHeading">
+                <div class="dashboard-range-header">
+                    <div class="dashboard-range-title">
+                        <div class="dashboard-range-title-icon">📅</div>
+                        <div>
+                            <strong id="dashboardRangeHeading">Rentang Tanggal Laporan</strong>
+                            <span>Pilih tanggal awal dan akhir untuk menggabungkan data beberapa hari.</span>
+                        </div>
+                    </div>
+                    <div class="dashboard-range-status" id="dashboardRangeStatus">Hari ini · 1 hari</div>
+                </div>
+                <div class="dashboard-range-controls">
+                    <div class="dashboard-range-field">
+                        <label for="inputTanggalDari">Dari Tanggal</label>
+                        <input type="date" id="inputTanggalDari">
+                    </div>
+                    <div class="dashboard-range-field">
+                        <label for="inputTanggalSampai">Sampai Tanggal</label>
+                        <input type="date" id="inputTanggalSampai">
+                    </div>
+                    <div class="dashboard-range-actions">
+                        <button type="button" class="dashboard-range-btn apply" onclick="terapkanRentangTanggal()">Tampilkan</button>
+                        <button type="button" class="dashboard-range-btn light" onclick="tampilkanHariIniRentang()">Hari Ini</button>
+                        <button type="button" class="dashboard-range-btn light" onclick="resetRentangTanggal()">Reset</button>
+                    </div>
+                </div>
+                <div class="dashboard-range-note" id="dashboardRangeNote">Maksimal 90 hari. Perhitungan menggunakan tanggal bisnis WITA dan kedua tanggal ikut dihitung.</div>
+                <div class="dashboard-range-chart" id="dashboardRangeChartBox">
+                    <canvas id="dashboardRangeChart"></canvas>
+                </div>
+            </section>
+
             <!-- TAHAP 15: OWNER CLOUD DEVICE MANAGEMENT -->
             <div class="action-bar-container" id="cloudDeviceActionBar" style="display:none;">
                 <div class="btn-action-group">
                     <button type="button" class="btn-transfer-owner" onclick="window.location.href='device-management.html'">
-                        <span>🔗</span> Tautkan Perangkat
+                        <span>🔗</span> Perangkat Cloud
                     </button>
                 </div>
             </div>
@@ -4472,6 +4637,8 @@ body.dark-mode
     <script>
         let isModeKemarin = false;
         let selectedDateCustom = null;
+        let selectedDateRange = null;
+        let dateRangeChartInstance = null;
         let monthlyChartInstance = null;
         let tempLogoBase64 = null;
         let backupConfigBeforeEdit = null;
@@ -4641,6 +4808,12 @@ function logout() {
             const tglSkg = getTanggalWITA();
             const inputTgl = document.getElementById("inputTanggalLaporan");
             if(inputTgl) inputTgl.value = tglSkg;
+
+            const inputDari = document.getElementById("inputTanggalDari");
+            const inputSampai = document.getElementById("inputTanggalSampai");
+            if (inputDari) inputDari.value = tglSkg;
+            if (inputSampai) inputSampai.value = tglSkg;
+            updateRentangTanggalUI();
 
             muatDashboard();
         });
@@ -4858,9 +5031,209 @@ function logout() {
         }
 
         function getTargetDateToFilter() {
+            if (selectedDateRange && selectedDateRange.end) return selectedDateRange.end;
             if (selectedDateCustom) return selectedDateCustom;
             if (isModeKemarin) return getTanggalKemarinWITA();
             return getTanggalWITA();
+        }
+
+        function dateKeyToUTC(dateKey) {
+            const match = String(dateKey || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+            if (!match) return NaN;
+            return Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+        }
+
+        function jumlahHariInklusif(start, end) {
+            const startMs = dateKeyToUTC(start);
+            const endMs = dateKeyToUTC(end);
+            if (!Number.isFinite(startMs) || !Number.isFinite(endMs) || endMs < startMs) return 0;
+            return Math.floor((endMs - startMs) / 86400000) + 1;
+        }
+
+        function daftarTanggalInklusif(start, end) {
+            const result = [];
+            const startMs = dateKeyToUTC(start);
+            const endMs = dateKeyToUTC(end);
+            if (!Number.isFinite(startMs) || !Number.isFinite(endMs) || endMs < startMs) return result;
+            for (let value = startMs; value <= endMs; value += 86400000) {
+                result.push(new Date(value).toISOString().slice(0, 10));
+            }
+            return result;
+        }
+
+        function formatTanggalRentang(dateKey) {
+            const value = dateKeyToUTC(dateKey);
+            if (!Number.isFinite(value)) return String(dateKey || "-");
+            return new Intl.DateTimeFormat("id-ID", {
+                timeZone: "UTC",
+                day: "2-digit",
+                month: "short",
+                year: "numeric"
+            }).format(new Date(value));
+        }
+
+        function getActiveDateRange() {
+            if (selectedDateRange?.start && selectedDateRange?.end) {
+                return { start: selectedDateRange.start, end: selectedDateRange.end, customRange: true };
+            }
+            const target = selectedDateCustom || (isModeKemarin ? getTanggalKemarinWITA() : getTanggalWITA());
+            return { start: target, end: target, customRange: false };
+        }
+
+        function tanggalMasukPeriode(dateKey) {
+            const range = getActiveDateRange();
+            const value = String(dateKey || "").slice(0, 10);
+            return value >= range.start && value <= range.end;
+        }
+
+        function dataMasukPeriode(item) {
+            return tanggalMasukPeriode(parseTanggalData(item));
+        }
+
+        function getLabelPeriodeAktif() {
+            const range = getActiveDateRange();
+            if (selectedDateRange) {
+                if (range.start === range.end) return `Tanggal ${formatTanggalRentang(range.start)}`;
+                return `${formatTanggalRentang(range.start)} – ${formatTanggalRentang(range.end)}`;
+            }
+            if (selectedDateCustom) return `Tanggal ${formatTanggalRentang(selectedDateCustom)}`;
+            return isModeKemarin ? "Kemarin" : "Hari Ini";
+        }
+
+        function updateRentangTanggalUI() {
+            const startInput = document.getElementById("inputTanggalDari");
+            const endInput = document.getElementById("inputTanggalSampai");
+            const status = document.getElementById("dashboardRangeStatus");
+            const today = getTanggalWITA();
+            if (startInput) {
+                startInput.max = today;
+                if (!startInput.value) startInput.value = selectedDateRange?.start || today;
+            }
+            if (endInput) {
+                endInput.max = today;
+                if (!endInput.value) endInput.value = selectedDateRange?.end || today;
+            }
+            if (status) {
+                const range = getActiveDateRange();
+                const days = jumlahHariInklusif(range.start, range.end) || 1;
+                status.textContent = `${getLabelPeriodeAktif()} · ${days} hari`;
+            }
+        }
+
+        function terapkanRentangTanggal() {
+            const start = document.getElementById("inputTanggalDari")?.value || "";
+            const end = document.getElementById("inputTanggalSampai")?.value || "";
+            const today = getTanggalWITA();
+            if (!start || !end) {
+                tampilkanAlertCustom("Tanggal Belum Lengkap", "Pilih Dari Tanggal dan Sampai Tanggal terlebih dahulu.", "warning");
+                return;
+            }
+            if (end < start) {
+                tampilkanAlertCustom("Rentang Tidak Valid", "Sampai Tanggal tidak boleh lebih awal dari Dari Tanggal.", "warning");
+                return;
+            }
+            if (end > today) {
+                tampilkanAlertCustom("Tanggal Tidak Valid", "Sampai Tanggal tidak boleh melewati tanggal hari ini dalam WITA.", "warning");
+                return;
+            }
+            const totalDays = jumlahHariInklusif(start, end);
+            if (totalDays > 90) {
+                tampilkanAlertCustom("Rentang Terlalu Panjang", "Pilih rentang maksimal 90 hari agar dashboard tetap ringan.", "warning");
+                return;
+            }
+            selectedDateRange = { start, end };
+            selectedDateCustom = null;
+            isModeKemarin = false;
+            const legacyInput = document.getElementById("inputTanggalLaporan");
+            if (legacyInput) legacyInput.value = end;
+            const oldButton = document.getElementById("btnBeralihPendapatan");
+            if (oldButton) oldButton.innerHTML = "Pendapatan Kemarin 🕒";
+            updateRentangTanggalUI();
+            muatDashboard();
+        }
+
+        function tampilkanHariIniRentang() {
+            const today = getTanggalWITA();
+            selectedDateRange = null;
+            selectedDateCustom = null;
+            isModeKemarin = false;
+            const startInput = document.getElementById("inputTanggalDari");
+            const endInput = document.getElementById("inputTanggalSampai");
+            if (startInput) startInput.value = today;
+            if (endInput) endInput.value = today;
+            const oldButton = document.getElementById("btnBeralihPendapatan");
+            if (oldButton) oldButton.innerHTML = "Pendapatan Kemarin 🕒";
+            updateRentangTanggalUI();
+            muatDashboard();
+        }
+
+        function resetRentangTanggal() {
+            tampilkanHariIniRentang();
+        }
+
+        function renderGrafikRentangTanggal(laporanAll) {
+            const box = document.getElementById("dashboardRangeChartBox");
+            const canvas = document.getElementById("dashboardRangeChart");
+            if (!box || !canvas) return;
+            if (!selectedDateRange || typeof Chart === "undefined") {
+                box.style.display = "none";
+                if (dateRangeChartInstance) {
+                    dateRangeChartInstance.destroy();
+                    dateRangeChartInstance = null;
+                }
+                return;
+            }
+            const dates = daftarTanggalInklusif(selectedDateRange.start, selectedDateRange.end);
+            const totals = Object.fromEntries(dates.map(date => [date, 0]));
+            (Array.isArray(laporanAll) ? laporanAll : []).forEach(transaction => {
+                const date = parseTanggalData(transaction);
+                if (Object.prototype.hasOwnProperty.call(totals, date)) {
+                    let nominal = getNominalTransaksi(transaction);
+                    if (nominal === 0) {
+                        nominal = getDaftarItem(transaction).reduce((sum, item) => {
+                            const qty = Number(item.qty || item.jumlah || 1);
+                            const price = Number(item.harga || item.hargaJual || item.price || 0);
+                            return sum + (Number(item.subtotal) || (price * qty));
+                        }, 0);
+                    }
+                    totals[date] += nominal;
+                }
+            });
+            if (dateRangeChartInstance) dateRangeChartInstance.destroy();
+            box.style.display = "block";
+            const styles = getComputedStyle(document.body);
+            const textColor = styles.getPropertyValue("--text-color").trim() || "#334155";
+            const borderColor = styles.getPropertyValue("--border-color").trim() || "#e2e8f0";
+            dateRangeChartInstance = new Chart(canvas.getContext("2d"), {
+                type: "line",
+                data: {
+                    labels: dates.map(date => date.slice(8, 10) + "/" + date.slice(5, 7)),
+                    datasets: [{
+                        label: "Omzet Harian",
+                        data: dates.map(date => totals[date]),
+                        borderColor: "#0f9d58",
+                        backgroundColor: "rgba(15,157,88,.14)",
+                        pointBackgroundColor: "#0f9d58",
+                        pointRadius: dates.length > 45 ? 1.5 : 3,
+                        borderWidth: 2,
+                        fill: true,
+                        tension: .25
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: "index", intersect: false },
+                    plugins: {
+                        legend: { labels: { color: textColor, boxWidth: 12 } },
+                        tooltip: { callbacks: { label: context => `Omzet: Rp ${Number(context.raw || 0).toLocaleString("id-ID")}` } }
+                    },
+                    scales: {
+                        x: { ticks: { color: textColor, autoSkip: true, maxTicksLimit: 15 }, grid: { color: borderColor } },
+                        y: { beginAtZero: true, ticks: { color: textColor, callback: value => "Rp " + Number(value).toLocaleString("id-ID") }, grid: { color: borderColor } }
+                    }
+                }
+            });
         }
 
         function parseTanggalData(item) {
@@ -6151,16 +6524,29 @@ function hapusAkun(idx) {
         function toggleTampilanHari() {
             isModeKemarin = !isModeKemarin;
             selectedDateCustom = null;
+            selectedDateRange = null;
             const btn = document.getElementById("btnBeralihPendapatan");
             btn.innerHTML = isModeKemarin ? "⬅️ Kembali (Hari Ini)" : "Pendapatan Kemarin 🕒";
+            const target = isModeKemarin ? getTanggalKemarinWITA() : getTanggalWITA();
+            const inputDari = document.getElementById("inputTanggalDari");
+            const inputSampai = document.getElementById("inputTanggalSampai");
+            if (inputDari) inputDari.value = target;
+            if (inputSampai) inputSampai.value = target;
+            updateRentangTanggalUI();
             muatDashboard();
         }
 
         function pilihTanggalHarianOwner(val) {
             if (!val) return;
             selectedDateCustom = val;
+            selectedDateRange = null;
             isModeKemarin = false;
             document.getElementById("btnBeralihPendapatan").innerHTML = "Pendapatan Kemarin 🕒";
+            const inputDari = document.getElementById("inputTanggalDari");
+            const inputSampai = document.getElementById("inputTanggalSampai");
+            if (inputDari) inputDari.value = val;
+            if (inputSampai) inputSampai.value = val;
+            updateRentangTanggalUI();
             muatDashboard();
         }
 
@@ -6178,7 +6564,9 @@ function hapusAkun(idx) {
                 if (diffMs <= 0) {
                     isModeKemarin = false;
                     selectedDateCustom = null;
+                    selectedDateRange = null;
 
+                    updateRentangTanggalUI();
                     muatDashboard();
 
                     setTimeout(() => {
@@ -6209,12 +6597,16 @@ function hapusAkun(idx) {
             const role = String(localStorage.getItem("userRole") || "").toLowerCase();
             const inputTgl = document.getElementById("inputTanggalLaporan");
             const deviceBar = document.getElementById("cloudDeviceActionBar");
+            const rangeFilter = document.getElementById("dashboardRangeFilter");
 
             if (deviceBar) {
                 deviceBar.style.display = (role === "owner") ? "block" : "none";
             }
             if (inputTgl) {
-                inputTgl.style.display = (role === "owner") ? "inline-block" : "none";
+                inputTgl.style.display = "none";
+            }
+            if (rangeFilter) {
+                rangeFilter.style.display = (role === "owner") ? "block" : "none";
             }
         }
 
@@ -7022,6 +7414,9 @@ function batasiTampilanOmzetDashboard() {
 
 
         function getTopSellingLabelTanggal() {
+            if (selectedDateRange) {
+                return getLabelPeriodeAktif();
+            }
             if (selectedDateCustom) {
                 return `Tanggal ${selectedDateCustom}`;
             }
@@ -7141,19 +7536,13 @@ function batasiTampilanOmzetDashboard() {
                 laporanAll = [];
             }
 
-            const targetDate =
-                getTargetDateToFilter();
-
             const mapItem =
                 new Map();
 
 
             laporanAll
                 .filter(
-                    transaksi =>
-                        parseTanggalData(
-                            transaksi
-                        ) === targetDate
+                    transaksi => dataMasukPeriode(transaksi)
                 )
                 .forEach(
                     transaksi => {
@@ -9247,13 +9636,12 @@ function batasiTampilanOmzetDashboard() {
 
         function hapusOperasional(indexDalamTanggal) {
             const operasionalAll = JSON.parse(localStorage.getItem("operasional")) || [];
-            const targetDate = getTargetDateToFilter();
 
             let countIndex = 0;
             let indexAsli = -1;
 
             for (let i = 0; i < operasionalAll.length; i++) {
-                if (parseTanggalData(operasionalAll[i]) === targetDate) {
+                if (dataMasukPeriode(operasionalAll[i])) {
                     if (countIndex === indexDalamTanggal) {
                         indexAsli = i;
                         break;
@@ -9274,25 +9662,29 @@ function batasiTampilanOmzetDashboard() {
             const laporanAll = JSON.parse(localStorage.getItem("laporan")) || JSON.parse(localStorage.getItem("dataLaporan")) || [];
             const operasionalAll = JSON.parse(localStorage.getItem("operasional")) || [];
             const masterBarang = JSON.parse(localStorage.getItem("dataBarang")) || [];
-            const targetDate = getTargetDateToFilter();
 
-            let txtJudulLabel = "Hari Ini";
-            if (selectedDateCustom) {
-                txtJudulLabel = `Tanggal (${selectedDateCustom})`;
-            } else if (isModeKemarin) {
-                txtJudulLabel = "Kemarin";
-            }
+            const txtJudulLabel = getLabelPeriodeAktif();
 
             document.getElementById("lblOwnerOmzet").innerText = `Total Omzet ${txtJudulLabel}`;
             document.getElementById("lblOmzetBox").innerText = `🛒 Ringkasan Omzet ${txtJudulLabel}`;
             
             const formOpContainer = document.getElementById("formOperasionalContainer");
             if (formOpContainer) {
-                formOpContainer.style.display = "block";
+                formOpContainer.style.display = selectedDateRange ? "none" : "block";
             }
 
-            const laporan = laporanAll.filter(t => parseTanggalData(t) === targetDate);
-            const operasional = operasionalAll.filter(op => parseTanggalData(op) === targetDate);
+            const laporan = laporanAll.filter(dataMasukPeriode);
+            const operasional = operasionalAll.filter(dataMasukPeriode);
+            updateRentangTanggalUI();
+            renderGrafikRentangTanggal(laporanAll);
+            const rangeNote = document.getElementById("dashboardRangeNote");
+            if (rangeNote) {
+                const range = getActiveDateRange();
+                const days = jumlahHariInklusif(range.start, range.end) || 1;
+                rangeNote.textContent = selectedDateRange
+                    ? `Menampilkan ${laporan.length} transaksi selama ${days} hari. Form biaya operasional disembunyikan saat mode agregasi agar tidak salah tanggal.`
+                    : "Maksimal 90 hari. Perhitungan menggunakan tanggal bisnis WITA dan kedua tanggal ikut dihitung.";
+            }
 
             const mapModalBarang = {};
             masterBarang.forEach(b => {
@@ -11120,6 +11512,15 @@ window.addEventListener(
         const ket = String(ketInput?.value || "").trim();
         const nominal = Number(nominalInput?.value || 0);
 
+        if(selectedDateRange){
+            tampilkanAlertCustom(
+                "Mode Rentang Aktif",
+                "Kembali ke tampilan satu hari sebelum menambahkan biaya operasional agar tanggal pencatatan tidak salah.",
+                "warning"
+            );
+            return;
+        }
+
         if(!ket){
             tampilkanAlertCustom("Peringatan","Silakan isi keterangan operasional!","warning");
             return;
@@ -11157,8 +11558,7 @@ window.addEventListener(
 
     window.hapusOperasional = async function(indexDalamTanggal){
         const all = JSON.parse(localStorage.getItem("operasional") || "[]");
-        const targetDate = getTargetDateToFilter();
-        const rows = all.filter(row => parseTanggalData(row) === targetDate);
+        const rows = all.filter(dataMasukPeriode);
         const target = rows[indexDalamTanggal];
         if(!target) return;
 
