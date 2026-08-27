@@ -1,9 +1,9 @@
 "use strict";
 
-const APP_VERSION = "18.0.0";
+const APP_VERSION = "18.0.1";
 const CACHE_PREFIX = "ldm-";
-const SHELL_CACHE = `${CACHE_PREFIX}stage18-shell-v1`;
-const RUNTIME_CACHE = `${CACHE_PREFIX}stage18-runtime-v1`;
+const SHELL_CACHE = `${CACHE_PREFIX}stage18-shell-v2`;
+const RUNTIME_CACHE = `${CACHE_PREFIX}stage18-runtime-v2`;
 const SUPABASE_CDN = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
 
 const APP_SHELL = [
