@@ -6,14 +6,18 @@
     <title>Dashboard - LocDailyMar POS</title>
     
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#0d2240">
+    <meta name="theme-color" content="#0F9D58">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <link rel="stylesheet" href="style.css">
 
     <!-- Favicon standar -->
     <link rel="icon" type="image/x-icon" href="icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="icon.png">
 
-    <!-- Icon untuk Apple (iOS) -->
+    <!-- Icon dan PWA Manager Tahap 18 -->
+    <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
+    <script src="js/pwa-manager.js?v=18.0"></script>
 <!-- Library Chart.js untuk Grafik -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -3138,6 +3142,7 @@ body.dark-mode
             <a href="eod.html" class="nav-item" data-permission="endofday.view"><span>🌙</span> End of Day</a>
             <a href="pengeluaran.html" class="nav-item" data-permission="pengeluaran.view"><span>💸</span> Pengeluaran</a>
             <a href="backup%20%26%20restore.html" class="nav-item" data-permission="backup.view"><span>💾</span> Backup & Restore</a>
+            <a href="pwa-settings.html" class="nav-item"><span>📲</span> Aplikasi & Update</a>
         </div>
 
         <!-- Area Konten Utama -->
@@ -4625,14 +4630,6 @@ function logout() {
         function tutupMenuNavigasi() {
             document.getElementById("navSidebar").classList.remove("active");
             document.getElementById("navOverlay").classList.remove("active");
-        }
-
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                    .then(reg => console.log('Service Worker terdaftar!', reg))
-                    .catch(err => console.log('Gagal mendaftarkan Service Worker', err));
-            });
         }
 
         const fontCollection = [

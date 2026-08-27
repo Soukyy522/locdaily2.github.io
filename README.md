@@ -58,6 +58,17 @@ Jangan commit `service_role` key, password database, JWT secret, token admin, at
 - [ ] Tahap 3: Supabase project
 - [ ] Tahap 4+: migrasi database bertahap
 
+## Status terbaru
+
+- [x] Tahap 16: Offline Queue + Reconnect
+- [ ] Tahap 17: belum dikerjakan
+- [x] Tahap 18: PWA Installation & Safe Update Manager
+
+Tahap 18 menambahkan manifest installable, ikon aplikasi, halaman fallback
+offline, satu Service Worker resmi, pemeriksaan update manual, serta perlindungan
+agar update/cache cleanup tidak berjalan ketika antrean offline belum aman.
+Gunakan `pwa-settings.html` untuk instalasi dan diagnostik perangkat.
+
 
 ## Tahap 2 - GitHub Pages
 Paket ini siap untuk deployment GitHub Pages dari branch `main` folder root. Setelah deployment, buka `pages-health-check.html`. Live Sync belum aktif pada Tahap 2.

@@ -1,41 +1,37 @@
 "use strict";
 
-const CACHE_VERSION = "ldm-stage16-shell-v1";
-const RUNTIME_CACHE = "ldm-stage16-runtime-v1";
+const APP_VERSION = "18.0.0";
+const CACHE_PREFIX = "ldm-";
+const SHELL_CACHE = `${CACHE_PREFIX}stage18-shell-v1`;
+const RUNTIME_CACHE = `${CACHE_PREFIX}stage18-runtime-v1`;
 const SUPABASE_CDN = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
 
 const APP_SHELL = [
-    "./kasir.html",
-    "./js/supabase-config.js",
-    "./js/supabase-client.js",
-    "./js/offline-queue.js",
-    "./js/cloud-auth.js",
-    "./js/cloud-session.js",
-    "./js/cloud-session-guard.js",
-    "./js/products-service.js",
-    "./js/products-bootstrap.js",
-    "./js/transactions-service.js",
-    "./js/attendance-service.js",
-    "./js/attendance-bootstrap.js",
-    SUPABASE_CDN
+    "./", "./index.html", "./dashboard.html", "./kasir.html",
+    "./pwa-settings.html", "./offline.html", "./manifest.json", "./icon.png",
+    "./assets/icons/icon-192.png", "./assets/icons/icon-512.png",
+    "./assets/icons/maskable-512.png", "./js/pwa-manager.js",
+    "./js/offline-queue.js", "./js/supabase-config.js", "./js/supabase-client.js",
+    "./js/cloud-auth.js", "./js/cloud-session.js", "./js/cloud-session-guard.js",
+    "./js/products-service.js", "./js/products-bootstrap.js",
+    "./js/transactions-service.js", "./js/attendance-service.js",
+    "./js/attendance-bootstrap.js", SUPABASE_CDN
 ];
 
 async function cacheOne(cache, url){
     try{
         const response = await fetch(url, {cache:"reload"});
-        if(response.ok || response.type === "opaque"){
-            await cache.put(url, response.clone());
-        }
+        if(response.ok || response.type === "opaque") await cache.put(url, response.clone());
     }catch(error){
-        // Instalasi tetap valid jika satu resource eksternal sedang tidak tersedia.
+        // Satu resource eksternal yang gagal tidak membatalkan instalasi PWA.
     }
 }
 
 self.addEventListener("install", event => {
     event.waitUntil((async () => {
-        const cache = await caches.open(CACHE_VERSION);
+        const cache = await caches.open(SHELL_CACHE);
         await Promise.allSettled(APP_SHELL.map(url => cacheOne(cache, url)));
-        await self.skipWaiting();
+        // Aktivasi menunggu persetujuan PWA Manager setelah antrean offline aman.
     })());
 });
 
@@ -43,18 +39,17 @@ self.addEventListener("activate", event => {
     event.waitUntil((async () => {
         const keys = await caches.keys();
         await Promise.all(keys
-            .filter(key => key.startsWith("ldm-stage16-") && ![CACHE_VERSION,RUNTIME_CACHE].includes(key))
-            .map(key => caches.delete(key))
-        );
+            .filter(key => key.startsWith(CACHE_PREFIX) && ![SHELL_CACHE, RUNTIME_CACHE].includes(key))
+            .map(key => caches.delete(key)));
         await self.clients.claim();
     })());
 });
 
+function isSupabaseApi(url){ return /\.supabase\.co$/i.test(url.hostname); }
+
 async function cacheFirst(request){
     const cached = await caches.match(request, {ignoreSearch:true});
-    if(cached){
-        return cached;
-    }
+    if(cached) return cached;
     const response = await fetch(request);
     if(response.ok || response.type === "opaque"){
         const cache = await caches.open(RUNTIME_CACHE);
@@ -73,18 +68,9 @@ async function networkFirstNavigation(request){
         return response;
     }catch(error){
         const exact = await caches.match(request, {ignoreSearch:true});
-        if(exact){
-            return exact;
-        }
-        const requestedUrl = new URL(request.url);
-        if(requestedUrl.pathname.toLowerCase().endsWith("/kasir.html")){
-            const cashier = await caches.match("./kasir.html", {ignoreSearch:true});
-            if(cashier){
-                return cashier;
-            }
-        }
-        return new Response(
-            "Halaman ini belum tersedia offline. Sambungkan internet lalu coba lagi.",
+        if(exact) return exact;
+        return (await caches.match("./offline.html", {ignoreSearch:true})) || new Response(
+            "Halaman belum tersedia offline.",
             {status:503,headers:{"Content-Type":"text/plain; charset=utf-8"}}
         );
     }
@@ -93,30 +79,18 @@ async function networkFirstNavigation(request){
 self.addEventListener("fetch", event => {
     const request = event.request;
     const url = new URL(request.url);
-
-    if(request.method !== "GET"){
-        return;
-    }
-
-    // Permintaan REST/Auth Supabase tidak pernah dicache.
-    if(/\.supabase\.co$/i.test(url.hostname)){
-        return;
-    }
-
+    if(request.method !== "GET" || isSupabaseApi(url)) return;
     if(request.mode === "navigate"){
         event.respondWith(networkFirstNavigation(request));
         return;
     }
-
     if(url.origin === self.location.origin || url.hostname === "cdn.jsdelivr.net"){
         event.respondWith(cacheFirst(request));
     }
 });
 
 self.addEventListener("sync", event => {
-    if(event.tag !== "ldm-offline-sales-v16"){
-        return;
-    }
+    if(event.tag !== "ldm-offline-sales-v16") return;
     event.waitUntil((async () => {
         const clients = await self.clients.matchAll({type:"window",includeUncontrolled:true});
         clients.forEach(client => client.postMessage({type:"LDM_SYNC_REQUEST"}));
@@ -124,7 +98,9 @@ self.addEventListener("sync", event => {
 });
 
 self.addEventListener("message", event => {
-    if(event.data && event.data.type === "LDM_SKIP_WAITING"){
-        self.skipWaiting();
+    const data = event.data || {};
+    if(data.type === "LDM_SKIP_WAITING") self.skipWaiting();
+    if(data.type === "LDM_GET_VERSION" && event.source){
+        event.source.postMessage({type:"LDM_SW_VERSION",version:APP_VERSION});
     }
 });

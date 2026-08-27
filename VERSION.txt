@@ -43,3 +43,14 @@ Reconnect RPC: ldm_sync_offline_sale
 Idempotency: store_id + client_transaction_id
 Offline Lease: Active device, maximum 12 hours
 Queue Maximum Age: 7 days
+
+Tahap: 18 - PWA Installation & Safe Update Manager
+Frontend Version: 18.0.0
+PWA Manifest: manifest.json
+Service Worker: service-worker.js
+Install Page: pwa-settings.html
+Offline Fallback: offline.html
+Update Policy: Manual confirmation + empty offline queue
+Cache Cleanup: ldm-* runtime cache only; app shell/IndexedDB/localStorage preserved
+Persistent Storage Diagnostics: Enabled
+Tahap 17: Belum dikerjakan (sengaja dilewati atas permintaan pengguna)
