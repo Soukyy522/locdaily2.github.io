@@ -96,7 +96,7 @@
         result("performance","TTFB",metric.ttfb>0&&metric.ttfb<=800?"PASS":"WARN",metric.ttfb?`${metric.ttfb} ms; target lab ≤ 800 ms.`:"Belum terekam.");
         result("performance","Error runtime",Number(metric.errors||0)+Number(metric.rejections||0)===0?"PASS":"FAIL",`${metric.errors||0} error dan ${metric.rejections||0} unhandled rejection pada halaman ini.`);
         result("performance","Long task",Number(metric.longestTask||0)<=200?"PASS":"WARN",`${metric.longTasks||0} long task; terlama ${metric.longestTask||0} ms.`);
-        render();lastReport={stage:19,version:"19.0.0",generatedAt:new Date().toISOString(),page:location.href.split(/[?#]/)[0],summary:{score:$("score").textContent,pass:$("passCount").textContent,warn:$("warnCount").textContent,fail:$("failCount").textContent},runtime:metric,groups};
+        render();lastReport={stage:19,version:"19.0.1",generatedAt:new Date().toISOString(),page:location.href.split(/[?#]/)[0],summary:{score:$("score").textContent,pass:$("passCount").textContent,warn:$("warnCount").textContent,fail:$("failCount").textContent},runtime:metric,groups};
         $("runButton").disabled=false;$("runButton").textContent="Jalankan Full QA";
     }
     $("runButton").addEventListener("click",run);

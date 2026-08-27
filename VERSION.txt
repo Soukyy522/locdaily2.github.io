@@ -65,3 +65,9 @@ Performance Runtime: js/qa-runtime.js
 Core Web Vitals Target: LCP <= 2500 ms, INP <= 200 ms, CLS <= 0.1
 Audit Policy: Read-only; no automatic database mutation
 Tahap 17: Tetap belum dikerjakan (sesuai urutan yang dipilih pengguna)
+
+Patch: 19.0.1 - Desktop Navigation Parity
+Desktop Mega Menu: Aplikasi & Update + QA & Security ditambahkan
+Desktop Fallback: Sidebar tetap tersedia sampai Mega Menu berhasil dibuat
+Desktop Small Height: Mega Menu dapat di-scroll
+Role Access: Tetap mengikuti Owner/Admin/Kasir

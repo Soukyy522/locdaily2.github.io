@@ -2194,28 +2194,28 @@ body.dark-mode
          * Sidebar lama hanya dipakai sebagai sumber struktur/menu
          * dan sebagai menu mobile. Desktop memakai Mega Menu.
          */
-        .nav-bar,
-        .nav-overlay,
-        .btn-toggle-menu,
-        .nav-header-mobile{
+        html.ldm-mega-ready .nav-bar,
+        html.ldm-mega-ready .nav-overlay,
+        html.ldm-mega-ready .btn-toggle-menu,
+        html.ldm-mega-ready .nav-header-mobile{
             display:none !important;
         }
 
-        .app-layout{
+        html.ldm-mega-ready .app-layout{
             display:flex !important;
             flex-direction:column !important;
             min-height:100vh !important;
             width:100% !important;
         }
 
-        .main-content{
+        html.ldm-mega-ready .main-content{
             width:100% !important;
             max-width:none !important;
             padding:24px 28px 30px !important;
             margin:0 !important;
         }
 
-        .ldm-mega-nav-shell{
+        html.ldm-mega-ready .ldm-mega-nav-shell{
             display:block;
             position:sticky;
             top:0;
@@ -2345,6 +2345,11 @@ body.dark-mode
             border-radius:0 0 16px 16px;
             box-shadow:0 24px 55px rgba(15,23,42,.24);
             padding:16px;
+            max-height:calc(100dvh - 64px);
+            overflow-x:hidden;
+            overflow-y:auto;
+            overscroll-behavior:contain;
+            scrollbar-width:thin;
         }
 
         .ldm-mega-nav-shell.open .ldm-mega-panel{
@@ -2493,6 +2498,22 @@ body.dark-mode
 
             .ldm-mega-quick a:nth-child(n+4){
                 display:none;
+            }
+        }
+
+        @media (max-height:700px){
+            .ldm-mega-panel{
+                top:100%;
+                max-height:calc(100dvh - 58px);
+                border-radius:0 0 12px 12px;
+            }
+
+            .ldm-mega-panel-top{
+                position:sticky;
+                top:-16px;
+                z-index:2;
+                background:var(--bg-secondary);
+                padding-top:12px;
             }
         }
     }
@@ -10550,7 +10571,10 @@ window.addEventListener(
 
         {page:"shift-closing.html", icon:"🔒", label:"Closing Shift", group:"Closing & Data", roles:["owner","admin"]},
         {page:"eod.html", icon:"🌙", label:"End of Day", group:"Closing & Data", roles:["owner","admin"]},
-        {page:"backup%20%26%20restore.html", icon:"💾", label:"Backup & Restore", group:"Closing & Data", roles:["owner","admin"]}
+        {page:"backup%20%26%20restore.html", icon:"💾", label:"Backup & Restore", group:"Closing & Data", roles:["owner","admin"]},
+
+        {page:"pwa-settings.html", icon:"📲", label:"Aplikasi & Update", group:"Sistem", roles:["owner","admin","kasir"]},
+        {page:"qa-security-performance.html", icon:"🧪", label:"QA & Security", group:"Sistem", roles:["owner"]}
     ];
 
     const GROUP_META={
@@ -10558,7 +10582,8 @@ window.addEventListener(
         "Inventori":"📦",
         "Supplier & Pembelian":"🏢",
         "Keuangan & Laporan":"📑",
-        "Closing & Data":"🔐"
+        "Closing & Data":"🔐",
+        "Sistem":"⚙️"
     };
 
     function getSession(){
@@ -10636,16 +10661,19 @@ window.addEventListener(
     }
 
     function buildMegaMenu(){
-        if(document.getElementById("ldmMegaNavShell"))return;
+        if(document.getElementById("ldmMegaNavShell")){
+            document.documentElement.classList.add("ldm-mega-ready");
+            return true;
+        }
 
         const app=document.querySelector(".app-layout");
         const main=document.querySelector(".main-content");
-        if(!app || !main)return;
+        if(!app || !main)return false;
 
         const session=getSession();
         const role=normalizeRole(session?.role);
 
-        if(!role)return;
+        if(!role)return false;
 
         const visible=ROUTES.filter(route=>routeAllowed(route,role));
         const current=currentPage();
@@ -10735,6 +10763,7 @@ window.addEventListener(
         `;
 
         app.insertBefore(shell,main);
+        document.documentElement.classList.add("ldm-mega-ready");
 
         const trigger=shell.querySelector("#ldmMegaTrigger");
         const close=shell.querySelector("#ldmMegaClose");
@@ -10805,6 +10834,8 @@ window.addEventListener(
                 attributeFilter:["style","class"]
             });
         });
+
+        return true;
     }
 
     function syncBadges(){
@@ -10832,21 +10863,25 @@ window.addEventListener(
         });
     }
 
-    if(document.readyState==="loading"){
-        document.addEventListener(
-            "DOMContentLoaded",
-            ()=>{
-                buildMegaMenu();
-                setTimeout(syncBadges,250);
-                setTimeout(syncBadges,900);
-            },
-            {once:true}
-        );
-    }else{
+    function bootMegaMenu(){
         buildMegaMenu();
+        setTimeout(buildMegaMenu,250);
+        setTimeout(buildMegaMenu,900);
+        setTimeout(buildMegaMenu,2200);
         setTimeout(syncBadges,250);
         setTimeout(syncBadges,900);
     }
+
+    if(document.readyState==="loading"){
+        document.addEventListener("DOMContentLoaded",bootMegaMenu,{once:true});
+    }else{
+        bootMegaMenu();
+    }
+
+    window.addEventListener("storage",event=>{
+        if(event.key==="userRole" || event.key==="role")buildMegaMenu();
+    });
+    window.addEventListener("ldm-cloud-session-ready",buildMegaMenu);
 })();
 </script>
 
