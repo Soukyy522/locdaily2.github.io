@@ -755,6 +755,11 @@
     async function notifyChanged(){
         await renderWidget();
         const detail = await stats().catch(() => null);
+        if(detail){
+            // Salinan kecil untuk halaman yang tidak membuka IndexedDB queue.
+            // PWA Manager tetap membaca IndexedDB langsung jika modul ini tersedia.
+            localStorage.setItem("ldmOfflineUnsyncedCountV16", String(Number(detail.unsynced) || 0));
+        }
         window.dispatchEvent(new CustomEvent("ldm-offline-queue-updated", {detail}));
     }
 
@@ -762,8 +767,12 @@
         if(!("serviceWorker" in navigator) || !/^https?:$/.test(location.protocol)){
             return;
         }
-        navigator.serviceWorker.register("service-worker.js", {scope:"./"})
-            .catch(error => console.warn("Service Worker Tahap 16 gagal didaftarkan:", error));
+        if(window.LDMPWA && typeof window.LDMPWA.register === "function"){
+            window.LDMPWA.register();
+            return;
+        }
+        navigator.serviceWorker.register("service-worker.js", {scope:"./",updateViaCache:"none"})
+            .catch(error => console.warn("Service Worker LocDailyMar gagal didaftarkan:", error));
     }
 
     function boot(){
