@@ -91,3 +91,12 @@ Mobile Date Filter: Collapsible single-row summary
 Mobile Form: Two date inputs + two compact actions
 Auto Collapse: Setelah Tampilkan atau Hari Ini
 PWA Cache: release19-1-compact-date-v1
+
+
+Patch: 19.1.2 - Historical Purchase Price & Profit
+Purchase Price History: public.purchase_price_history
+HPP Authority: transaction_items.cost_price_snapshot first
+Historical Fallback: purchase_price_history by transaction time
+Dashboard Profit: Historical HPP aware
+Realtime Cost History: Owner-only
+PWA Cache: release19-1-2-cost-history-v1

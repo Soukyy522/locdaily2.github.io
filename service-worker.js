@@ -1,9 +1,9 @@
 "use strict";
 
-const APP_VERSION = "19.1.1";
+const APP_VERSION = "19.1.2";
 const CACHE_PREFIX = "ldm-";
-const SHELL_CACHE = `${CACHE_PREFIX}release19-1-compact-date-shell-v1`;
-const RUNTIME_CACHE = `${CACHE_PREFIX}release19-1-compact-date-runtime-v1`;
+const SHELL_CACHE = `${CACHE_PREFIX}release19-1-2-cost-history-shell-v1`;
+const RUNTIME_CACHE = `${CACHE_PREFIX}release19-1-2-cost-history-runtime-v1`;
 const SUPABASE_CDN = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
 
 const APP_SHELL = [
@@ -15,6 +15,7 @@ const APP_SHELL = [
     "./js/offline-queue.js", "./js/supabase-config.js", "./js/supabase-client.js",
     "./js/cloud-auth.js", "./js/cloud-session.js", "./js/cloud-session-guard.js",
     "./js/products-service.js", "./js/products-bootstrap.js",
+    "./js/cost-history-service.js", "./js/cost-history-bootstrap.js",
     "./js/transactions-service.js", "./js/attendance-service.js",
     "./js/attendance-bootstrap.js", SUPABASE_CDN
 ];
