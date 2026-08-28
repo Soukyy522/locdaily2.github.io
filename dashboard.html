@@ -4430,9 +4430,8 @@ body.dark-mode
                     <div class="card profit">
                         <div class="card-icon">📈</div>
                         <div class="card-info">
-                            <h4>Profit Setelah HPP</h4>
+                            <h4>Profit Bersih</h4>
                             <h2>Rp <span id="totalProfit">0</span></h2>
-                            <small id="ownerProfitMargin" style="display:block;margin-top:3px;color:#64748b;font-size:.58rem;line-height:1.35;">Margin 0%</small>
                         </div>
                     </div>
 
@@ -4683,7 +4682,7 @@ body.dark-mode
 
                 <!-- Banner Rumus Profit -->
                 <div class="formula-box">
-                    Rumus Profit: <span>PENJUALAN BERSIH (<span id="txtOmzet2">0</span>)</span> - <span>HPP (<span id="txtModal">0</span>)</span> = <span>PROFIT SETELAH HPP Rp <span id="txtProfit">0</span></span>
+                    Rumus Profit: <span>PENJUALAN BERSIH (<span id="txtOmzet2">0</span>)</span> - <span>HPP (<span id="txtModal">0</span>)</span> = <span>PROFIT BERSIH Rp <span id="txtProfit">0</span></span>
                 </div>
 
                 <!-- PANEL STATISTIK BULANAN -->
@@ -4714,9 +4713,8 @@ body.dark-mode
                         <div class="card profit">
                             <div class="card-icon">📈</div>
                             <div class="card-info">
-                                <h4>Profit Setelah HPP</h4>
+                                <h4>Profit Bersih</h4>
                                 <h2>Rp <span id="monthlyProfit">0</span></h2>
-                                <small id="monthlyProfitMargin" style="display:block;margin-top:3px;color:#64748b;font-size:.58rem;line-height:1.35;">Margin 0%</small>
                             </div>
                         </div>
                         <div class="card transaksi">
@@ -10230,7 +10228,6 @@ function batasiTampilanOmzetDashboard() {
 
             const totalBiayaOperasional = operasional.reduce((sum, item) => sum + Number(item.nominal || 0), 0);
             const totalProfit = totalOmzet - totalModalBarang;
-            const profitMargin = totalOmzet > 0 ? (totalProfit/totalOmzet)*100 : 0;
 
             document.getElementById("totalOmzet").innerText = totalOmzet.toLocaleString("id-ID");
             document.getElementById("ownerTunai").innerText = totalTunai.toLocaleString("id-ID");
@@ -10246,10 +10243,6 @@ function batasiTampilanOmzetDashboard() {
                     ? `${missingSnapshotItems} item transaksi lama belum memiliki snapshot HPP`
                     : "Harga beli saat transaksi";
                 ownerHppNote.style.color = missingSnapshotItems > 0 ? "#d97706" : "#64748b";
-            }
-            const ownerProfitMargin = document.getElementById("ownerProfitMargin");
-            if (ownerProfitMargin) {
-                ownerProfitMargin.textContent = `Margin ${profitMargin.toLocaleString("id-ID",{maximumFractionDigits:1})}% • belum termasuk operasional`;
             }
             document.getElementById("totalProfit").style.color = totalProfit < 0 ? "#dc2626" : "";
 
@@ -10397,17 +10390,12 @@ function batasiTampilanOmzetDashboard() {
             });
 
             const profitBulan = totalOmzetBulan - totalModalBarangBulan;
-            const monthlyMargin = totalOmzetBulan > 0 ? (profitBulan/totalOmzetBulan)*100 : 0;
 
             document.getElementById("monthlyOmzet").innerText = totalOmzetBulan.toLocaleString("id-ID");
             document.getElementById("monthlyModal").innerText = totalModalBarangBulan.toLocaleString("id-ID");
             document.getElementById("monthlyProfit").innerText = profitBulan.toLocaleString("id-ID");
             document.getElementById("monthlyTransaksi").innerText = laporanBulan.length;
             document.getElementById("monthlyProfit").style.color = profitBulan < 0 ? "#dc2626" : "";
-            const monthlyProfitMargin = document.getElementById("monthlyProfitMargin");
-            if (monthlyProfitMargin) {
-                monthlyProfitMargin.textContent = `Margin ${monthlyMargin.toLocaleString("id-ID",{maximumFractionDigits:1})}% • belum termasuk operasional`;
-            }
 
             let bestSellerName = "-";
             let maxOmzetBarang = 0;
