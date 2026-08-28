@@ -567,7 +567,9 @@
 
         border-collapse: collapse;
 
-        font-size: 10px;
+        table-layout: fixed;
+
+        font-size: 9px;
     }
 
 
@@ -605,6 +607,25 @@
     .so-print-right {
         text-align: right;
     }
+
+
+    .so-print-money {
+        text-align: right;
+        white-space: nowrap;
+        font-variant-numeric: tabular-nums;
+        font-weight: 700;
+    }
+
+
+    .so-print-table th:nth-child(1) { width: 4%; }
+    .so-print-table th:nth-child(2) { width: 17%; }
+    .so-print-table th:nth-child(3) { width: 12%; }
+    .so-print-table th:nth-child(4) { width: 8%; }
+    .so-print-table th:nth-child(5) { width: 8%; }
+    .so-print-table th:nth-child(6) { width: 7%; }
+    .so-print-table th:nth-child(7) { width: 14%; }
+    .so-print-table th:nth-child(8) { width: 20%; }
+    .so-print-table th:nth-child(9) { width: 10%; }
 
 
     .so-print-summary {
@@ -3075,6 +3096,8 @@ else if (
 
     let totalSelisih = 0;
 
+    let totalNominalSelisih = 0;
+
 
     /*
      * Buat isi tabel.
@@ -3102,6 +3125,22 @@ else if (
                 stokSistem;
 
 
+            const nominalAbsolut =
+                Math.abs(
+                    Number(
+                        item.nominal ?? 0
+                    )
+                );
+
+
+            const nominalSelisih =
+                selisih < 0
+                    ? -nominalAbsolut
+                    : selisih > 0
+                        ? nominalAbsolut
+                        : 0;
+
+
             totalItem++;
 
             totalStokSistem +=
@@ -3113,11 +3152,24 @@ else if (
             totalSelisih +=
                 selisih;
 
+            totalNominalSelisih +=
+                nominalSelisih;
+
 
             let selisihText =
                 selisih > 0
                     ? `+${selisih}`
                     : `${selisih}`;
+
+
+            const nominalSelisihText =
+                `${
+                    nominalSelisih > 0
+                        ? "+ "
+                        : nominalSelisih < 0
+                            ? "- "
+                            : ""
+                }Rp ${Math.abs(nominalSelisih).toLocaleString("id-ID")}`;
 
 
             rowsHTML += `
@@ -3167,6 +3219,13 @@ else if (
                         class="so-print-center"
                     >
                         ${selisihText}
+                    </td>
+
+
+                    <td
+                        class="so-print-money"
+                    >
+                        ${nominalSelisihText}
                     </td>
 
 
@@ -3327,6 +3386,11 @@ const usernameOwner =
                     </th>
 
                     <th>
+                        Nominal
+                        Selisih
+                    </th>
+
+                    <th>
                         Alasan /
                         Keterangan
                     </th>
@@ -3409,6 +3473,27 @@ const usernameOwner =
                               totalSelisih
                             : totalSelisih
                     }
+                </strong>
+
+            </div>
+
+
+            <div
+                class="so-print-summary-row"
+            >
+
+                <strong>
+                    Total Nominal Selisih
+                </strong>
+
+                <strong>
+                    ${
+                        totalNominalSelisih > 0
+                            ? "+ "
+                            : totalNominalSelisih < 0
+                                ? "- "
+                                : ""
+                    }Rp ${Math.abs(totalNominalSelisih).toLocaleString("id-ID")}
                 </strong>
 
             </div>
