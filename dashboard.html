@@ -3266,10 +3266,6 @@ body.dark-mode
     <script src="js/stock-opname-service.js?v=10.0"></script>
     <script src="js/stock-opname-bootstrap.js?v=10.0"></script>
 
-    <!-- Patch 19.1.2: Histori Harga Beli + HPP historis Owner -->
-    <script src="js/cost-history-service.js?v=19.1.2"></script>
-    <script src="js/cost-history-bootstrap.js?v=19.1.2"></script>
-
     <!-- Live Sync Tahap 12: Final Cloud Reporting Authority -->
     <script src="js/reporting-service.js?v=12.0"></script>
     <script src="js/reporting-bootstrap.js?v=12.0"></script>
@@ -7791,49 +7787,6 @@ function batasiTampilanOmzetDashboard() {
             return [];
         }
 
-
-        /* =====================================================
-           PATCH 19.1.2 - HPP / HARGA BELI HISTORIS
-           Prioritas:
-           1. snapshot HPP pada item transaksi cloud;
-           2. purchase_price_history sesuai waktu transaksi;
-           3. harga master saat ini hanya fallback data legacy lama.
-           ===================================================== */
-        function getModalSatuanHistoris(item, transaksi, masterBarang = []) {
-            if (
-                window.LDMCostHistory &&
-                typeof window.LDMCostHistory.resolve === "function"
-            ) {
-                const resolved = window.LDMCostHistory.resolve({
-                    item,
-                    transaction: transaksi,
-                    masterBarang
-                });
-
-                if (
-                    resolved &&
-                    resolved.found &&
-                    Number.isFinite(Number(resolved.value))
-                ) {
-                    return Number(resolved.value);
-                }
-            }
-
-            const direct = Number(
-                item?.hargaBeli ??
-                item?.cost_price_snapshot ??
-                item?.modal ??
-                item?.hpp ??
-                0
-            );
-
-            if (Number.isFinite(direct) && direct >= 0) {
-                return direct;
-            }
-
-            return 0;
-        }
-
         /* =====================================================
            5 ITEM TERLARIS
            ===================================================== */
@@ -10157,11 +10110,10 @@ function batasiTampilanOmzetDashboard() {
                     const nama = item.nama || item.namaBarang || item.title || "";
                     const qty = Number(item.qty || item.jumlah || 1);
 
-                    const modalSatuan = getModalSatuanHistoris(
-                        item,
-                        transaksi,
-                        masterBarang
-                    );
+                    let modalSatuan = Number(item.hargaBeli || item.modal || item.hpp || 0);
+                    if (modalSatuan === 0 && mapModalBarang[nama.toLowerCase().trim()]) {
+                        modalSatuan = mapModalBarang[nama.toLowerCase().trim()];
+                    }
 
                     totalModalBarang += (modalSatuan * qty);
                     totalQtyTerjual += qty;
@@ -10306,11 +10258,10 @@ function batasiTampilanOmzetDashboard() {
                     const nama = item.nama || item.namaBarang || item.title || "Lainnya";
                     const qty = Number(item.qty || item.jumlah || 1);
 
-                    const modalSatuan = getModalSatuanHistoris(
-                        item,
-                        transaksi,
-                        masterBarang
-                    );
+                    let modalSatuan = Number(item.hargaBeli || item.modal || item.hpp || 0);
+                    if (modalSatuan === 0 && mapModalBarang[nama.toLowerCase().trim()]) {
+                        modalSatuan = mapModalBarang[nama.toLowerCase().trim()];
+                    }
 
                     totalModalBarangBulan += (modalSatuan * qty);
 
@@ -12017,15 +11968,6 @@ window.addEventListener(
         }
     };
 
-
-    window.addEventListener("ldm-cost-history-updated",function(){
-        const role=String(localStorage.getItem("userRole")||"").toLowerCase();
-        if(role==="owner" && typeof renderOwner==="function"){
-            renderOwner();
-            if(typeof renderStatistikBulanan==="function") renderStatistikBulanan();
-        }
-    });
-
     window.addEventListener("ldm-reporting-cache-updated",function(){
         const role = String(localStorage.getItem("userRole") || "").toLowerCase();
         if(role === "owner" && typeof renderOwner === "function"){
@@ -12208,9 +12150,7 @@ window.addEventListener(
                 const amount=Math.max(0,safeNumber(item?.qty||item?.jumlah||item?.quantity||1));
                 const subtotal=safeNumber(item?.subtotal||item?.subTotal||item?.lineSubtotal)||safeNumber(item?.harga||item?.hargaJual||item?.price)*amount;
                 const product=productByName.get(key);
-                const unitCost=typeof getModalSatuanHistoris==="function"
-                    ? getModalSatuanHistoris(item,transaction,productRows)
-                    : safeNumber(item?.hargaBeli||item?.modal||item?.hpp||product?.hargaBeli||product?.modal||product?.hpp);
+                const unitCost=safeNumber(item?.hargaBeli||item?.modal||item?.hpp||product?.hargaBeli||product?.modal||product?.hpp);
                 const existing=itemMap.get(key)||{name,qty:0,revenue:0,cost:0};
                 existing.qty+=amount;existing.revenue+=subtotal;existing.cost+=unitCost*amount;
                 itemMap.set(key,existing);qty+=amount;cost+=unitCost*amount;
@@ -12361,5 +12301,6 @@ window.addEventListener(
     if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init,{once:true});else init();
 })();
 </script>
+<script src="js/global-system-navigation.js?v=20.1"></script>
 </body>
 </html>
