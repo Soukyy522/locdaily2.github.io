@@ -215,7 +215,7 @@
 
         .summary-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
             gap: 10px;
             margin-bottom: 12px;
         }
@@ -3419,6 +3419,7 @@ function simpanLaporanKeStorage(dataArray) {
             let totalOmset = filteredData.reduce((acc, curr) => acc + getNetTransactionTotal(curr), 0);
             document.getElementById("statOmset").innerText = `Rp ${totalOmset.toLocaleString("id-ID")}`;
             document.getElementById("statCount").innerText = `${filteredData.length} TRX`;
+
         }
 
         function renderTable() {
@@ -4328,7 +4329,7 @@ function simpanLaporanKeStorage(dataArray) {
                 let waktu = `"${item.waktu_teks || item.tanggal || ''}"`;
                 let kasir = `"${item.kasir || item.operator || localStorage.getItem("username") || 'owner'}"`;
                 let barang = `"${(item.barang || '').replace(/"/g, '""')}"`;
-                let total = item.total || 0;
+                let total = getNetTransactionTotal(item);
                 let metode = item.metode || "Tunai";
 
                 csvContent += `${idTrx},${waktu},${kasir},${barang},${total},${metode}\n`;
@@ -5395,13 +5396,7 @@ function tampilkanStatusAksesLaporan() {
 
 function batasiTampilanOmzetLaporan() {
 
-    const role =
-        (
-            localStorage.getItem("userRole") ||
-            ""
-        )
-        .trim()
-        .toLowerCase();
+    const isOwner = getRolePengguna() === "Owner";
 
 
     const omzetElement =
@@ -5430,7 +5425,7 @@ function batasiTampilanOmzetLaporan() {
      * Hanya Owner melihat
      * Total Penjualan.
      */
-    if (role === "owner") {
+    if (isOwner) {
 
         omzetCard.style.display = "";
 
