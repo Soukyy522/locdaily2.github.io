@@ -1,21 +1,21 @@
 "use strict";
 
-const APP_VERSION = "19.1.2";
+const APP_VERSION = "20.0.0";
 const CACHE_PREFIX = "ldm-";
-const SHELL_CACHE = `${CACHE_PREFIX}release19-1-2-cost-history-shell-v1`;
-const RUNTIME_CACHE = `${CACHE_PREFIX}release19-1-2-cost-history-runtime-v1`;
+const SHELL_CACHE = `${CACHE_PREFIX}release20-unit-conversion-shell-v1`;
+const RUNTIME_CACHE = `${CACHE_PREFIX}release20-unit-conversion-runtime-v1`;
 const SUPABASE_CDN = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
 
 const APP_SHELL = [
-    "./", "./index.html", "./dashboard.html", "./kasir.html",
+    "./", "./index.html", "./dashboard.html", "./kasir.html", "./barang.html", "./Purchase-Order.html", "./goods.receipt.html", "./supabase-stage20-unit-test.html",
     "./pwa-settings.html", "./recovery-center.html", "./qa-security-performance.html", "./offline.html", "./manifest.json", "./icon.png",
     "./assets/icons/icon-192.png", "./assets/icons/icon-512.png",
     "./assets/icons/maskable-512.png", "./style.css", "./setting.js", "./employee-id.js",
     "./js/pwa-manager.js", "./js/security-hardening.js", "./js/qa-runtime.js", "./js/recovery-service.js",
     "./js/offline-queue.js", "./js/supabase-config.js", "./js/supabase-client.js",
     "./js/cloud-auth.js", "./js/cloud-session.js", "./js/cloud-session-guard.js",
-    "./js/products-service.js", "./js/products-bootstrap.js",
-    "./js/cost-history-service.js", "./js/cost-history-bootstrap.js",
+    "./js/unit-conversion.js", "./js/products-service.js", "./js/products-bootstrap.js",
+    "./js/procurement-service.js", "./js/procurement-bootstrap.js",
     "./js/transactions-service.js", "./js/attendance-service.js",
     "./js/attendance-bootstrap.js", SUPABASE_CDN
 ];

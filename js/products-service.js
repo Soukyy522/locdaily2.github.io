@@ -73,6 +73,15 @@
                 ),
             satuan:
                 row.unit || "Pcs",
+            satuanDasar:
+                row.unit || "Pcs",
+            satuanBeli:
+                row.purchase_unit || row.unit || "Pcs",
+            konversiBeli:
+                Math.max(
+                    normalizeNumber(row.purchase_unit_factor,1),
+                    0.001
+                ),
             expiredTerakhir:
                 row.last_expiry_date || "",
             _cloud: {
@@ -229,6 +238,8 @@
                         "name",
                         "category",
                         "unit",
+                        "purchase_unit",
+                        "purchase_unit_factor",
                         "purchase_price",
                         "sale_price",
                         "legacy_stock_snapshot",
@@ -327,7 +338,7 @@
             error
         } =
             await supabase.rpc(
-                "ldm_import_legacy_products",
+                "ldm_sync_products_stage20",
                 {
                     p_products:
                         source
@@ -398,7 +409,7 @@
             error
         } =
             await supabase.rpc(
-                "ldm_import_legacy_products",
+                "ldm_sync_products_stage20",
                 {
                     p_products:
                         source

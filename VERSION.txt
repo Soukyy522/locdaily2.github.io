@@ -92,11 +92,13 @@ Mobile Form: Two date inputs + two compact actions
 Auto Collapse: Setelah Tampilkan atau Hari Ini
 PWA Cache: release19-1-compact-date-v1
 
-
-Patch: 19.1.2 - Historical Purchase Price & Profit
-Purchase Price History: public.purchase_price_history
-HPP Authority: transaction_items.cost_price_snapshot first
-Historical Fallback: purchase_price_history by transaction time
-Dashboard Profit: Historical HPP aware
-Realtime Cost History: Owner-only
-PWA Cache: release19-1-2-cost-history-v1
+Tahap: 20 - Master Satuan dan Konversi Kemasan
+Release Version: 20.0.0
+Stock Authority: Tetap satuan dasar pada public.products.unit
+Purchase Unit: public.products.purchase_unit
+Conversion Factor: public.products.purchase_unit_factor
+PO/GR Snapshot: Satuan beli, faktor, qty kemasan, dan harga kemasan
+Atomic Stock: Goods Receipt tetap menambah qty dasar
+Kasir/Retur/Stock Opname: Tetap memakai satuan dasar
+WhatsApp PO: Menggunakan satuan beli dari snapshot PO
+PWA Cache: release20-unit-conversion-v1

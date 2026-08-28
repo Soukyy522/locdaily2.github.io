@@ -1945,10 +1945,11 @@ input[type="color"] {
     <script src="js/cloud-auth.js?v=15.0"></script>
     <script src="js/cloud-session.js?v=6.0"></script>
     <script src="js/cloud-session-guard.js?v=15.0"></script>
-    <script src="js/procurement-service.js?v=11.0"></script>
+    <script src="js/unit-conversion.js?v=20.0"></script>
+    <script src="js/procurement-service.js?v=20.0"></script>
     <script src="js/procurement-bootstrap.js?v=11.0"></script>
     <!-- Live Sync Tahap 7: Cloud Master Barang -->
-    <script src="js/products-service.js?v=7.0"></script>
+    <script src="js/products-service.js?v=20.0"></script>
     <script src="js/products-bootstrap.js?v=7.0"></script>
 
 </head>
@@ -2077,12 +2078,22 @@ input[type="color"] {
                 </div>
 
                 <div class="form-group">
-                    <label>Qty Pesan</label>
+                    <label id="labelQtyPO">Qty Pesan</label>
                     <input type="number" id="inputQtyPO" min="0.01" step="0.01" placeholder="0" oninput="hitungPreviewPO()">
                 </div>
 
+                <div class="form-group">
+                    <label>Satuan Beli</label>
+                    <input type="text" id="inputSatuanBeliPO" value="Pcs" readonly>
+                </div>
+
+                <div class="form-group">
+                    <label>Konversi ke Stok Dasar</label>
+                    <input type="text" id="inputKonversiPO" value="1 Pcs = 1 Pcs" readonly>
+                </div>
+
                 <div class="form-group owner-purchase-value">
-                    <label>Harga Beli Estimasi / Satuan</label>
+                    <label>Harga Beli Estimasi / Kemasan</label>
                     <input type="number" id="inputHargaBeliPO" min="0" step="1" placeholder="0" oninput="hitungPreviewPO()">
                 </div>
 
@@ -4237,10 +4248,19 @@ function pilihBarangPO(index) {
     document.getElementById("selectedBarangPO").value = String(index);
     document.getElementById("inputCariBarangPO").value = item.nama || "";
     document.getElementById("inputNamaBarangPO").value = item.nama || "";
+    const normalized = window.LDMUnits
+        ? window.LDMUnits.normalizeProduct(item)
+        : {...item,satuanDasar:item.satuan || "Pcs",satuanBeli:item.satuanBeli || item.satuan || "Pcs",konversiBeli:Number(item.konversiBeli || 1)};
     document.getElementById("inputStokPO").value =
-        `${formatQty(item.stok || 0)} ${item.satuan || "Pcs"}`;
+        `${formatQty(item.stok || 0)} ${normalized.satuanDasar}`;
+    document.getElementById("inputSatuanBeliPO").value = normalized.satuanBeli;
+    document.getElementById("inputKonversiPO").value =
+        `1 ${normalized.satuanBeli} = ${normalized.konversiBeli} ${normalized.satuanDasar}`;
+    document.getElementById("labelQtyPO").textContent = `Qty Pesan (${normalized.satuanBeli})`;
     document.getElementById("inputQtyPO").value = "1";
-    document.getElementById("inputHargaBeliPO").value = Number(item.hargaBeli || 0);
+    document.getElementById("inputHargaBeliPO").value = window.LDMUnits
+        ? window.LDMUnits.packagePrice(item.hargaBeli || 0,normalized)
+        : Number(item.hargaBeli || 0) * Number(normalized.konversiBeli || 1);
     document.getElementById("dropdownBarangPO").style.display = "none";
 
     hitungPreviewPO();
@@ -4259,6 +4279,9 @@ function resetFormBarangPO() {
     document.getElementById("inputCariBarangPO").value = "";
     document.getElementById("inputNamaBarangPO").value = "";
     document.getElementById("inputStokPO").value = "0";
+    document.getElementById("inputSatuanBeliPO").value = "Pcs";
+    document.getElementById("inputKonversiPO").value = "1 Pcs = 1 Pcs";
+    document.getElementById("labelQtyPO").textContent = "Qty Pesan";
     document.getElementById("inputQtyPO").value = "";
     document.getElementById("inputHargaBeliPO").value = "";
     document.getElementById("inputSubtotalPO").value = "Rp 0";
@@ -4284,6 +4307,15 @@ function tambahBarangKePO() {
 
     const qty = Number(document.getElementById("inputQtyPO").value);
     const harga = Number(document.getElementById("inputHargaBeliPO").value);
+    const normalized = window.LDMUnits
+        ? window.LDMUnits.normalizeProduct(barang)
+        : {...barang,satuanDasar:barang.satuan || "Pcs",satuanBeli:barang.satuanBeli || barang.satuan || "Pcs",konversiBeli:Number(barang.konversiBeli || 1)};
+    const qtyBase = window.LDMUnits
+        ? window.LDMUnits.toBase(qty,normalized)
+        : qty * Number(normalized.konversiBeli || 1);
+    const hargaDasar = window.LDMUnits
+        ? window.LDMUnits.basePrice(harga,normalized)
+        : harga / Number(normalized.konversiBeli || 1);
 
     if (!Number.isFinite(qty) || qty <= 0) {
         notify("Qty Tidak Valid","Qty pesanan harus lebih dari 0.");
@@ -4301,7 +4333,9 @@ function tambahBarangKePO() {
 
     if (existing) {
         existing.qtyOrdered += qty;
+        existing.qtyOrderedBase = Number(existing.qtyOrdered || 0) * Number(existing.faktorKonversi || 1);
         existing.hargaBeli = harga;
+        existing.hargaBeliDasar = hargaDasar;
         existing.subtotal = existing.qtyOrdered * harga;
     } else {
         draftPO.push({
@@ -4311,11 +4345,16 @@ function tambahBarangKePO() {
             barcode,
             namaBarang: String(barang.nama || "Tanpa Nama"),
             kategori: String(barang.kategori || ""),
-            satuan: String(barang.satuan || "Pcs"),
+            satuan: String(normalized.satuanBeli),
+            satuanDasar: String(normalized.satuanDasar),
+            faktorKonversi: Number(normalized.konversiBeli || 1),
             stokSnapshot: Number(barang.stok || 0),
             qtyOrdered: qty,
+            qtyOrderedBase: qtyBase,
             qtyReceived: 0,
+            qtyReceivedBase: 0,
             hargaBeli: harga,
+            hargaBeliDasar: hargaDasar,
             subtotal: qty * harga
         });
     }
@@ -4335,15 +4374,15 @@ function renderDraftPO() {
         tbody.innerHTML = draftPO.map((item,index) => `
             <tr>
                 <td>${index + 1}</td>
-                <td><strong>${escapeHTML(item.namaBarang)}</strong><br><small style="color:#94a3b8;">${escapeHTML(item.kategori || "-")} • ${escapeHTML(item.satuan)}</small></td>
+                <td><strong>${escapeHTML(item.namaBarang)}</strong><br><small style="color:#94a3b8;">${escapeHTML(item.kategori || "-")} • 1 ${escapeHTML(item.satuan)} = ${formatQty(item.faktorKonversi || 1)} ${escapeHTML(item.satuanDasar || item.satuan || "Pcs")}</small></td>
                 <td>${escapeHTML(item.barcode || "-")}</td>
-                <td>${formatQty(item.stokSnapshot)} ${escapeHTML(item.satuan)}</td>
+                <td>${formatQty(item.stokSnapshot)} ${escapeHTML(item.satuanDasar || item.satuan || "Pcs")}</td>
                 <td>
                     <button type="button" class="btn btn-soft" style="padding:4px 7px;" onclick="ubahQtyDraft('${item.id}',-1)">−</button>
-                    <strong style="margin:0 7px;">${formatQty(item.qtyOrdered)}</strong>
+                    <strong style="margin:0 7px;">${formatQty(item.qtyOrdered)} ${escapeHTML(item.satuan || "")}</strong>
                     <button type="button" class="btn btn-soft" style="padding:4px 7px;" onclick="ubahQtyDraft('${item.id}',1)">+</button>
                 </td>
-                <td>${formatQty(item.qtyReceived || 0)}</td>
+                <td>${formatQty(item.qtyReceived || 0)} ${escapeHTML(item.satuan || "")}</td>
                 <td class="owner-purchase-value">${formatRupiah(item.hargaBeli)}</td>
                 <td class="owner-purchase-value"><strong>${formatRupiah(item.subtotal)}</strong></td>
                 <td><button type="button" class="btn btn-danger" style="padding:5px 8px;" onclick="hapusDraftItem('${item.id}')">Hapus</button></td>
@@ -4375,6 +4414,7 @@ function ubahQtyDraft(id,delta) {
     }
 
     item.qtyOrdered = Math.max(next,minQty || 0.01);
+    item.qtyOrderedBase = item.qtyOrdered * Number(item.faktorKonversi || 1);
     item.subtotal = item.qtyOrdered * item.hargaBeli;
     renderDraftPO();
     jadwalkanAutoDraftPO();
@@ -4575,12 +4615,9 @@ function normalisasiNomorWhatsAppPO(nomor) {
 
 function satuanPesanWhatsAppPO(item) {
     const namaBarang = String(item?.namaBarang || item?.nama || "").trim();
-
-    if (namaBarang.toLowerCase().includes("telur")) {
-        return "Kg";
-    }
-
-    return String(item?.satuan || "Pcs").trim() || "Pcs";
+    return String(
+        item?.satuan || (namaBarang.toLowerCase().includes("telur") ? "Kg" : "Pcs")
+    ).trim() || "Pcs";
 }
 
 function buatPesanWhatsAppPO(po) {

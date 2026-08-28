@@ -121,11 +121,16 @@
             barcode:item.barcode_snapshot || "",
             namaBarang:item.product_name_snapshot || "Barang",
             kategori:item.category_snapshot || "",
-            satuan:item.unit_snapshot || "Pcs",
+            satuan:item.purchase_unit_snapshot || item.unit_snapshot || "Pcs",
+            satuanDasar:item.unit_snapshot || "Pcs",
+            faktorKonversi:Number(item.unit_factor_snapshot || 1),
             stokSnapshot:Number(item.stock_snapshot || 0),
-            qtyOrdered:Number(item.qty_ordered || 0),
-            qtyReceived:Number(item.qty_received || 0),
-            hargaBeli:Number(item.purchase_price || 0),
+            qtyOrdered:Number(item.purchase_qty_ordered ?? (Number(item.qty_ordered || 0) / Number(item.unit_factor_snapshot || 1))),
+            qtyOrderedBase:Number(item.qty_ordered || 0),
+            qtyReceived:Number(item.purchase_qty_received ?? (Number(item.qty_received || 0) / Number(item.unit_factor_snapshot || 1))),
+            qtyReceivedBase:Number(item.qty_received || 0),
+            hargaBeli:Number(item.package_purchase_price ?? (Number(item.purchase_price || 0) * Number(item.unit_factor_snapshot || 1))),
+            hargaBeliDasar:Number(item.purchase_price || 0),
             subtotal:Number(item.line_subtotal || 0),
             _cloud:{id:item.id}
         }));
@@ -149,8 +154,10 @@
             createdAt:row.created_at || null,
             updatedAt:row.updated_at || null,
             totalJenis:Number(row.total_item_types || mappedItems.length),
-            totalQty:Number(row.total_qty || 0),
-            totalReceived:Number(row.total_received || 0),
+            totalQty:mappedItems.reduce((sum,item) => sum + Number(item.qtyOrdered || 0),0),
+            totalQtyBase:Number(row.total_qty || 0),
+            totalReceived:mappedItems.reduce((sum,item) => sum + Number(item.qtyReceived || 0),0),
+            totalReceivedBase:Number(row.total_received || 0),
             totalNilai:Number(row.total_value || 0),
             legacyImported:Boolean(row.legacy_imported),
             historyOnly:Boolean(row.history_only),
@@ -171,12 +178,16 @@
             barcode:item.barcode_snapshot || "",
             namaBarang:item.product_name_snapshot || "Barang",
             kategori:item.category_snapshot || "",
-            satuan:item.unit_snapshot || "Pcs",
+            satuan:item.purchase_unit_snapshot || item.unit_snapshot || "Pcs",
+            satuanDasar:item.unit_snapshot || "Pcs",
+            faktorKonversi:Number(item.unit_factor_snapshot || 1),
             stokSebelum:item.stock_before === null ? 0 : Number(item.stock_before || 0),
-            qtyDiterima:Number(item.qty_received || 0),
+            qtyDiterima:Number(item.purchase_qty_received ?? (Number(item.qty_received || 0) / Number(item.unit_factor_snapshot || 1))),
+            qtyDiterimaBase:Number(item.qty_received || 0),
             stokSesudah:item.stock_after === null ? 0 : Number(item.stock_after || 0),
             hargaBeliSebelum:Number(item.purchase_price_before || 0),
-            hargaBeli:Number(item.purchase_price || 0),
+            hargaBeli:Number(item.package_purchase_price ?? (Number(item.purchase_price || 0) * Number(item.unit_factor_snapshot || 1))),
+            hargaBeliDasar:Number(item.purchase_price || 0),
             subtotal:Number(item.line_subtotal || 0),
             expiredDate:item.expiry_date || "",
             _cloud:{id:item.id}
@@ -203,7 +214,8 @@
             cancelledBy:row.cancelled_username || "",
             cancelledAt:row.cancelled_at || "",
             totalJenis:Number(row.total_item_types || mappedItems.length),
-            totalQty:Number(row.total_qty || 0),
+            totalQty:mappedItems.reduce((sum,item) => sum + Number(item.qtyDiterima || 0),0),
+            totalQtyBase:Number(row.total_qty || 0),
             totalNilai:Number(row.total_value || 0),
             stockEffectApplied:Boolean(row.stock_effect_applied),
             stockEffectReversed:Boolean(row.stock_effect_reversed),
@@ -298,7 +310,7 @@
                 .order("created_at",{ascending:false})
                 .limit(2000),
             supabase.from("purchase_order_items")
-                .select("id,purchase_order_id,product_id,product_name_snapshot,barcode_snapshot,category_snapshot,unit_snapshot,stock_snapshot,qty_ordered,qty_received,purchase_price,line_subtotal,legacy_item_id")
+                .select("id,purchase_order_id,product_id,product_name_snapshot,barcode_snapshot,category_snapshot,unit_snapshot,purchase_unit_snapshot,unit_factor_snapshot,stock_snapshot,qty_ordered,qty_received,purchase_qty_ordered,purchase_qty_received,purchase_price,package_purchase_price,line_subtotal,legacy_item_id")
                 .limit(10000)
         ]);
         if(headerError) throw headerError;
@@ -324,7 +336,7 @@
                 .order("created_at",{ascending:false})
                 .limit(2000),
             supabase.from("goods_receipt_items")
-                .select("id,goods_receipt_id,product_id,purchase_order_item_id,product_name_snapshot,barcode_snapshot,category_snapshot,unit_snapshot,qty_received,purchase_price_before,purchase_price,line_subtotal,expiry_date,stock_before,stock_after,stock_effect_applied,legacy_item_id")
+                .select("id,goods_receipt_id,product_id,purchase_order_item_id,product_name_snapshot,barcode_snapshot,category_snapshot,unit_snapshot,purchase_unit_snapshot,unit_factor_snapshot,qty_received,purchase_qty_received,purchase_price_before,purchase_price,package_purchase_price,line_subtotal,expiry_date,stock_before,stock_after,stock_effect_applied,legacy_item_id")
                 .limit(10000)
         ]);
         if(headerError) throw headerError;
@@ -400,8 +412,8 @@
 
         const items = (payload.items || []).map((item,index) => ({
             product_id:resolveProductId(item),
-            qty:Number(item.qtyOrdered || item.qty || 0),
-            purchase_price:Number(item.hargaBeli || item.purchasePrice || 0),
+            qty:Number(item.qtyOrderedBase ?? (Number(item.qtyOrdered || item.qty || 0) * Number(item.faktorKonversi || 1))),
+            purchase_price:Number(item.hargaBeliDasar ?? (Number(item.hargaBeli || item.purchasePrice || 0) / Number(item.faktorKonversi || 1))),
             client_item_id:String(item.id || index)
         }));
 
@@ -466,8 +478,8 @@
 
         const items = (payload.items || []).map((item,index) => ({
             product_id:resolveProductId(item),
-            qty:Number(item.qtyDiterima || item.qty || 0),
-            purchase_price:Number(item.hargaBeli || item.purchasePrice || 0),
+            qty:Number(item.qtyDiterimaBase ?? (Number(item.qtyDiterima || item.qty || 0) * Number(item.faktorKonversi || 1))),
+            purchase_price:Number(item.hargaBeliDasar ?? (Number(item.hargaBeli || item.purchasePrice || 0) / Number(item.faktorKonversi || 1))),
             expiry_date:item.expiredDate || null,
             client_item_id:String(item.id || index)
         }));

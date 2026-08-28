@@ -1549,10 +1549,11 @@
     <script src="js/cloud-auth.js?v=15.0"></script>
     <script src="js/cloud-session.js?v=6.0"></script>
     <script src="js/cloud-session-guard.js?v=15.0"></script>
-    <script src="js/procurement-service.js?v=11.0"></script>
+    <script src="js/unit-conversion.js?v=20.0"></script>
+    <script src="js/procurement-service.js?v=20.0"></script>
     <script src="js/procurement-bootstrap.js?v=11.0"></script>
     <!-- Live Sync Tahap 7: Cloud Master Barang -->
-    <script src="js/products-service.js?v=7.0"></script>
+    <script src="js/products-service.js?v=20.0"></script>
     <script src="js/products-bootstrap.js?v=7.0"></script>
 
 </head>
@@ -1703,12 +1704,22 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="inputQtyGR">Qty Diterima</label>
+                    <label for="inputQtyGR" id="labelQtyGR">Qty Diterima</label>
                     <input type="number" id="inputQtyGR" min="0.01" step="0.01" placeholder="0" oninput="hitungPreviewGR()">
                 </div>
 
                 <div class="form-group">
-                    <label for="inputHargaBeliGR">Harga Beli / Satuan (Rp)</label>
+                    <label>Satuan Beli</label>
+                    <input type="text" id="inputSatuanBeliGR" value="Pcs" readonly>
+                </div>
+
+                <div class="form-group">
+                    <label>Konversi ke Stok Dasar</label>
+                    <input type="text" id="inputKonversiGR" value="1 Pcs = 1 Pcs" readonly>
+                </div>
+
+                <div class="form-group">
+                    <label for="inputHargaBeliGR">Harga Beli / Kemasan (Rp)</label>
                     <input type="number" id="inputHargaBeliGR" min="0" step="1" placeholder="0" oninput="hitungPreviewGR()">
                 </div>
 
@@ -3974,12 +3985,20 @@ function pilihBarangGoodsReceipt(index) {
     document.getElementById("inputCariBarangGR").value = item.nama || "";
     document.getElementById("inputNamaBarangGR").value = item.nama || "";
 
-    const satuan = item.satuan || "Pcs";
+    const normalized = window.LDMUnits
+        ? window.LDMUnits.normalizeProduct(item)
+        : {...item,satuanDasar:item.satuan || "Pcs",satuanBeli:item.satuanBeli || item.satuan || "Pcs",konversiBeli:Number(item.konversiBeli || 1)};
+    const satuan = normalized.satuanDasar;
     document.getElementById("inputStokSekarangGR").value =
         `${formatQty(item.stok || 0)} ${satuan}`;
 
-    document.getElementById("inputHargaBeliGR").value =
-        Number(item.hargaBeli || 0);
+    document.getElementById("inputSatuanBeliGR").value = normalized.satuanBeli;
+    document.getElementById("inputKonversiGR").value =
+        `1 ${normalized.satuanBeli} = ${normalized.konversiBeli} ${normalized.satuanDasar}`;
+    document.getElementById("labelQtyGR").textContent = `Qty Diterima (${normalized.satuanBeli})`;
+    document.getElementById("inputHargaBeliGR").value = window.LDMUnits
+        ? window.LDMUnits.packagePrice(item.hargaBeli || 0,normalized)
+        : Number(item.hargaBeli || 0) * Number(normalized.konversiBeli || 1);
 
     document.getElementById("inputQtyGR").value = "1";
 
@@ -4005,6 +4024,9 @@ function resetFormBarangGR() {
     document.getElementById("inputCariBarangGR").value = "";
     document.getElementById("inputNamaBarangGR").value = "";
     document.getElementById("inputStokSekarangGR").value = "0";
+    document.getElementById("inputSatuanBeliGR").value = "Pcs";
+    document.getElementById("inputKonversiGR").value = "1 Pcs = 1 Pcs";
+    document.getElementById("labelQtyGR").textContent = "Qty Diterima";
     document.getElementById("inputQtyGR").value = "";
     document.getElementById("inputHargaBeliGR").value = "";
     document.getElementById("inputExpiredGR").value = "";
@@ -4038,6 +4060,15 @@ function tambahBarangKeGoodsReceipt() {
 
     const qty = Number(document.getElementById("inputQtyGR").value);
     const hargaBeli = Number(document.getElementById("inputHargaBeliGR").value);
+    const normalized = window.LDMUnits
+        ? window.LDMUnits.normalizeProduct(barang)
+        : {...barang,satuanDasar:barang.satuan || "Pcs",satuanBeli:barang.satuanBeli || barang.satuan || "Pcs",konversiBeli:Number(barang.konversiBeli || 1)};
+    const qtyBase = window.LDMUnits
+        ? window.LDMUnits.toBase(qty,normalized)
+        : qty * Number(normalized.konversiBeli || 1);
+    const hargaBeliDasar = window.LDMUnits
+        ? window.LDMUnits.basePrice(hargaBeli,normalized)
+        : hargaBeli / Number(normalized.konversiBeli || 1);
 
     if (!Number.isFinite(qty) || qty <= 0) {
         tampilkanNotifikasi("Qty Tidak Valid", "Jumlah barang diterima harus lebih dari 0.");
@@ -4056,7 +4087,9 @@ function tambahBarangKeGoodsReceipt() {
 
     if (existing) {
         existing.qtyDiterima += qty;
+        existing.qtyDiterimaBase = Number(existing.qtyDiterima || 0) * Number(existing.faktorKonversi || 1);
         existing.hargaBeli = hargaBeli;
+        existing.hargaBeliDasar = hargaBeliDasar;
         existing.subtotal = existing.qtyDiterima * existing.hargaBeli;
 
         const exp = document.getElementById("inputExpiredGR").value;
@@ -4071,11 +4104,15 @@ function tambahBarangKeGoodsReceipt() {
             barcode,
             namaBarang: String(barang.nama || "Tanpa Nama"),
             kategori: String(barang.kategori || ""),
-            satuan: String(barang.satuan || "Pcs"),
+            satuan: String(normalized.satuanBeli),
+            satuanDasar: String(normalized.satuanDasar),
+            faktorKonversi: Number(normalized.konversiBeli || 1),
             stokSnapshot: Number(barang.stok || 0),
             hargaBeliSebelum: Number(barang.hargaBeli || 0),
             qtyDiterima: qty,
+            qtyDiterimaBase: qtyBase,
             hargaBeli,
+            hargaBeliDasar,
             subtotal: qty * hargaBeli,
             expiredDate: document.getElementById("inputExpiredGR").value || ""
         });
@@ -4105,6 +4142,7 @@ function editQtyDraft(id, delta) {
     }
 
     item.qtyDiterima = next;
+    item.qtyDiterimaBase = item.qtyDiterima * Number(item.faktorKonversi || 1);
     item.subtotal = item.qtyDiterima * item.hargaBeli;
     renderDraftGoodsReceipt();
     jadwalkanAutoDraftGR();
@@ -4127,13 +4165,13 @@ function renderDraftGoodsReceipt() {
                 <td>${index + 1}</td>
                 <td>
                     <strong>${escapeHTML(item.namaBarang)}</strong><br>
-                    <small style="color:var(--label-color);">${escapeHTML(item.kategori || "-")} • ${escapeHTML(item.satuan)}</small>
+                    <small style="color:var(--label-color);">${escapeHTML(item.kategori || "-")} • 1 ${escapeHTML(item.satuan)} = ${formatQty(item.faktorKonversi || 1)} ${escapeHTML(item.satuanDasar || item.satuan || "Pcs")}</small>
                 </td>
                 <td>${escapeHTML(item.barcode || "-")}</td>
-                <td>${formatQty(item.stokSnapshot)} ${escapeHTML(item.satuan)}</td>
+                <td>${formatQty(item.stokSnapshot)} ${escapeHTML(item.satuanDasar || item.satuan || "Pcs")}</td>
                 <td>
                     <button type="button" class="btn btn-soft" style="padding:4px 7px;" onclick="editQtyDraft('${item.id}', -1)">−</button>
-                    <strong style="margin:0 7px;">${formatQty(item.qtyDiterima)}</strong>
+                    <strong style="margin:0 7px;">${formatQty(item.qtyDiterima)} ${escapeHTML(item.satuan || "")}</strong>
                     <button type="button" class="btn btn-soft" style="padding:4px 7px;" onclick="editQtyDraft('${item.id}', 1)">+</button>
                 </td>
                 <td class="owner-purchase-value"></td>
@@ -4317,11 +4355,12 @@ function simpanGoodsReceipt() {
             return;
         }
 
-        const qty =
-            Number(draft.qtyDiterima || 0);
+        const qty = Number(draft.qtyDiterima || 0);
+        const faktorKonversi = Math.max(Number(draft.faktorKonversi || 1),0.001);
+        const qtyBase = Number(draft.qtyDiterimaBase ?? (qty * faktorKonversi));
 
-        const hargaBeliBaru =
-            Number(draft.hargaBeli || 0);
+        const hargaBeliBaru = Number(draft.hargaBeli || 0);
+        const hargaBeliDasar = Number(draft.hargaBeliDasar ?? (hargaBeliBaru / faktorKonversi));
 
         preparedItems.push({
             barangIndex: index,
@@ -4343,20 +4382,19 @@ function simpanGoodsReceipt() {
                     draft.kategori ||
                     ""
                 ),
-            satuan:
-                String(
-                    barang.satuan ||
-                    draft.satuan ||
-                    "Pcs"
-                ),
+            satuan: String(draft.satuan || barang.satuanBeli || barang.satuan || "Pcs"),
+            satuanDasar: String(barang.satuan || draft.satuanDasar || "Pcs"),
+            faktorKonversi,
             stokSebelum:
                 Number(barang.stok || 0),
             qtyDiterima: qty,
+            qtyDiterimaBase: qtyBase,
             stokSesudah:
-                Number(barang.stok || 0) + qty,
+                Number(barang.stok || 0) + qtyBase,
             hargaBeliSebelum:
                 Number(barang.hargaBeli || 0),
             hargaBeli: hargaBeliBaru,
+            hargaBeliDasar,
             subtotal:
                 qty * hargaBeliBaru,
             expiredDate:
@@ -4558,13 +4596,13 @@ function terapkanGoodsReceiptKeStok(receipt) {
         item.stokSebelum = stokSebelum;
         item.stokSesudah =
             stokSebelum +
-            Number(item.qtyDiterima || 0);
+            Number(item.qtyDiterimaBase ?? (Number(item.qtyDiterima || 0) * Number(item.faktorKonversi || 1)));
 
         barang.stok =
             item.stokSesudah;
 
         barang.hargaBeli =
-            Number(item.hargaBeli || 0);
+            Number(item.hargaBeliDasar ?? (Number(item.hargaBeli || 0) / Number(item.faktorKonversi || 1)));
 
         if (item.expiredDate) {
             barang.expiredTerakhir =
@@ -4860,7 +4898,7 @@ function hapusGoodsReceiptDanRollback(id) {
         if (!barang) continue;
 
         const stokSekarang = Number(barang.stok || 0);
-        const qty = Number(item.qtyDiterima || 0);
+        const qty = Number(item.qtyDiterimaBase ?? (Number(item.qtyDiterima || 0) * Number(item.faktorKonversi || 1)));
 
         if (stokSekarang >= qty) {
             barang.stok = stokSekarang - qty;
@@ -4868,7 +4906,7 @@ function hapusGoodsReceiptDanRollback(id) {
             barang.stok = 0;
         }
 
-        if (Number(barang.hargaBeli || 0) === Number(item.hargaBeli || 0)) {
+        if (Number(barang.hargaBeli || 0) === Number(item.hargaBeliDasar ?? (Number(item.hargaBeli || 0) / Number(item.faktorKonversi || 1)))) {
             barang.hargaBeli = Number(item.hargaBeliSebelum || 0);
         }
     }
@@ -5187,11 +5225,15 @@ function muatSumberPurchaseOrder() {
             barcode: String(barang.barcode || ""),
             namaBarang: String(barang.nama || poItem.namaBarang || "Tanpa Nama"),
             kategori: String(barang.kategori || poItem.kategori || ""),
-            satuan: String(barang.satuan || poItem.satuan || "Pcs"),
+            satuan: String(poItem.satuan || barang.satuanBeli || barang.satuan || "Pcs"),
+            satuanDasar: String(poItem.satuanDasar || barang.satuan || "Pcs"),
+            faktorKonversi: Number(poItem.faktorKonversi || barang.konversiBeli || 1),
             stokSnapshot: Number(barang.stok || 0),
             hargaBeliSebelum: Number(barang.hargaBeli || 0),
             qtyDiterima: remaining,
+            qtyDiterimaBase: Number(poItem.qtyOrderedBase || (Number(poItem.qtyOrdered || 0) * Number(poItem.faktorKonversi || 1))) - Number(poItem.qtyReceivedBase || (Number(poItem.qtyReceived || 0) * Number(poItem.faktorKonversi || 1))),
             hargaBeli: Number(poItem.hargaBeli || barang.hargaBeli || 0),
+            hargaBeliDasar: Number(poItem.hargaBeliDasar ?? barang.hargaBeli ?? 0),
             subtotal:
                 remaining *
                 Number(poItem.hargaBeli || barang.hargaBeli || 0),
