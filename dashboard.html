@@ -4421,9 +4421,8 @@ body.dark-mode
                     <div class="card modal">
                         <div class="card-icon">📉</div>
                         <div class="card-info">
-                            <h4>HPP / Modal Terjual</h4>
+                            <h4>Modal + Ops</h4>
                             <h2>Rp <span id="totalModal">0</span></h2>
-                            <small id="ownerHppNote" style="display:block;margin-top:3px;color:#64748b;font-size:.58rem;line-height:1.35;">Harga beli saat transaksi</small>
                         </div>
                     </div>
 
@@ -4682,7 +4681,7 @@ body.dark-mode
 
                 <!-- Banner Rumus Profit -->
                 <div class="formula-box">
-                    Rumus Profit: <span>PENJUALAN BERSIH (<span id="txtOmzet2">0</span>)</span> - <span>HPP (<span id="txtModal">0</span>)</span> = <span>PROFIT BERSIH Rp <span id="txtProfit">0</span></span>
+                    Rumus Profit: <span>OMZET (<span id="txtOmzet2">0</span>)</span> - <span>MODAL (<span id="txtModal">0</span>)</span> = <span>TOTAL PROFIT Rp <span id="txtProfit">0</span></span>
                 </div>
 
                 <!-- PANEL STATISTIK BULANAN -->
@@ -4706,7 +4705,7 @@ body.dark-mode
                         <div class="card modal">
                             <div class="card-icon">📉</div>
                             <div class="card-info">
-                                <h4>HPP / Modal Terjual</h4>
+                                <h4>Modal + Ops</h4>
                                 <h2>Rp <span id="monthlyModal">0</span></h2>
                             </div>
                         </div>
@@ -7788,119 +7787,6 @@ function batasiTampilanOmzetDashboard() {
             return [];
         }
 
-        function getDashboardTransactionCode(transaction) {
-            return String(
-                transaction?.kodeTransaksi
-                ?? transaction?.transaction_code
-                ?? transaction?.id
-                ?? transaction?.timestamp
-                ?? ""
-            );
-        }
-
-        function getDashboardApprovedReturnIndex() {
-            let returns = [];
-            try {
-                const parsed = JSON.parse(localStorage.getItem("dataRetur") || "[]");
-                returns = Array.isArray(parsed) ? parsed : [];
-            } catch (error) {
-                console.warn("Data retur tidak dapat dibaca untuk perhitungan dashboard:",error);
-            }
-
-            const index = new Map();
-            returns.forEach(returnRecord => {
-                if (String(returnRecord?.status || "").toUpperCase() !== "APPROVED") return;
-                const code = String(returnRecord?.transaksiId ?? returnRecord?.transactionCode ?? "");
-                if (!code) return;
-                if (!index.has(code)) index.set(code,[]);
-                index.get(code).push(returnRecord);
-            });
-            return index;
-        }
-
-        function getDashboardItemQty(item) {
-            const value = Number(item?.qty ?? item?.jumlah ?? item?.quantity ?? 0);
-            return Number.isFinite(value) ? Math.max(0,value) : 0;
-        }
-
-        function getDashboardItemCostSnapshot(item) {
-            const snapshotKeys = ["hargaBeli","cost_price_snapshot","purchasePrice","hargaModal","modal","hpp"];
-            const hasSnapshot = snapshotKeys.some(key =>
-                item?.[key] !== undefined
-                && item?.[key] !== null
-                && item?.[key] !== ""
-            );
-            const rawValue = snapshotKeys
-                .map(key => item?.[key])
-                .find(value => value !== undefined && value !== null && value !== "");
-            const value = Number(rawValue ?? 0);
-            return {
-                value:Number.isFinite(value) ? Math.max(0,value) : 0,
-                hasSnapshot
-            };
-        }
-
-        function isSameDashboardTransactionItem(source,returned) {
-            const sourceProductId = String(source?.productId ?? source?.product_id ?? source?.id ?? "").trim();
-            const returnProductId = String(returned?.productId ?? returned?.product_id ?? "").trim();
-            if (sourceProductId && returnProductId && sourceProductId === returnProductId) return true;
-
-            const sourceBarcode = String(source?.barcode ?? "").trim().toLowerCase();
-            const returnBarcode = String(returned?.barcode ?? "").trim().toLowerCase();
-            if (sourceBarcode && returnBarcode && sourceBarcode === returnBarcode) return true;
-
-            const sourceName = String(source?.nama ?? source?.namaBarang ?? source?.title ?? "").trim().toLowerCase();
-            const returnName = String(returned?.nama ?? returned?.namaBarang ?? "").trim().toLowerCase();
-            return Boolean(sourceName && returnName && sourceName === returnName);
-        }
-
-        function getDashboardTransactionFinancials(transaction,returnIndex) {
-            const items = getDaftarItem(transaction);
-            let grossHpp = 0;
-            let missingSnapshotItems = 0;
-
-            items.forEach(item => {
-                const cost = getDashboardItemCostSnapshot(item);
-                grossHpp += getDashboardItemQty(item) * cost.value;
-                if (!cost.hasSnapshot) missingSnapshotItems += 1;
-            });
-
-            const transactionCode = getDashboardTransactionCode(transaction);
-            const approvedReturns = returnIndex?.get(transactionCode) || [];
-            let returnTotal = 0;
-            let returnedHpp = 0;
-
-            approvedReturns.forEach(returnRecord => {
-                returnTotal += Math.max(0,Number(returnRecord?.totalRetur ?? returnRecord?.total_refund ?? 0) || 0);
-                const returnedItems = Array.isArray(returnRecord?.items) ? returnRecord.items : [];
-                returnedItems.forEach(returnedItem => {
-                    const sourceItem = items.find(item => isSameDashboardTransactionItem(item,returnedItem));
-                    if (!sourceItem) return;
-                    const qtyReturn = Math.max(0,Number(returnedItem?.qtyRetur ?? returnedItem?.qty ?? 0) || 0);
-                    returnedHpp += qtyReturn * getDashboardItemCostSnapshot(sourceItem).value;
-                });
-            });
-
-            if (!approvedReturns.length) {
-                returnTotal = Math.max(0,Number(transaction?.totalRetur ?? 0) || 0);
-            }
-
-            const grossSales = Math.max(0,getNominalTransaksi(transaction));
-            let netSales = Math.max(0,grossSales-returnTotal);
-            if (!approvedReturns.length && !returnTotal && transaction?.totalBersih !== undefined) {
-                netSales = Math.max(0,Number(transaction.totalBersih) || 0);
-            }
-
-            const hpp = Math.max(0,grossHpp-returnedHpp);
-            return {
-                sales:Math.round(netSales*100)/100,
-                hpp:Math.round(hpp*100)/100,
-                profit:Math.round((netSales-hpp)*100)/100,
-                missingSnapshotItems
-            };
-        }
-
-
         /* =====================================================
            5 ITEM TERLARIS
            ===================================================== */
@@ -10188,66 +10074,66 @@ function batasiTampilanOmzetDashboard() {
                     : "Maksimal 90 hari. Perhitungan menggunakan tanggal bisnis WITA dan kedua tanggal ikut dihitung.";
             }
 
+            const mapModalBarang = {};
+            masterBarang.forEach(b => {
+                const keyName = (b.nama || b.namaBarang || "").toLowerCase().trim();
+                if (keyName) {
+                    mapModalBarang[keyName] = Number(b.hargaBeli || b.modal || b.hpp || 0);
+                }
+            });
+
             let totalOmzet = 0;
             let totalTunai = 0;
             let totalNonTunai = 0;
             let totalModalBarang = 0;
             let totalQtyTerjual = 0;
-            let missingSnapshotItems = 0;
-            const approvedReturnIndex = getDashboardApprovedReturnIndex();
 
             laporan.forEach(transaksi => {
-                const financial = getDashboardTransactionFinancials(transaksi,approvedReturnIndex);
-                let nominal = financial.sales;
+                let nominal = getNominalTransaksi(transaksi);
                 const items = getDaftarItem(transaksi);
 
                 if (nominal === 0 && items.length > 0) {
-                    const hasReturn = (approvedReturnIndex.get(getDashboardTransactionCode(transaksi)) || []).length > 0;
-                    if (!hasReturn && Number(transaksi?.totalRetur || 0) <= 0) {
-                        items.forEach(it => {
-                            const price = Number(it.harga || it.hargaJual || it.price || 0);
-                            const q = Number(it.qty || it.jumlah || 1);
-                            nominal += Number(it.subtotal) || (price * q);
-                        });
-                    }
+                    items.forEach(it => {
+                        const price = Number(it.harga || it.hargaJual || it.price || 0);
+                        const q = Number(it.qty || it.jumlah || 1);
+                        nominal += Number(it.subtotal) || (price * q);
+                    });
                 }
 
                 totalOmzet += nominal;
-                totalModalBarang += financial.hpp;
-                missingSnapshotItems += financial.missingSnapshotItems;
 
                 const pecahan = hitungPecahanPembayaran(transaksi, nominal);
                 totalTunai += pecahan.tunai;
                 totalNonTunai += pecahan.nonTunai;
 
                 items.forEach(item => {
+                    const nama = item.nama || item.namaBarang || item.title || "";
                     const qty = Number(item.qty || item.jumlah || 1);
+
+                    let modalSatuan = Number(item.hargaBeli || item.modal || item.hpp || 0);
+                    if (modalSatuan === 0 && mapModalBarang[nama.toLowerCase().trim()]) {
+                        modalSatuan = mapModalBarang[nama.toLowerCase().trim()];
+                    }
+
+                    totalModalBarang += (modalSatuan * qty);
                     totalQtyTerjual += qty;
                 });
             });
 
             const totalBiayaOperasional = operasional.reduce((sum, item) => sum + Number(item.nominal || 0), 0);
-            const totalProfit = totalOmzet - totalModalBarang;
+            const grandTotalModal = totalModalBarang + totalBiayaOperasional;
+            const totalProfit = totalOmzet - grandTotalModal;
 
             document.getElementById("totalOmzet").innerText = totalOmzet.toLocaleString("id-ID");
             document.getElementById("ownerTunai").innerText = totalTunai.toLocaleString("id-ID");
             document.getElementById("ownerNonTunai").innerText = totalNonTunai.toLocaleString("id-ID");
             
-            document.getElementById("totalModal").innerText = totalModalBarang.toLocaleString("id-ID");
+            document.getElementById("totalModal").innerText = grandTotalModal.toLocaleString("id-ID");
             document.getElementById("totalProfit").innerText = totalProfit.toLocaleString("id-ID");
             document.getElementById("transaksiCount").innerText = laporan.length + " Transaksi";
 
-            const ownerHppNote = document.getElementById("ownerHppNote");
-            if (ownerHppNote) {
-                ownerHppNote.textContent = missingSnapshotItems > 0
-                    ? `${missingSnapshotItems} item transaksi lama belum memiliki snapshot HPP`
-                    : "Harga beli saat transaksi";
-                ownerHppNote.style.color = missingSnapshotItems > 0 ? "#d97706" : "#64748b";
-            }
-            document.getElementById("totalProfit").style.color = totalProfit < 0 ? "#dc2626" : "";
-
             document.getElementById("txtOmzet2").innerText = totalOmzet.toLocaleString("id-ID");
-            document.getElementById("txtModal").innerText = totalModalBarang.toLocaleString("id-ID");
+            document.getElementById("txtModal").innerText = grandTotalModal.toLocaleString("id-ID");
             document.getElementById("txtProfit").innerText = totalProfit.toLocaleString("id-ID");
 
             const stokKritis = masterBarang.filter(
@@ -10294,10 +10180,6 @@ function batasiTampilanOmzetDashboard() {
                     <span class="item-name">Total Modal HPP</span>
                     <span class="item-price">Rp ${totalModalBarang.toLocaleString("id-ID")}</span>
                 </li>
-                <li>
-                    <span class="item-name">Total Pengeluaran Operasional</span>
-                    <span class="item-price" style="color:#f43f5e;">Rp ${totalBiayaOperasional.toLocaleString("id-ID")}</span>
-                </li>
             `;
 
             if (operasional.length > 0) {
@@ -10332,34 +10214,39 @@ function batasiTampilanOmzetDashboard() {
             const totalDays = new Date(Number(yearStr), Number(monthStr), 0).getDate();
 
             const laporanAll = JSON.parse(localStorage.getItem("laporan")) || JSON.parse(localStorage.getItem("dataLaporan")) || [];
+            const operasionalAll = JSON.parse(localStorage.getItem("operasional")) || [];
+            const masterBarang = JSON.parse(localStorage.getItem("dataBarang")) || [];
 
             const laporanBulan = laporanAll.filter(t => parseTanggalData(t).startsWith(targetMonth));
+            const operasionalBulan = operasionalAll.filter(op => parseTanggalData(op).startsWith(targetMonth));
+
+            const mapModalBarang = {};
+            masterBarang.forEach(b => {
+                const keyName = (b.nama || b.namaBarang || "").toLowerCase().trim();
+                if (keyName) {
+                    mapModalBarang[keyName] = Number(b.hargaBeli || b.modal || b.hpp || 0);
+                }
+            });
 
             let totalOmzetBulan = 0;
             let totalModalBarangBulan = 0;
             const rekapQtyBarang = {};
             const rekapOmzetBarang = {};
             const omzetPerHari = Array(totalDays).fill(0);
-            const approvedReturnIndex = getDashboardApprovedReturnIndex();
 
             laporanBulan.forEach(transaksi => {
-                const financial = getDashboardTransactionFinancials(transaksi,approvedReturnIndex);
-                let nominal = financial.sales;
+                let nominal = getNominalTransaksi(transaksi);
                 const items = getDaftarItem(transaksi);
 
                 if (nominal === 0 && items.length > 0) {
-                    const hasReturn = (approvedReturnIndex.get(getDashboardTransactionCode(transaksi)) || []).length > 0;
-                    if (!hasReturn && Number(transaksi?.totalRetur || 0) <= 0) {
-                        items.forEach(it => {
-                            const price = Number(it.harga || it.hargaJual || it.price || 0);
-                            const q = Number(it.qty || it.jumlah || 1);
-                            nominal += Number(it.subtotal) || (price * q);
-                        });
-                    }
+                    items.forEach(it => {
+                        const price = Number(it.harga || it.hargaJual || it.price || 0);
+                        const q = Number(it.qty || it.jumlah || 1);
+                        nominal += Number(it.subtotal) || (price * q);
+                    });
                 }
 
                 totalOmzetBulan += nominal;
-                totalModalBarangBulan += financial.hpp;
 
                 const tglStr = parseTanggalData(transaksi);
                 const tglNum = parseInt(tglStr.substring(8, 10), 10);
@@ -10370,6 +10257,13 @@ function batasiTampilanOmzetDashboard() {
                 items.forEach(item => {
                     const nama = item.nama || item.namaBarang || item.title || "Lainnya";
                     const qty = Number(item.qty || item.jumlah || 1);
+
+                    let modalSatuan = Number(item.hargaBeli || item.modal || item.hpp || 0);
+                    if (modalSatuan === 0 && mapModalBarang[nama.toLowerCase().trim()]) {
+                        modalSatuan = mapModalBarang[nama.toLowerCase().trim()];
+                    }
+
+                    totalModalBarangBulan += (modalSatuan * qty);
 
                     if (!rekapQtyBarang[nama]) {
                         rekapQtyBarang[nama] = 0;
@@ -10389,13 +10283,14 @@ function batasiTampilanOmzetDashboard() {
                 });
             });
 
-            const profitBulan = totalOmzetBulan - totalModalBarangBulan;
+            const totalOperasionalBulan = operasionalBulan.reduce((sum, item) => sum + Number(item.nominal || 0), 0);
+            const grandTotalModalBulan = totalModalBarangBulan + totalOperasionalBulan;
+            const profitBulan = totalOmzetBulan - grandTotalModalBulan;
 
             document.getElementById("monthlyOmzet").innerText = totalOmzetBulan.toLocaleString("id-ID");
-            document.getElementById("monthlyModal").innerText = totalModalBarangBulan.toLocaleString("id-ID");
+            document.getElementById("monthlyModal").innerText = grandTotalModalBulan.toLocaleString("id-ID");
             document.getElementById("monthlyProfit").innerText = profitBulan.toLocaleString("id-ID");
             document.getElementById("monthlyTransaksi").innerText = laporanBulan.length;
-            document.getElementById("monthlyProfit").style.color = profitBulan < 0 ? "#dc2626" : "";
 
             let bestSellerName = "-";
             let maxOmzetBarang = 0;
@@ -12254,13 +12149,8 @@ window.addEventListener(
                 const name=itemName(item),key=normalize(name);
                 const amount=Math.max(0,safeNumber(item?.qty||item?.jumlah||item?.quantity||1));
                 const subtotal=safeNumber(item?.subtotal||item?.subTotal||item?.lineSubtotal)||safeNumber(item?.harga||item?.hargaJual||item?.price)*amount;
-                const unitCost=safeNumber(
-                    item?.hargaBeli
-                    ?? item?.cost_price_snapshot
-                    ?? item?.modal
-                    ?? item?.hpp
-                    ?? 0
-                );
+                const product=productByName.get(key);
+                const unitCost=safeNumber(item?.hargaBeli||item?.modal||item?.hpp||product?.hargaBeli||product?.modal||product?.hpp);
                 const existing=itemMap.get(key)||{name,qty:0,revenue:0,cost:0};
                 existing.qty+=amount;existing.revenue+=subtotal;existing.cost+=unitCost*amount;
                 itemMap.set(key,existing);qty+=amount;cost+=unitCost*amount;
