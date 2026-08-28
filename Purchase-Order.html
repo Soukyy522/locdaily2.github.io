@@ -4561,6 +4561,105 @@ function statusClass(status) {
     return map[status] || "badge-draft";
 }
 
+function normalisasiNomorWhatsAppPO(nomor) {
+    let hasil = String(nomor || "").replace(/\D/g, "");
+
+    if (hasil.startsWith("0")) {
+        hasil = `62${hasil.slice(1)}`;
+    } else if (hasil.startsWith("8")) {
+        hasil = `62${hasil}`;
+    }
+
+    return hasil;
+}
+
+function satuanPesanWhatsAppPO(item) {
+    const namaBarang = String(item?.namaBarang || item?.nama || "").trim();
+
+    if (namaBarang.toLowerCase().includes("telur")) {
+        return "Ikat";
+    }
+
+    return String(item?.satuan || "Pcs").trim() || "Pcs";
+}
+
+function buatPesanWhatsAppPO(po) {
+    const config = { ...DEFAULT_HEADER_CONFIG, ...safeReadObject("headerConfig") };
+    const namaToko = String(config.judul || "LocDailyMar").trim() || "LocDailyMar";
+    const supplier = String(po?.supplier || "Supplier").trim() || "Supplier";
+    const items = Array.isArray(po?.items) ? po.items : [];
+
+    const daftarPesanan = items.map((item,index) => {
+        const namaBarang = String(item?.namaBarang || item?.nama || "Barang").trim() || "Barang";
+        const jumlah = formatQty(Number(item?.qtyOrdered || item?.qty || 0));
+        const satuan = satuanPesanWhatsAppPO(item);
+        return `${index + 1}. ${namaBarang} - ${jumlah} ${satuan}`;
+    }).join("\n");
+
+    const bagianPesan = [
+        `Halo Kak ${supplier}, kami dari ${namaToko} ingin melakukan pemesanan.`,
+        "",
+        "*PURCHASE ORDER*",
+        `No. PO: ${po?.nomorPO || "-"}`,
+        `Tanggal: ${formatTanggalIndo(po?.tanggal)}`,
+        `Estimasi tiba: ${formatTanggalIndo(po?.estimasiTiba)}`,
+        "",
+        "*Daftar pesanan:*",
+        daftarPesanan || "-"
+    ];
+
+    if (String(po?.catatan || "").trim()) {
+        bagianPesan.push("", "*Catatan:*", String(po.catatan).trim());
+    }
+
+    bagianPesan.push(
+        "",
+        "Mohon dikonfirmasi ketersediaan barang dan estimasi pengirimannya.",
+        "Terima kasih."
+    );
+
+    return bagianPesan.join("\n");
+}
+
+function kirimPOKeWhatsApp(id) {
+    const po = safeReadArray("dataPurchaseOrder")
+        .find(item => String(item.id) === String(id));
+
+    if (!po) {
+        notify("PO Tidak Ditemukan", "Purchase Order tidak ditemukan.");
+        return;
+    }
+
+    if (!["Ordered","Partial"].includes(po.status)) {
+        notify(
+            "PO Belum Bisa Dikirim",
+            "Pesan WhatsApp hanya dapat dibuat setelah PO disetujui dan berstatus Ordered atau Partial."
+        );
+        return;
+    }
+
+    const nomor = normalisasiNomorWhatsAppPO(po.kontakSupplier);
+
+    if (!/^[1-9]\d{7,14}$/.test(nomor)) {
+        notify(
+            "Nomor WhatsApp Tidak Valid",
+            "Isi kontak supplier dengan nomor WhatsApp yang benar, misalnya 081234567890."
+        );
+        return;
+    }
+
+    const pesan = buatPesanWhatsAppPO(po);
+    const tautan = `https://wa.me/${nomor}?text=${encodeURIComponent(pesan)}`;
+    const link = document.createElement("a");
+
+    link.href = tautan;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+}
+
 function renderRiwayatPO() {
     let data = safeReadArray("dataPurchaseOrder");
     const status = document.getElementById("filterStatusPO").value;
@@ -4591,6 +4690,7 @@ function renderRiwayatPO() {
         const canApprove =
             po.status === "PendingApproval" &&
             hasPermission("purchaseorder.approve");
+        const canWhatsApp = ["Ordered","Partial"].includes(po.status);
         const canCancel =
             ownerDelete &&
             ["Draft","PendingApproval","Ordered","Partial"].includes(po.status);
@@ -4611,6 +4711,7 @@ function renderRiwayatPO() {
                         <button type="button" class="btn btn-secondary" style="padding:5px 7px;" onclick="cetakPO('${po.id}')">🖨</button>
                         ${canEdit ? `<button type="button" class="btn btn-warning" style="padding:5px 7px;" onclick="editDraftPO('${po.id}')">Edit</button>` : ""}
                         ${canApprove ? `<button type="button" class="btn btn-success" style="padding:5px 7px;" onclick="acceptPendingPO('${po.id}')">✅ Accept</button>` : ""}
+                        ${canWhatsApp ? `<button type="button" class="btn btn-success" style="padding:5px 7px;" onclick="kirimPOKeWhatsApp('${po.id}')">💬 WhatsApp</button>` : ""}
                         ${canReceive ? `<button type="button" class="btn btn-success" style="padding:5px 7px;" onclick="buatGoodsReceiptDariPO('${po.id}')">📥 Terima</button>` : ""}
                         ${canCancel ? `<button type="button" class="btn btn-danger" style="padding:5px 7px;" onclick="konfirmasiBatalkanPO('${po.id}')">Batalkan</button>` : ""}
                         ${ownerDelete ? `<button type="button" class="btn btn-danger" style="padding:5px 7px;" onclick="konfirmasiHapusPO('${po.id}')">Hapus</button>` : ""}
@@ -4687,6 +4788,7 @@ function lihatDetailPO(id) {
             ${po.status === "PendingApproval" && hasPermission("purchaseorder.approve")
                 ? `<button class="btn btn-success" onclick="acceptPendingPO('${po.id}')">✅ Accept Pending</button>`
                 : ""}
+            ${["Ordered","Partial"].includes(po.status) ? `<button class="btn btn-success" onclick="kirimPOKeWhatsApp('${po.id}')">💬 Kirim ke WhatsApp</button>` : ""}
             ${["Ordered","Partial"].includes(po.status) ? `<button class="btn btn-success" onclick="buatGoodsReceiptDariPO('${po.id}')">📥 Buat Goods Receipt</button>` : ""}
             <button class="btn btn-secondary" onclick="cetakPO('${po.id}')">🖨 Cetak</button>
             <button class="btn btn-soft" onclick="tutupModal('modalDetailPO')">Tutup</button>
