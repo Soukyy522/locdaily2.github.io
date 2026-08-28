@@ -4577,7 +4577,7 @@ function satuanPesanWhatsAppPO(item) {
     const namaBarang = String(item?.namaBarang || item?.nama || "").trim();
 
     if (namaBarang.toLowerCase().includes("telur")) {
-        return "Ikat";
+        return "Kg";
     }
 
     return String(item?.satuan || "Pcs").trim() || "Pcs";
