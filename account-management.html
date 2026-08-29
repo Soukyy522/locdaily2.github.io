@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="id">
-<head><meta name="referrer" content="strict-origin-when-cross-origin"><link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><script src="js/security-hardening.js?v=23.1"></script><script defer src="js/qa-runtime.js?v=19.0"></script>
+<head><meta name="referrer" content="strict-origin-when-cross-origin"><link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><script src="js/security-hardening.js?v=19.0"></script><script defer src="js/qa-runtime.js?v=19.0"></script>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Management Akun - LocDailyMar</title>
 <style>
@@ -42,4 +42,4 @@ async function reactivateAt(i){const target=archivedAccounts[i];if(!target)retur
 async function changePassword(){const a=document.getElementById("ownPassword").value,b=document.getElementById("ownPassword2").value;if(a!==b){showMessage("❌ Konfirmasi password tidak sama.","error");return}try{await LDMAccounts.changeOwnPassword(a);document.getElementById("ownPassword").value=document.getElementById("ownPassword2").value="";showMessage("✅ Password akun sendiri berhasil diubah.")}catch(e){showMessage("❌ "+(e.message||String(e)),"error")}}
 async function boot(){await refreshAll();try{await LDMAccounts.startRealtime(async()=>refreshAll());document.getElementById("realtime").textContent="Realtime: aktif"}catch(e){document.getElementById("realtime").textContent="Realtime: gagal";console.warn(e)}}
 document.addEventListener("DOMContentLoaded",boot);
-</script><script src="js/global-system-navigation.js?v=23.1"></script></body></html>
+</script><script src="js/global-system-navigation.js?v=22.2"></script></body></html>
