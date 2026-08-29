@@ -1,9 +1,11 @@
-23.0.0
-Stage: 23 - Paid License, 14-Day Trial & Midtrans Payment Gateway
-Baseline: 22.2
+23.1.0
+Stage: 23.1 - Paid License, 14-Day Trial & WhatsApp Manual Payment
+Baseline: 23.0.0
 License scope: Store Network
 Plans: Warung Kecil / Warung Sederhana / Toko / Lifetime
 Trial: Warung Sederhana 14 days, one-time per network and Owner user
+Lifetime price: Rp2.799.000
 Lifetime quota: 15 devices / 8 stores
-Payment provider: Midtrans Snap via Supabase Edge Functions
-Server Key: Edge Secret only
+Payment provider: WhatsApp Manual
+Payment confirmation: Developer-only
+Midtrans UI flow: Disabled
