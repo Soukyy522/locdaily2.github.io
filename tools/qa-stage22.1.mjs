@@ -35,13 +35,13 @@ for(const match of multiStore.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>
 const markers=[
     [multiStore,"data-ldm-menu-toggle","Hamburger Multi-Toko"],
     [multiStore,"css/multi-store-dashboard-theme.css?v=22.1","CSS tema Multi-Toko"],
-    [multiStore,"global-system-navigation.js?v=22.1","Navigasi global Multi-Toko"],
+    [multiStore,"global-system-navigation.js?v=22.2","Navigasi global Multi-Toko"],
     [fs.readFileSync(path.join(root,"dashboard.html"),"utf8"),'page:"multi-store.html"',"Multi-Toko pada Mega Menu Dashboard"],
     [fs.readFileSync(path.join(root,"js/global-system-navigation.js"),"utf8"),"ldm-global-mega-grid","Generator Mega Menu"],
     [fs.readFileSync(path.join(root,"js/global-system-navigation.js"),"utf8"),"ldm-global-mobile-drawer","Generator hamburger drawer"],
     [fs.readFileSync(path.join(root,"css/global-responsive-navigation.css"),"utf8"),"@media (min-width:900px)","Breakpoint desktop"],
     [fs.readFileSync(path.join(root,"css/global-responsive-navigation.css"),"utf8"),"@media (max-width:899px)","Breakpoint mobile"],
-    [fs.readFileSync(path.join(root,"service-worker.js"),"utf8"),'APP_VERSION = "22.1.0"',"Versi PWA"]
+    [fs.readFileSync(path.join(root,"service-worker.js"),"utf8"),'APP_VERSION = "22.2.0"',"Versi PWA"]
 ];
 
 for(const [content,marker,label] of markers){
@@ -55,7 +55,7 @@ for(const entry of fs.readdirSync(root)){
     if(content.includes("global-system-navigation.js"))navPages.push([entry,content]);
 }
 for(const [file,content] of navPages){
-    if(!content.includes("global-system-navigation.js?v=22.1"))failures.push(`${file}: cache-buster navigasi belum 22.1.`);
+    if(!/global-system-navigation\.js\?v=22\.[12]/.test(content))failures.push(`${file}: cache-buster navigasi belum kompatibel 22.1+.`);
 }
 
 if(process.env.LDM_QA_BASE_URL){
