@@ -9,33 +9,18 @@
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="assets/icons/icon-192.png">
     <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
-    <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <title>Aplikasi & Update - LocDailyMar</title>
     <style>
         *{box-sizing:border-box}body{margin:0;background:#f4f7f5;color:#263442;font-family:Inter,system-ui,sans-serif}.top{background:linear-gradient(135deg,#0d2240,#0f9d58);color:#fff;padding:24px}.top-inner,.wrap{width:min(1050px,calc(100% - 28px));margin:auto}.top-inner{display:flex;gap:16px;align-items:center}.top img{width:68px;height:68px;border-radius:18px}.top h1{margin:0 0 5px;font-size:clamp(22px,4vw,32px)}.top p{margin:0;color:#d9f7e6}.wrap{padding:22px 0 40px}.notice{background:#fff8dc;border:1px solid #ead27a;border-radius:14px;padding:14px 16px;margin-bottom:18px;line-height:1.55}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:16px}.card{background:#fff;border:1px solid #dfe8e3;border-radius:18px;padding:19px;box-shadow:0 7px 24px #1231}.card h2{font-size:17px;margin:0 0 15px}.row{display:flex;justify-content:space-between;gap:15px;padding:9px 0;border-bottom:1px solid #edf2ef;font-size:14px}.row:last-of-type{border-bottom:0}.value{text-align:right;font-weight:800;overflow-wrap:anywhere}.good{color:#08783e}.warn{color:#a05a00}.bad{color:#b42318}.bar{height:10px;background:#e8eeeb;border-radius:99px;overflow:hidden;margin:12px 0}.bar>span{display:block;height:100%;width:0;background:#0f9d58}.buttons{display:flex;flex-wrap:wrap;gap:9px;margin-top:16px}.btn{border:0;border-radius:10px;padding:11px 14px;font-weight:800;cursor:pointer;text-decoration:none;display:inline-block}.primary{background:#0f9d58;color:#fff}.navy{background:#0d2240;color:#fff}.light{background:#e7eeea;color:#263442}.danger{background:#ffe4e1;color:#9b1c14}.btn:disabled{opacity:.55;cursor:wait}.log{margin-top:18px;padding:14px;border-radius:12px;background:#0d2240;color:#d9f7e6;white-space:pre-wrap;min-height:48px;font:13px/1.5 ui-monospace,monospace}@media(max-width:600px){.top-inner{align-items:flex-start}.top img{width:54px;height:54px}.row{display:block}.value{text-align:left;margin-top:4px}}
     </style>
-    <link rel="stylesheet" href="css/system-pages-shared-theme.css?v=22.2">
     <script src="js/pwa-manager.js?v=19.1"></script>
 </head>
-<body class="ldm-system-page">
-    <header class="ldm-shared-header" data-ldm-shared-header>
-        <div class="ldm-shared-brand">
-            <button class="ldm-shared-menu-toggle" type="button" data-ldm-menu-toggle aria-label="Buka menu navigasi" aria-expanded="false">☰</button>
-            <img class="ldm-shared-logo" data-ldm-brand-logo alt="Logo toko">
-            <div class="ldm-shared-brand-copy"><h1 data-ldm-brand-title>LocDailyMar</h1><p data-ldm-brand-subtitle>Sistem Operasional Toko</p></div>
-        </div>
-        <div class="ldm-shared-actions">
-            <span class="ldm-shared-role" data-ldm-role-chip>👤 Memuat</span>
-            <button class="ldm-shared-action ldm-shared-theme-button" type="button" data-ldm-theme-open>🎨 Tema</button>
-            <a class="ldm-shared-action ldm-shared-action-home" href="dashboard.html">⌂ Dashboard</a>
-        </div>
-    </header>
-    <main class="wrap ldm-system-content">
-        <section class="ldm-page-hero">
-            <div class="ldm-page-hero-copy"><span class="ldm-page-eyebrow">PWA & Penyimpanan</span><h1>📲 Aplikasi & Update</h1><p>Kelola pemasangan aplikasi, pembaruan aman, antrean sinkronisasi, dan penyimpanan perangkat.</p></div>
-            <div class="ldm-page-hero-actions"><a class="btn light" href="kasir.html">Buka Kasir</a></div>
-        </section>
+<body>
+    <header class="top"><div class="top-inner">
+        <img src="assets/icons/icon-192.png" alt="Ikon LocDailyMar">
+        <div><h1>Aplikasi & Update</h1><p> PWA Installation & Safe Update Manager</p></div>
+    </div></header>
+    <main class="wrap">
         <div class="notice"><strong>Aturan aman:</strong> pembaruan dan pembersihan cache ditolak apabila ada transaksi offline atau reservasi stok lokal yang belum tersinkron.</div>
         <div class="grid">
             <section class="card">
@@ -121,6 +106,5 @@
     })();
     </script>
 <script src="js/global-system-navigation.js?v=22.2"></script>
-<script src="js/shared-system-theme.js?v=22.2"></script>
 </body>
 </html>

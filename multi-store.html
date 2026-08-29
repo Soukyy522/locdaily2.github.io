@@ -27,7 +27,6 @@
         @media(max-width:480px){.ms-header-inner,.ms-main{width:min(100% - 18px,1180px)}.ms-header{padding:17px 9px}.ms-title h1{font-size:1.05rem}.ms-back{padding:8px}.ms-panel{padding:14px}.ms-summary{gap:8px}.ms-stat{padding:12px}.ms-panel-head{display:block}.ms-panel-head .ms-btn{margin-top:10px;width:100%}.ms-store{grid-template-columns:1fr}.ms-store .ms-btn{width:100%}}
     </style>
     <link rel="stylesheet" href="css/multi-store-dashboard-theme.css?v=22.1">
-    <link rel="stylesheet" href="css/system-pages-shared-theme.css?v=22.2">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase-config.js"></script>
     <script src="js/supabase-client.js?v=22.0"></script>
@@ -37,24 +36,22 @@
     <script src="js/cloud-session-guard.js?v=22.0"></script>
     <script src="js/multi-store-service.js?v=22.0"></script>
 </head>
-<body class="ldm-system-page">
+<body>
     <div class="ms-offline" id="offlineBanner">Mode offline — pergantian toko dan transfer stok dinonaktifkan.</div>
-    <header class="ldm-shared-header" data-ldm-shared-header>
-        <div class="ldm-shared-brand">
-            <button class="ldm-shared-menu-toggle" type="button" data-ldm-menu-toggle aria-label="Buka menu navigasi" aria-expanded="false">☰</button>
-            <img class="ldm-shared-logo" data-ldm-brand-logo alt="Logo toko">
-            <div class="ldm-shared-brand-copy">
-                <h1 data-ldm-brand-title>LocDailyMar</h1>
-                <p data-ldm-brand-subtitle>Sistem Operasional Toko</p>
+    <header class="ms-header">
+        <div class="ms-header-inner">
+            <div class="ms-brand">
+                <button class="ms-menu-toggle" type="button" data-ldm-menu-toggle aria-label="Buka menu navigasi" aria-expanded="false">☰</button>
+                <img class="ms-brand-logo" data-ldm-brand-logo alt="Logo toko">
+                <div class="ms-title"><h1 data-ldm-brand-title>LocDailyMar</h1><p data-ldm-brand-subtitle>Multi-Toko & Transfer Stok</p></div>
+            </div>
+            <div class="ms-header-actions">
+                <span class="ms-role-chip" id="roleChip">👤 Memuat</span>
+                <a class="ms-back" href="dashboard.html">← Dashboard</a>
             </div>
         </div>
-        <div class="ldm-shared-actions">
-            <span class="ldm-shared-role" id="roleChip" data-ldm-role-chip>👤 Memuat</span>
-            <button class="ldm-shared-action ldm-shared-theme-button" type="button" data-ldm-theme-open>🎨 Tema</button>
-            <a class="ldm-shared-action ldm-shared-action-home" href="dashboard.html">⌂ Dashboard</a>
-        </div>
     </header>
-    <main class="ms-main ldm-system-content" id="appRoot">
+    <main class="ms-main" id="appRoot">
         <section class="ms-page-intro">
             <div class="ms-page-intro-copy">
                 <span class="ms-page-eyebrow">Operasional Cabang</span>
@@ -196,6 +193,5 @@
     })();
     </script>
     <script src="js/global-system-navigation.js?v=22.2"></script>
-    <script src="js/shared-system-theme.js?v=22.2"></script>
 </body>
 </html>
