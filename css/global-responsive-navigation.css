@@ -15,16 +15,47 @@
 .ldm-global-mobile-drawer,
 .ldm-global-floating-toggle{font-family:var(--app-font)}
 
+/* Setelah renderer global siap, navigasi lama hanya menjadi fallback di source. */
+html.ldm-global-nav-ready .nav-bar,
+html.ldm-global-nav-ready .nav-overlay,
+html.ldm-global-nav-ready #ldmMegaNavShell,
+html.ldm-global-nav-ready .ldm-mega-nav-shell{
+    display:none!important;
+}
+
+/* Samakan kerangka layout dengan dashboard ketika navigasi global aktif. */
+html.ldm-global-nav-ready .app-layout{
+    display:flex!important;
+    flex-direction:column!important;
+    min-height:100vh!important;
+    width:100%!important;
+}
+
+html.ldm-global-nav-ready .main-content{
+    width:100%!important;
+    max-width:none!important;
+    margin:0!important;
+    min-width:0!important;
+}
+
+/* EOD tidak boleh muncul di renderer lama maupun renderer global sebelum Closing Shift lengkap. */
+html:not([data-ldm-eod-ready="true"]) a[href="eod.html"],
+html:not([data-ldm-eod-ready="true"]) a[data-ldm-route="eod.html"]{
+    display:none!important;
+}
+
 .ldm-global-mega{display:none}
 
 @media (min-width:900px){
-    html.ldm-global-mega-ready .nav-bar,
-    html.ldm-global-mega-ready .nav-overlay,
-    html.ldm-global-mega-ready .btn-toggle-menu,
-    html.ldm-global-mega-ready [data-ldm-menu-toggle],
-    html.ldm-global-mega-ready .ldm-global-mobile-drawer,
-    html.ldm-global-mega-ready .ldm-global-mobile-overlay,
-    html.ldm-global-mega-ready .ldm-global-floating-toggle{
+    html.ldm-global-nav-ready .main-content{
+        padding:24px 28px 30px!important;
+    }
+
+    html.ldm-global-nav-ready .btn-toggle-menu,
+    html.ldm-global-nav-ready [data-ldm-menu-toggle],
+    html.ldm-global-nav-ready .ldm-global-mobile-drawer,
+    html.ldm-global-nav-ready .ldm-global-mobile-overlay,
+    html.ldm-global-nav-ready .ldm-global-floating-toggle{
         display:none!important;
     }
 
@@ -173,7 +204,7 @@
 
     .ldm-global-mega-grid{
         display:grid;
-        grid-template-columns:repeat(4,minmax(0,1fr));
+        grid-template-columns:repeat(3,minmax(0,1fr));
         gap:10px;
     }
 
@@ -210,11 +241,31 @@
     .ldm-global-link.active .ldm-global-icon{background:rgba(255,255,255,.36)}
 }
 
-@media (min-width:900px) and (max-width:1120px){
+@media (min-width:1200px){
     .ldm-global-mega-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+
+@media (min-width:900px) and (max-width:1120px){
     .ldm-global-mega-quick a:nth-child(n+4){display:none}
     .ldm-global-store{display:none}
 }
+
+.ldm-global-badge{
+    margin-left:auto;
+    min-width:18px;
+    height:18px;
+    padding:0 5px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:999px;
+    background:#ef4444;
+    color:#fff;
+    font-size:.58rem;
+    font-weight:900;
+    line-height:1;
+}
+.ldm-global-badge[hidden]{display:none!important}
 
 .ldm-global-mobile-overlay{
     display:none;
@@ -231,8 +282,8 @@
     position:fixed;
     inset:0 auto 0 0;
     z-index:2000;
-    width:min(84vw,292px);
-    padding:14px 12px 24px;
+    width:min(86vw,310px);
+    padding:14px 12px calc(24px + env(safe-area-inset-bottom,0px));
     overflow-y:auto;
     transform:translateX(-104%);
     color:#fff;
@@ -240,6 +291,7 @@
     box-shadow:15px 0 38px rgba(15,23,42,.28);
     transition:transform .22s ease;
     overscroll-behavior:contain;
+    -webkit-overflow-scrolling:touch;
 }
 
 .ldm-global-mobile-drawer.open{transform:translateX(0)}
@@ -247,18 +299,19 @@
 .ldm-global-mobile-head strong{font-family:var(--brand-font);font-size:.88rem}
 .ldm-global-mobile-close{width:34px;height:34px;border:0;border-radius:9px;background:rgba(255,255,255,.1);color:#fff;font-size:1rem;cursor:pointer}
 .ldm-global-mobile-context{display:grid;gap:6px;margin-bottom:12px;padding:10px;border:1px solid rgba(255,255,255,.1);border-radius:11px;background:rgba(255,255,255,.06);font-size:.67rem;color:#cbd5e1}
-.ldm-global-mobile-context strong{color:#fff;font-size:.72rem}
+.ldm-global-mobile-context strong{color:#fff;font-size:.72rem;text-transform:capitalize}
 .ldm-global-mobile-group{margin-top:12px}
 .ldm-global-mobile-label{display:flex;align-items:center;gap:7px;margin:0 8px 5px;color:#93a4b8;font-size:.59rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase}
-.ldm-global-mobile-link{min-height:39px;display:flex;align-items:center;gap:10px;margin:2px 0;padding:8px 10px;border-radius:9px;color:#cbd5e1;text-decoration:none;font-size:.74rem;font-weight:700}
+.ldm-global-mobile-link{min-height:41px;display:flex;align-items:center;gap:10px;margin:2px 0;padding:8px 10px;border-radius:9px;color:#cbd5e1;text-decoration:none;font-size:.74rem;font-weight:700}
 .ldm-global-mobile-link:hover{background:rgba(255,255,255,.08);color:#fff}
 .ldm-global-mobile-link.active{background:var(--accent-color,#ffc107);color:#0d2240}
 .ldm-global-mobile-link .ldm-global-icon{width:24px;text-align:center;font-size:.9rem}
+.ldm-global-mobile-link .ldm-global-badge{margin-left:auto}
 
 .ldm-global-floating-toggle{
     position:fixed;
     left:12px;
-    bottom:14px;
+    bottom:calc(14px + env(safe-area-inset-bottom,0px));
     z-index:1800;
     width:46px;
     height:46px;
@@ -274,9 +327,25 @@
 }
 
 @media (max-width:899px){
+    html.ldm-global-nav-ready .main-content{
+        padding:12px!important;
+        padding-bottom:28px!important;
+    }
     .ldm-global-mega{display:none!important}
-    .ldm-global-floating-toggle{display:grid}
+    html.ldm-global-nav-ready .btn-toggle-menu,
+    html.ldm-global-nav-ready [data-ldm-menu-toggle]{
+        display:inline-flex!important;
+        align-items:center;
+        justify-content:center;
+    }
+    html.ldm-global-nav-ready .ldm-global-floating-toggle{display:grid!important}
+    html.ldm-global-nav-ready .btn-toggle-menu + .ldm-global-floating-toggle{display:none!important}
     body.ldm-global-menu-open{overflow:hidden}
+}
+
+@media (max-width:520px){
+    .ldm-global-mobile-drawer{width:min(90vw,300px);padding-left:10px;padding-right:10px}
+    .ldm-global-mobile-link{font-size:.72rem}
 }
 
 @media (min-width:900px){
