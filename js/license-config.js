@@ -4,7 +4,7 @@
  */
 window.LDM_LICENSE_CONFIG = Object.freeze({
     enabled: true,
-    serverUrl: "https://baecaqtojsdjnzcbpsaf.supabase.co/functions/v1/ldm-license",
+    serverUrl: https://baecaqtojsdjnzcbpsaf.supabase.co/functions/v1/ldm-license",
     appVersion: "23.1.0",
     publicSigningJwk: {
   "key_ops": [
