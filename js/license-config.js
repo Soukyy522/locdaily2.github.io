@@ -10,10 +10,19 @@
      */
     window.LDM_LICENSE_CONFIG=Object.freeze({
         enabled:true,
-        serverUrl:"https://PROJECT-REF-LISENSI.supabase.co/functions/v1/ldm-license",
+        serverUrl:"https://pbrluziihlcqtjesakmg.supabase.co/functions/v1/ldm-license",
         appVersion:"23.1.0",
-        publicSigningJwk:null,
-        developerWhatsapp:"628XXXXXXXXXX",
+        publicSigningJwk:{
+  "key_ops": [
+    "verify"
+  ],
+  "ext": true,
+  "kty": "EC",
+  "x": "0dgzgUy_PFPOlqHRTHyBNh2Doe8uLlUf20Gv6LX_r7w",
+  "y": "ehdfHZNq0WneSoE1YoZslm2GnnOdSlO9mZYEBFXsPWY",
+  "crv": "P-256"
+},
+        developerWhatsapp:"6283117590286",
         supportName:"Developer LocDailyMar",
         validationIntervalMinutes:60,
         plans:Object.freeze({
