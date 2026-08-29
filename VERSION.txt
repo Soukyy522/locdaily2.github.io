@@ -121,3 +121,14 @@ Promo Metadata: promo_name + promo_type + promo_value
 Pricing Audit: public.product_pricing_history
 Legacy Compatibility: promo lama otomatis menjadi fixed_price
 PWA Cache: release21-promo-pricing-v1
+
+Tahap: 22 - Multi-Toko dan Transfer Stok
+Release Version: 22.0.0
+Store Network: public.store_networks + public.store_network_stores
+Account Membership: public.store_memberships
+Active Store Scope: Per user + per client_device_id
+Store Switch Guard: Online + Offline Queue kosong + perangkat aktif
+Transfer Status: DRAFT -> IN_TRANSIT -> RECEIVED
+Stock Ledger: transfer_out + transfer_in
+Stock Authority: RPC atomik + public.stock_movements
+PWA Cache: release22-multi-store-v1
