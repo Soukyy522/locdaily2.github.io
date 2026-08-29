@@ -311,13 +311,8 @@ File utama:
 - `docs/TAHAP-19.md`
 
 Jalankan audit frontend dengan `node tools/qa-stage19.mjs .`. Peringatan berbeda dari kegagalan: kegagalan harus dibereskan sebelum rilis, sedangkan peringatan perlu ditinjau dan dicatat.
+# LocDailyMar — TAHAP 23.1 Lisensi Berbayar
 
+Versi ini menambahkan empat paket lisensi, trial Warung Sederhana 14 hari, pemesanan melalui WhatsApp developer, penerbitan License Key manual, batas perangkat/toko, dan penguncian seluruh halaman operasional.
 
-## TAHAP 23 — Lisensi & Billing
-
-Menambahkan lisensi per store network, trial Warung Sederhana 14 hari, kuota device/toko, Midtrans Snap via Edge Functions, dan Developer License Center.
-
-
-## Tahap 23.1 - WhatsApp Manual License Payment
-
-Payment lisensi diarahkan ke WhatsApp Developer. Request disimpan sebagai `pending`; hanya Developer License Admin yang dapat mengonfirmasi dan mengaktifkan lisensi. Lifetime: Rp2.799.000, 15 device, 8 toko. Trial Warung Sederhana tetap 14 hari.
+Mulai pemasangan dari `docs/TAHAP-23.1-LISENSI-4-PAKET-MANUAL-WHATSAPP.md`.

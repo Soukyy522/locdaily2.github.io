@@ -1,14 +1,1 @@
-LocDailyMar
-Version: 23.2.0
-Stage: 23.2 - Manual License Key + Package Feature Gating
-Baseline: TAHAP 23.1 License Trial WhatsApp
-License Authority: public.network_licenses
-Manual Key Authority: public.license_activation_keys (SHA-256 hash only)
-Activation: Developer issues key, Owner redeems key
-Trial: Warung Sederhana 14 days, one time per Network + Owner
-Payment: WhatsApp manual
-Expiry: Auto-expire on license context check
-Guard: Fail-closed for operational pages
-Lifetime: Rp2.799.000 / 15 devices / 8 stores
-License Page Mobile Hamburger: Disabled
-License Page Logout: Enabled
+23.1.0
