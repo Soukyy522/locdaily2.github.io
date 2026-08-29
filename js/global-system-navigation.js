@@ -1,7 +1,7 @@
 (function(){
     "use strict";
 
-    const NAV_VERSION="22.2";
+    const NAV_VERSION="23.0";
     const EOD_KEYS=["laporan","dataLaporan","shiftClosingLog","dataRetur"];
 
     /*
@@ -30,6 +30,7 @@
         {page:"eod.html",icon:"🌙",label:"End of Day",group:"Closing & Data",roles:["owner","admin"],requiresEodReady:true},
         {page:"backup%20%26%20restore.html",icon:"💾",label:"Backup & Restore",group:"Closing & Data",roles:["owner","admin"]},
 
+        {page:"license.html",icon:"🔐",label:"Lisensi & Paket",group:"Sistem",roles:["owner","admin","kasir"],quick:true},
         {page:"pwa-settings.html",icon:"📲",label:"Aplikasi & Update",group:"Sistem",roles:["owner","admin","kasir"]},
         {page:"recovery-center.html",icon:"🛟",label:"Recovery Center",group:"Sistem",roles:["owner","admin","kasir"]},
         {page:"qa-security-performance.html",icon:"🧪",label:"QA & Security",group:"Sistem",roles:["owner"]}

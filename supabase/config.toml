@@ -414,3 +414,9 @@ enabled = true
 
 [functions.ldm-account-admin]
 verify_jwt = false
+
+[functions.ldm-license-payment]
+verify_jwt = false
+
+[functions.ldm-midtrans-webhook]
+verify_jwt = false
