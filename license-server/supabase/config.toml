@@ -1,4 +1,0 @@
-project_id = "locdailymar-license-server"
-
-[functions.ldm-license]
-verify_jwt = false
