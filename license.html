@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <title>Aktivasi Lisensi - LocDailyMar</title>
+    <script src="js/security-hardening.js?v=23.1"></script>
+    <style>
+        :root{--navy:#0d2240;--blue:#1d4ed8;--yellow:#ffc107;--bg:#f3f6fb;--line:#dbe3ee;--muted:#64748b}
+        *{box-sizing:border-box}body{margin:0;background:linear-gradient(150deg,#eef4ff 0,#f8fafc 42%,#eef2f7 100%);color:#152238;font-family:Inter,Poppins,Arial,sans-serif;min-height:100vh}
+        .header{background:linear-gradient(120deg,#081a31,#0d2e57);color:#fff;padding:24px 18px 66px}.header-inner,.main{width:min(1080px,calc(100% - 28px));margin:auto}.brand{display:flex;align-items:center;gap:11px}.brand-mark{display:grid;place-items:center;width:42px;height:42px;border-radius:13px;background:var(--yellow);color:#172033;font-weight:900}.brand strong{display:block;font-size:1.05rem}.brand span{font-size:.72rem;color:#cbd5e1}.headline{margin-top:32px;max-width:720px}.headline h1{font-size:clamp(1.55rem,4vw,2.4rem);margin:0 0 10px}.headline p{color:#dbeafe;line-height:1.65;font-size:.88rem;margin:0}
+        .main{margin-top:-42px;padding-bottom:38px}.plans{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.plan,.panel{background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:0 12px 30px rgba(15,23,42,.08)}.plan{padding:17px;position:relative}.plan.popular{border-color:#93c5fd}.plan.popular:before{content:"PALING SEIMBANG";position:absolute;right:12px;top:12px;background:#dbeafe;color:#1d4ed8;border-radius:99px;padding:4px 8px;font-size:.55rem;font-weight:900}.plan.lifetime{border-color:#f6c344;background:linear-gradient(145deg,#fffdf5,#fff)}.plan.lifetime:before{content:"SEKALI BAYAR";position:absolute;right:12px;top:12px;background:#fff0b3;color:#7c5700;border-radius:99px;padding:4px 8px;font-size:.55rem;font-weight:900}.plan-icon{width:40px;height:40px;display:grid;place-items:center;border-radius:12px;background:#eff6ff;font-size:1.2rem}.plan.lifetime .plan-icon{background:#fff0b3}.plan h2{font-size:1rem;margin:13px 0 6px}.plan .limit{color:#1e40af;font-size:.73rem;font-weight:800}.plan.lifetime .limit{color:#8a6100}.plan ul{padding-left:18px;margin:12px 0 0;color:var(--muted);font-size:.72rem;line-height:1.75}
+        .panel{margin-top:14px;padding:21px}.panel-grid{display:grid;grid-template-columns:.9fr 1.3fr;gap:24px}.panel h2{font-size:1.12rem;margin:0 0 8px}.panel p{color:var(--muted);font-size:.76rem;line-height:1.65}.steps{display:grid;gap:9px;margin-top:15px}.step{display:flex;gap:9px;align-items:flex-start;font-size:.73rem;color:#475569}.step b{display:grid;place-items:center;min-width:24px;height:24px;background:#e0e7ff;color:#3730a3;border-radius:8px}.field{margin-bottom:12px}.field label{display:block;font-size:.68rem;font-weight:800;margin:0 0 6px;color:#334155}.field input{width:100%;min-height:44px;border:1px solid #cbd5e1;border-radius:10px;padding:10px 12px;font:inherit;font-size:.8rem;outline:0}.field input:focus{border-color:#3b82f6;box-shadow:0 0 0 3px #dbeafe}.actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.button{border:0;border-radius:10px;min-height:43px;padding:10px 15px;background:var(--navy);color:#fff;font-weight:800;cursor:pointer}.button:disabled{opacity:.55;cursor:wait}.button.secondary{background:#fff;color:#334155;border:1px solid #cbd5e1}.message{display:none;margin-top:12px;padding:11px 13px;border-radius:10px;font-size:.75rem;line-height:1.55;white-space:pre-wrap}.message.error{display:block;background:#fef2f2;color:#991b1b;border:1px solid #fecaca}.message.success{display:block;background:#ecfdf5;color:#166534;border:1px solid #bbf7d0}.fine{margin-top:11px!important;font-size:.66rem!important}.status-card{display:none;margin-top:14px;padding:13px;border:1px solid #bbf7d0;background:#f0fdf4;border-radius:12px;font-size:.73rem;line-height:1.65}
+        .trial-offer{margin-top:14px;background:linear-gradient(120deg,#eef6ff,#f8fbff);border:1px solid #bfdbfe;border-radius:18px;padding:18px;box-shadow:0 10px 24px rgba(37,99,235,.07)}.trial-head{display:flex;justify-content:space-between;align-items:center;gap:16px}.trial-head h2{margin:0 0 5px;font-size:1rem;color:#1e3a8a}.trial-head p{margin:0;color:#53657c;font-size:.73rem;line-height:1.55}.trial-form{display:none;margin-top:16px;padding-top:16px;border-top:1px solid #cbdff7}.trial-form.show{display:block}.trial-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:0 12px}.trial-consent{display:flex;align-items:flex-start;gap:8px;color:#475569;font-size:.68rem;line-height:1.5;margin:2px 0 12px}.trial-consent input{margin-top:3px}.button.trial{background:#1d4ed8}
+        @media(max-width:1000px){.plans{grid-template-columns:repeat(2,1fr)}}
+        @media(max-width:760px){.header{padding-bottom:57px}.headline{margin-top:22px}.plans{grid-template-columns:1fr}.plan ul{display:grid;grid-template-columns:1fr 1fr;column-gap:16px}.panel-grid,.trial-grid{grid-template-columns:1fr}.trial-head{align-items:flex-start;flex-direction:column}.trial-head .button{width:100%}.panel{padding:17px}.main{margin-top:-35px}}
+        @media(max-width:430px){.plan ul{grid-template-columns:1fr}.actions .button{width:100%}}
+    </style>
+</head>
+<body>
+    <header class="header"><div class="header-inner">
+        <div class="brand"><div class="brand-mark">LDM</div><div><strong>LocDailyMar</strong><span>Aktivasi aplikasi berlisensi</span></div></div>
+        <div class="headline"><h1>Aktifkan lisensi pada perangkat ini</h1><p>Masukkan kunci lisensi yang diberikan setelah pembelian. Satu aktivasi menggunakan satu slot perangkat sesuai paket.</p></div>
+    </div></header>
+    <main class="main">
+        <section class="plans" aria-label="Pilihan paket">
+            <article class="plan"><div class="plan-icon">🏪</div><h2>Warung Kecil</h2><div class="limit">1 perangkat · 1 toko · offline 1 hari</div><ul><li>Kasir dan barang</li><li>Stok opname</li><li>Laporan dan closing</li><li>Backup dasar</li></ul></article>
+            <article class="plan popular"><div class="plan-icon">🏬</div><h2>Warung Sederhana</h2><div class="limit">3 perangkat · 1 toko · offline 3 hari</div><ul><li>Semua fitur dasar</li><li>Supplier, PO, penerimaan</li><li>Akun dan perangkat cloud</li><li>Recovery dan antrean offline</li></ul></article>
+            <article class="plan"><div class="plan-icon">🏢</div><h2>Toko</h2><div class="limit">10 perangkat · 5 toko · offline 7 hari</div><ul><li>Semua fitur lengkap</li><li>Multi-toko</li><li>Transfer stok</li><li>QA dan recovery lanjutan</li></ul></article>
+            <article class="plan lifetime"><div class="plan-icon">∞</div><h2>Lifetime</h2><div class="limit">15 perangkat · 8 toko · offline 14 hari</div><ul><li>Masa aktif tanpa batas</li><li>Semua fitur lengkap</li><li>Multi-toko dan transfer</li><li>Tetap dapat divalidasi server</li></ul></article>
+        </section>
+        <section class="trial-offer">
+            <div class="trial-head"><div><h2>🎁 Coba Warung Sederhana gratis selama 14 hari</h2><p>Trial menggunakan 1 perangkat dan 1 toko. Nama usaha serta kontak dicatat pada server lisensi agar developer dapat mengetahui dan membantu pengguna trial.</p></div><button class="button trial" id="toggleTrial" type="button">Mulai Trial 14 Hari</button></div>
+            <form class="trial-form" id="trialForm" novalidate>
+                <div class="trial-grid">
+                    <div class="field"><label for="trialBusinessName">NAMA USAHA</label><input id="trialBusinessName" maxlength="120" placeholder="Contoh: Warung Maju" required></div>
+                    <div class="field"><label for="trialEmail">EMAIL PEMILIK</label><input id="trialEmail" type="email" maxlength="160" autocomplete="email" placeholder="pemilik@example.com" required></div>
+                    <div class="field"><label for="trialWhatsapp">NOMOR WHATSAPP (OPSIONAL)</label><input id="trialWhatsapp" maxlength="24" inputmode="tel" placeholder="Contoh: 62812xxxx"></div>
+                    <div class="field"><label for="trialStoreRef">KODE TOKO</label><input id="trialStoreRef" maxlength="100" placeholder="Contoh: TOKO-UTAMA" required></div>
+                    <div class="field"><label for="trialDeviceName">NAMA PERANGKAT</label><input id="trialDeviceName" maxlength="120" placeholder="Contoh: Laptop Kasir" required></div>
+                </div>
+                <label class="trial-consent"><input id="trialConsent" type="checkbox" required><span>Saya memahami bahwa nama usaha, email, nomor WhatsApp jika diisi, kode toko, perangkat, waktu mulai dan waktu berakhir trial akan dicatat pada server lisensi milik developer. Satu email dan satu perangkat hanya dapat menggunakan trial satu kali.</span></label>
+                <div class="actions"><button class="button trial" id="trialButton" type="submit">Aktifkan Trial</button></div>
+                <div id="trialMessage" class="message" role="status"></div>
+            </form>
+        </section>
+        <section class="panel"><div class="panel-grid">
+            <div><h2>Cara aktivasi</h2><p>Aktivasi pertama wajib terhubung internet. Setelah berhasil, aplikasi menyimpan sertifikat bertanda tangan digital untuk toleransi offline.</p><div class="steps"><div class="step"><b>1</b><span>Masukkan kunci lisensi dari penjual.</span></div><div class="step"><b>2</b><span>Isi kode toko yang sama untuk semua perangkat dalam toko yang sama.</span></div><div class="step"><b>3</b><span>Tekan Aktivasi. Kunci lisensi tidak disimpan di browser; browser menyimpan token aktivasi perangkat.</span></div></div></div>
+            <form id="activationForm" novalidate>
+                <div class="field"><label for="licenseKey">KUNCI LISENSI</label><input id="licenseKey" autocomplete="off" spellcheck="false" placeholder="LDM-XXXXXXXX-XXXXXXXX-XXXXXXXX-XXXXXXXX" required></div>
+                <div class="field"><label for="storeRef">KODE TOKO</label><input id="storeRef" maxlength="100" placeholder="Contoh: TOKO-UTAMA" required></div>
+                <div class="field"><label for="deviceName">NAMA PERANGKAT</label><input id="deviceName" maxlength="120" placeholder="Contoh: Laptop Kasir 1" required></div>
+                <div class="actions"><button class="button" id="activateButton" type="submit">Aktifkan Lisensi</button><button class="button secondary" id="checkButton" type="button">Cek Lisensi Tersimpan</button></div>
+                <div id="message" class="message" role="status"></div><div id="statusCard" class="status-card"></div>
+                <p class="fine">Jangan mengirim tangkapan layar kunci lisensi ke publik. Jika perangkat diganti, nonaktifkan perangkat lama terlebih dahulu agar slot kembali tersedia.</p>
+            </form>
+        </div></section>
+    </main>
+    <script src="js/license-config.js?v=23.1"></script>
+    <script src="js/license-client.js?v=23.1"></script>
+    <script>
+        (function(){
+            const params=new URLSearchParams(location.search);
+            const messages={
+                LICENSE_ACTIVATION_REQUIRED:"Aplikasi ini belum memiliki lisensi aktif.",
+                LICENSE_EXPIRED:"Masa aktif lisensi telah berakhir.",
+                LICENSE_NOT_ACTIVE:"Lisensi sedang dibekukan atau dicabut.",
+                DEVICE_LIMIT_REACHED:"Batas perangkat paket sudah penuh. Nonaktifkan perangkat lama atau tambah slot.",
+                STORE_LIMIT_REACHED:"Batas jumlah toko pada paket sudah penuh.",
+                LICENSE_OFFLINE_GRACE_EXPIRED:"Masa toleransi offline berakhir. Hubungkan internet untuk memeriksa lisensi.",
+                LICENSE_SERVER_URL_NOT_CONFIGURED:"Alamat server lisensi belum dikonfigurasi oleh pengembang.",
+                LICENSE_PUBLIC_KEY_NOT_CONFIGURED:"Public key verifikasi lisensi belum dikonfigurasi oleh pengembang.",
+                ORIGIN_NOT_ALLOWED:"Alamat aplikasi ini belum diizinkan oleh server lisensi."
+                ,TRIAL_ALREADY_USED:"Email atau perangkat ini sudah pernah menggunakan masa trial."
+                ,TRIAL_IP_LIMIT_REACHED:"Terlalu banyak pendaftaran trial dari jaringan ini. Coba kembali besok."
+                ,TRIAL_CONSENT_REQUIRED:"Persetujuan pencatatan data trial wajib dicentang."
+                ,CUSTOMER_EMAIL_INVALID:"Alamat email tidak valid."
+                ,CUSTOMER_NAME_REQUIRED:"Nama usaha minimal 3 karakter."
+            };
+            const form=document.getElementById("activationForm");
+            const button=document.getElementById("activateButton");
+            const message=document.getElementById("message");
+            const statusCard=document.getElementById("statusCard");
+            const trialForm=document.getElementById("trialForm");
+            const trialButton=document.getElementById("trialButton");
+            const trialMessage=document.getElementById("trialMessage");
+            document.getElementById("storeRef").value=localStorage.getItem("ldmLicenseStoreRefV23")||localStorage.getItem("ldmCloudStoreId")||"";
+            document.getElementById("deviceName").value=localStorage.getItem("ldmDeviceName")||`${navigator.platform||"Perangkat"} LocDailyMar`;
+            document.getElementById("trialStoreRef").value=localStorage.getItem("ldmLicenseStoreRefV23")||localStorage.getItem("ldmCloudStoreId")||"";
+            document.getElementById("trialDeviceName").value=localStorage.getItem("ldmDeviceName")||`${navigator.platform||"Perangkat"} Trial`;
+            function show(text,type){message.textContent=text;message.className=`message ${type}`}
+            function render(payload,mode){
+                statusCard.style.display="block";
+                const validity=payload.isTrial===true?`Trial sampai ${new Date(payload.trialEndsAt||payload.licenseExpiresAt).toLocaleString("id-ID")}`:payload.isLifetime===true?"Lifetime — tanpa tanggal kedaluwarsa":new Date(payload.licenseExpiresAt).toLocaleString("id-ID");
+                statusCard.innerHTML=`<strong>✅ ${payload.planName}</strong><br>Pelanggan: ${escapeHtml(payload.customerName||"-")}<br>Mode: ${escapeHtml(mode||"aktif")}<br>Berlaku sampai: ${escapeHtml(validity)}`;
+            }
+            function escapeHtml(value){return String(value).replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[char]))}
+            function safeReturn(){const value=params.get("returnTo")||"index.html";return /^[a-zA-Z0-9 .&_-]+\.html$/.test(value)?value:"index.html"}
+            const initialError=params.get("error");if(initialError)show(messages[initialError]||`Lisensi perlu diperiksa: ${initialError}`,"error");
+            document.getElementById("toggleTrial").addEventListener("click",()=>{trialForm.classList.toggle("show");if(trialForm.classList.contains("show"))document.getElementById("trialBusinessName").focus()});
+            trialForm.addEventListener("submit",async event=>{
+                event.preventDefault();trialButton.disabled=true;trialMessage.textContent="Mendaftarkan trial ke server...";trialMessage.className="message success";
+                try{
+                    const payload=await LDMLicense.startTrial({customerName:document.getElementById("trialBusinessName").value,customerEmail:document.getElementById("trialEmail").value,whatsapp:document.getElementById("trialWhatsapp").value,storeRef:document.getElementById("trialStoreRef").value,deviceName:document.getElementById("trialDeviceName").value,trialConsent:document.getElementById("trialConsent").checked});
+                    render(payload,"trial-online");trialMessage.textContent="✅ Trial Warung Sederhana aktif selama 14 hari. Membuka aplikasi...";trialMessage.className="message success";setTimeout(()=>location.replace(safeReturn()),1000);
+                }catch(error){trialMessage.textContent="❌ "+(messages[error.message]||error.message||String(error));trialMessage.className="message error"}
+                finally{trialButton.disabled=false}
+            });
+            form.addEventListener("submit",async event=>{
+                event.preventDefault();button.disabled=true;show("Memeriksa lisensi ke server...","success");
+                try{
+                    const payload=await LDMLicense.activate({licenseKey:document.getElementById("licenseKey").value,storeRef:document.getElementById("storeRef").value,deviceName:document.getElementById("deviceName").value});
+                    document.getElementById("licenseKey").value="";render(payload,"online");show("Lisensi berhasil diaktifkan. Membuka aplikasi...","success");
+                    setTimeout(()=>location.replace(safeReturn()),900);
+                }catch(error){show("❌ "+(messages[error.message]||error.message||String(error)),"error")}
+                finally{button.disabled=false}
+            });
+            document.getElementById("checkButton").addEventListener("click",async()=>{
+                try{const payload=await LDMLicense.ensureValid();render(payload,LDMLicense.status().mode);show("Lisensi tersimpan masih valid.","success")}
+                catch(error){show("❌ "+(messages[error.message]||error.message||String(error)),"error")}
+            });
+        })();
+    </script>
+</body>
+</html>
