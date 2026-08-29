@@ -1,7 +1,7 @@
 (function(){
     "use strict";
 
-    const NAV_VERSION="22.2";
+    const NAV_VERSION="23.1";
     const EOD_KEYS=["laporan","dataLaporan","shiftClosingLog","dataRetur"];
 
     /*
@@ -9,30 +9,30 @@
      * Every authenticated operational page is rendered from this list.
      */
     const ROUTES=[
-        {page:"dashboard.html",icon:"📊",label:"Dashboard",group:"Utama",roles:["owner","admin","kasir"],quick:true},
-        {page:"absensi.html",icon:"📝",label:"Absensi",group:"Utama",roles:["owner","admin","kasir"]},
-        {page:"kasir.html",icon:"💵",label:"Kasir",group:"Utama",roles:["owner","admin","kasir"],quick:true},
+        {page:"dashboard.html",icon:"📊",label:"Dashboard",group:"Utama",roles:["owner","admin","kasir"],feature:"dashboard",quick:true},
+        {page:"absensi.html",icon:"📝",label:"Absensi",group:"Utama",roles:["owner","admin","kasir"],feature:"attendance"},
+        {page:"kasir.html",icon:"💵",label:"Kasir",group:"Utama",roles:["owner","admin","kasir"],feature:"pos",quick:true},
 
-        {page:"barang.html",icon:"📦",label:"Barang",group:"Inventori",roles:["owner","admin"],badge:"navBadge"},
-        {page:"kartu-stok.html",icon:"📒",label:"Kartu Stok",group:"Inventori",roles:["owner","admin","kasir"]},
-        {page:"stock-opname.html",icon:"📋",label:"Stock Opname",group:"Inventori",roles:["owner","admin","kasir"]},
-        {page:"multi-store.html",icon:"⇄",label:"Multi-Toko & Transfer",group:"Inventori",roles:["owner","admin"],quick:true},
+        {page:"barang.html",icon:"📦",label:"Barang",group:"Inventori",roles:["owner","admin"],feature:"inventory",badge:"navBadge"},
+        {page:"kartu-stok.html",icon:"📒",label:"Kartu Stok",group:"Inventori",roles:["owner","admin","kasir"],feature:"stock_card"},
+        {page:"stock-opname.html",icon:"📋",label:"Stock Opname",group:"Inventori",roles:["owner","admin","kasir"],feature:"stock_opname"},
+        {page:"multi-store.html",icon:"⇄",label:"Multi-Toko & Transfer",group:"Inventori",roles:["owner","admin"],feature:"multi_store",quick:true},
 
-        {page:"supplier.html",icon:"🏢",label:"Supplier",group:"Supplier & Pembelian",roles:["owner","admin"]},
-        {page:"Purchase-Order.html",icon:"🛒",label:"Purchase Order",group:"Supplier & Pembelian",roles:["owner","admin"],badge:"pendingPOBadge"},
-        {page:"goods.receipt.html",icon:"📥",label:"Goods Receipt",group:"Supplier & Pembelian",roles:["owner","admin"],badge:"pendingGRBadge"},
+        {page:"supplier.html",icon:"🏢",label:"Supplier",group:"Supplier & Pembelian",roles:["owner","admin"],feature:"suppliers"},
+        {page:"Purchase-Order.html",icon:"🛒",label:"Purchase Order",group:"Supplier & Pembelian",roles:["owner","admin"],feature:"purchase_order",badge:"pendingPOBadge"},
+        {page:"goods.receipt.html",icon:"📥",label:"Goods Receipt",group:"Supplier & Pembelian",roles:["owner","admin"],feature:"goods_receipt",badge:"pendingGRBadge"},
 
-        {page:"retur.html",icon:"↩️",label:"Retur",group:"Keuangan & Laporan",roles:["owner","admin","kasir"]},
-        {page:"laporan.html",icon:"📑",label:"Laporan",group:"Keuangan & Laporan",roles:["owner","admin","kasir"],quick:true},
-        {page:"pengeluaran.html",icon:"💸",label:"Pengeluaran",group:"Keuangan & Laporan",roles:["owner","admin"]},
+        {page:"retur.html",icon:"↩️",label:"Retur",group:"Keuangan & Laporan",roles:["owner","admin","kasir"],feature:"returns"},
+        {page:"laporan.html",icon:"📑",label:"Laporan",group:"Keuangan & Laporan",roles:["owner","admin","kasir"],feature:"reports",quick:true},
+        {page:"pengeluaran.html",icon:"💸",label:"Pengeluaran",group:"Keuangan & Laporan",roles:["owner","admin"],feature:"expenses"},
 
-        {page:"shift-closing.html",icon:"🔒",label:"Closing Shift",group:"Closing & Data",roles:["owner","admin"]},
-        {page:"eod.html",icon:"🌙",label:"End of Day",group:"Closing & Data",roles:["owner","admin"],requiresEodReady:true},
-        {page:"backup%20%26%20restore.html",icon:"💾",label:"Backup & Restore",group:"Closing & Data",roles:["owner","admin"]},
+        {page:"shift-closing.html",icon:"🔒",label:"Closing Shift",group:"Closing & Data",roles:["owner","admin"],feature:"shift_closing"},
+        {page:"eod.html",icon:"🌙",label:"End of Day",group:"Closing & Data",roles:["owner","admin"],feature:"eod",requiresEodReady:true},
+        {page:"backup%20%26%20restore.html",icon:"💾",label:"Backup & Restore",group:"Closing & Data",roles:["owner","admin"],feature:"backup_restore"},
 
-        {page:"pwa-settings.html",icon:"📲",label:"Aplikasi & Update",group:"Sistem",roles:["owner","admin","kasir"]},
-        {page:"recovery-center.html",icon:"🛟",label:"Recovery Center",group:"Sistem",roles:["owner","admin","kasir"]},
-        {page:"qa-security-performance.html",icon:"🧪",label:"QA & Security",group:"Sistem",roles:["owner"]}
+        {page:"pwa-settings.html",icon:"📲",label:"Aplikasi & Update",group:"Sistem",roles:["owner","admin","kasir"],feature:"app_update"},
+        {page:"recovery-center.html",icon:"🛟",label:"Recovery Center",group:"Sistem",roles:["owner","admin","kasir"],feature:"recovery_center"},
+        {page:"qa-security-performance.html",icon:"🧪",label:"QA & Security",group:"Sistem",roles:["owner"],feature:"qa_security"}
     ];
 
     const GROUP_ORDER=["Utama","Inventori","Supplier & Pembelian","Keuangan & Laporan","Closing & Data","Sistem"];
@@ -161,6 +161,7 @@
 
     function routeAllowed(route,role,eodReady){
         if(!route.roles.includes(role))return false;
+        if(route.feature&&window.LDMLicense&&typeof window.LDMLicense.hasFeature==="function"&&!window.LDMLicense.hasFeature(route.feature))return false;
         if(route.requiresEodReady && !eodReady)return false;
         return true;
     }
@@ -454,6 +455,7 @@
     window.addEventListener("focus",()=>syncEodAvailability(false));
     document.addEventListener("visibilitychange",()=>{if(!document.hidden)syncEodAvailability(false)});
     window.addEventListener("ldm-cloud-session-ready",()=>{render();syncEodAvailability(false)});
+    window.addEventListener("ldm-license-ready",()=>{render();syncEodAvailability(false)});
 
     window.LDMGlobalNavigation={
         version:NAV_VERSION,

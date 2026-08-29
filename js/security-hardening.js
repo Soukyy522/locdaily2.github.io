@@ -1,7 +1,42 @@
 (function(){
     "use strict";
 
-    const VERSION = "19.0.0";
+    const VERSION = "23.1.0";
+
+    function loadLocalScript(src,id){
+        return new Promise((resolve,reject)=>{
+            const existing=document.getElementById(id);
+            if(existing){
+                if(existing.dataset.loaded==="true")resolve();
+                else existing.addEventListener("load",resolve,{once:true});
+                return;
+            }
+            const script=document.createElement("script");
+            script.id=id;
+            script.src=src;
+            script.async=false;
+            script.addEventListener("load",()=>{script.dataset.loaded="true";resolve()},{once:true});
+            script.addEventListener("error",()=>reject(new Error(`Gagal memuat ${src}`)),{once:true});
+            document.head.appendChild(script);
+        });
+    }
+
+    async function bootLicenseGuard(){
+        const page=String(location.pathname.split("/").pop()||"index.html").toLowerCase();
+        if(["license.html","offline.html"].includes(page))return;
+        await loadLocalScript("js/license-config.js?v=23.1","ldmLicenseConfigScript");
+        if(!window.LDM_LICENSE_CONFIG||window.LDM_LICENSE_CONFIG.enabled!==true)return;
+
+        document.documentElement.classList.add("ldm-license-pending");
+        const style=document.createElement("style");
+        style.id="ldmLicensePendingStyle";
+        style.textContent="html.ldm-license-pending body{visibility:hidden!important}";
+        document.head.appendChild(style);
+
+        await loadLocalScript("js/license-client.js?v=23.1","ldmLicenseClientScript");
+        if(!window.LDMLicense)throw new Error("License client tidak tersedia.");
+        await window.LDMLicense.bootGuard();
+    }
 
     function ensureReferrerPolicy(){
         if(document.querySelector('meta[name="referrer"]')) return;
@@ -68,6 +103,13 @@
 
     ensureReferrerPolicy();
     window.LDMSecurity = Object.freeze({version:VERSION,diagnostics,hardenExternalLinks,hardenForms});
+    bootLicenseGuard().catch(error=>{
+        console.error("License Guard:",error);
+        if(window.LDM_LICENSE_CONFIG&&window.LDM_LICENSE_CONFIG.enabled===true){
+            const code=encodeURIComponent(error&&error.message||"LICENSE_BOOT_FAILED");
+            location.replace(`license.html?error=${code}`);
+        }
+    });
     if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot, {once:true});
     else boot();
 })();
