@@ -117,6 +117,17 @@
                         row.promo_price,
                         0
                     ),
+                nama:
+                    row.promo_name ||
+                    "Promo Produk",
+                type:
+                    row.promo_type ||
+                    "fixed_price",
+                value:
+                    normalizeNumber(
+                        row.promo_value,
+                        row.promo_price
+                    ),
                 minQty:
                     Math.max(
                         1,
@@ -245,6 +256,9 @@
                         "legacy_stock_snapshot",
                         "last_expiry_date",
                         "promo_active",
+                        "promo_name",
+                        "promo_type",
+                        "promo_value",
                         "promo_price",
                         "promo_min_qty",
                         "promo_start_date",
@@ -338,7 +352,7 @@
             error
         } =
             await supabase.rpc(
-                "ldm_sync_products_stage20",
+                "ldm_sync_products_stage21",
                 {
                     p_products:
                         source
@@ -409,7 +423,7 @@
             error
         } =
             await supabase.rpc(
-                "ldm_sync_products_stage20",
+                "ldm_sync_products_stage21",
                 {
                     p_products:
                         source

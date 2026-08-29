@@ -1,9 +1,9 @@
 "use strict";
 
-const APP_VERSION = "20.1.0";
+const APP_VERSION = "21.0.0";
 const CACHE_PREFIX = "ldm-";
-const SHELL_CACHE = `${CACHE_PREFIX}release20-1-global-navigation-shell-v1`;
-const RUNTIME_CACHE = `${CACHE_PREFIX}release20-1-global-navigation-runtime-v1`;
+const SHELL_CACHE = `${CACHE_PREFIX}release21-promo-pricing-shell-v1`;
+const RUNTIME_CACHE = `${CACHE_PREFIX}release21-promo-pricing-runtime-v1`;
 const SUPABASE_CDN = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
 
 const APP_SHELL = [
@@ -14,7 +14,7 @@ const APP_SHELL = [
     "./js/pwa-manager.js", "./js/security-hardening.js", "./js/qa-runtime.js", "./js/recovery-service.js", "./js/global-system-navigation.js",
     "./js/offline-queue.js", "./js/supabase-config.js", "./js/supabase-client.js",
     "./js/cloud-auth.js", "./js/cloud-session.js", "./js/cloud-session-guard.js",
-    "./js/unit-conversion.js", "./js/products-service.js", "./js/products-bootstrap.js",
+    "./js/unit-conversion.js", "./js/promo-pricing.js", "./js/products-service.js", "./js/products-bootstrap.js",
     "./js/procurement-service.js", "./js/procurement-bootstrap.js",
     "./js/transactions-service.js", "./js/attendance-service.js",
     "./js/attendance-bootstrap.js", SUPABASE_CDN

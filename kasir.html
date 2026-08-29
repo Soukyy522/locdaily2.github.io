@@ -1526,8 +1526,10 @@
     <!-- Live Sync Tahap 9: Cloud Absensi -->
     <script src="js/attendance-service.js?v=9.1"></script>
     <script src="js/attendance-bootstrap.js?v=9.0"></script>
+    <!-- Tahap 21: Promo dan Harga Lanjutan -->
+    <script src="js/promo-pricing.js?v=21.0"></script>
     <!-- Live Sync Tahap 7: Cloud Master Barang -->
-    <script src="js/products-service.js?v=16.0"></script>
+    <script src="js/products-service.js?v=21.0"></script>
     <script src="js/transactions-service.js?v=16.0"></script>
     <script src="js/products-bootstrap.js?v=7.0"></script>
     <!-- Live Sync Tahap 10: Cloud Retur compatibility -->
@@ -2342,6 +2344,9 @@ document.addEventListener(
    ========================================================= */
 
 function getHargaEfektif(barang, qty = 1) {
+    if (window.LDMPromoPricing) {
+        return window.LDMPromoPricing.resolve(barang, qty).unitPrice;
+    }
     const hargaNormal = Number(barang?.harga) || 0;
 
     // Tidak ada promo
@@ -2402,6 +2407,20 @@ function isPromoAktif(barang, qty = 1) {
     const hargaEfektif = getHargaEfektif(barang, qty);
 
     return hargaEfektif < hargaNormal;
+}
+
+function getKeputusanHarga(barang, qty = 1) {
+    if (window.LDMPromoPricing) {
+        return window.LDMPromoPricing.resolve(barang, qty);
+    }
+    const normalPrice = Number(barang?.harga) || 0;
+    const unitPrice = getHargaEfektif(barang, qty);
+    return {
+        normalPrice,
+        unitPrice,
+        applied: unitPrice < normalPrice,
+        label: barang?.promo?.nama || "Promo Produk"
+    };
 }
 
 
@@ -3047,9 +3066,10 @@ function tambahItem() {
     // HITUNG HARGA NORMAL DAN HARGA EFEKTIF
     // ==========================================
 
-    const hargaNormal = Number(barang.harga) || 0;
-    const hargaEfektif = getHargaEfektif(barang, qty);
-    const promoAktif = hargaEfektif < hargaNormal;
+    const keputusanHarga = getKeputusanHarga(barang, qty);
+    const hargaNormal = keputusanHarga.normalPrice;
+    const hargaEfektif = keputusanHarga.unitPrice;
+    const promoAktif = keputusanHarga.applied;
 
     // ==========================================
     // MASUKKAN KE KERANJANG
@@ -3076,7 +3096,8 @@ function tambahItem() {
         // Hitung ulang harga berdasarkan total quantity
         const qtyBaru = keranjang[existingIdx].qty;
 
-        const hargaBaru = getHargaEfektif(barang, qtyBaru);
+        const keputusanBaru = getKeputusanHarga(barang, qtyBaru);
+        const hargaBaru = keputusanBaru.unitPrice;
 
         keranjang[existingIdx].productId =
             barang.id || keranjang[existingIdx].productId || null;
@@ -3087,6 +3108,7 @@ function tambahItem() {
         keranjang[existingIdx].harga = hargaBaru;
         keranjang[existingIdx].hargaNormal = hargaNormal;
         keranjang[existingIdx].isPromo = hargaBaru < hargaNormal;
+        keranjang[existingIdx].promoLabel = keputusanBaru.label || "Promo Produk";
 
         keranjang[existingIdx].subtotal =
             qtyBaru * hargaBaru;
@@ -3108,6 +3130,7 @@ function tambahItem() {
             hargaNormal: hargaNormal,
 
             isPromo: promoAktif,
+            promoLabel: keputusanHarga.label || "Promo Produk",
 
             qty: qty,
 
@@ -3143,6 +3166,8 @@ function tambahItem() {
             subtotalBelanja = 0;
 
             keranjang.forEach((item, index) => {
+                // Pulihkan draft/keranjang memakai aturan promo terbaru.
+                hitungUlangHargaItemKeranjang(index);
                 subtotalBelanja += item.subtotal;
 
                 const row = document.createElement("div");
@@ -3214,7 +3239,7 @@ function tambahItem() {
                 if (keranjang[index].qty <= 0) {
                     keranjang.splice(index, 1);
                 } else {
-                    keranjang[index].subtotal = keranjang[index].qty * keranjang[index].harga;
+                    hitungUlangHargaItemKeranjang(index);
                 }
                 renderKeranjang();
             }
@@ -3226,9 +3251,31 @@ function tambahItem() {
                 keranjang.splice(index, 1);
             } else {
                 keranjang[index].qty = parsed;
-                keranjang[index].subtotal = keranjang[index].qty * keranjang[index].harga;
+                hitungUlangHargaItemKeranjang(index);
             }
             renderKeranjang();
+        }
+
+        function hitungUlangHargaItemKeranjang(index) {
+            const cartItem = keranjang[index];
+            if (!cartItem) return;
+
+            const products = JSON.parse(localStorage.getItem("dataBarang") || "[]");
+            const product = products.find(row =>
+                (cartItem.productId && row.id === cartItem.productId) ||
+                (cartItem.barcode && String(row.barcode || "") === String(cartItem.barcode)) ||
+                (!cartItem.productId && !cartItem.barcode && row.nama === cartItem.nama)
+            );
+
+            if (product) {
+                const decision = getKeputusanHarga(product, cartItem.qty);
+                cartItem.hargaNormal = decision.normalPrice;
+                cartItem.harga = decision.unitPrice;
+                cartItem.isPromo = decision.applied;
+                cartItem.promoLabel = decision.label || "Promo Produk";
+            }
+
+            cartItem.subtotal = cartItem.qty * cartItem.harga;
         }
 
         function hapusItemCart(index) {

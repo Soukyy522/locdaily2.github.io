@@ -2456,6 +2456,28 @@
 })();
 </script>
 
+<style>
+    .promo-modal-content{max-width:560px;max-height:92vh;overflow-y:auto}
+    .promo-section{padding:14px;border:1px solid var(--border-color);border-radius:12px;background:var(--bg-primary);margin-bottom:12px}
+    .promo-section-title{font-size:.78rem;font-weight:800;color:var(--heading-color);margin-bottom:10px;text-transform:uppercase;letter-spacing:.04em}
+    .promo-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .promo-form-grid .field-full{grid-column:1/-1}
+    .promo-field label{display:block;margin:0 0 5px;font-size:.76rem}
+    .promo-field input,.promo-field select{margin:0;width:100%}
+    .promo-preview{border:1px solid #bbf7d0;background:linear-gradient(135deg,#f0fdf4,#ecfdf5);border-radius:12px;padding:13px;color:#14532d}
+    .promo-preview-row{display:flex;justify-content:space-between;gap:12px;font-size:.78rem;margin:4px 0}
+    .promo-preview-row strong{text-align:right}
+    .promo-preview-warning{margin-top:8px;color:#b45309;font-size:.72rem;font-weight:700}
+    body.dark-mode .promo-preview{background:rgba(16,185,129,.12);border-color:rgba(52,211,153,.35);color:#bbf7d0}
+    @media(max-width:560px){
+        .promo-modal-content{width:94%;padding:16px}
+        .promo-form-grid{grid-template-columns:1fr}
+        .promo-form-grid .field-full{grid-column:auto}
+        .promo-modal-content .modal-footer{display:grid;grid-template-columns:1fr 1fr}
+        .promo-modal-content .modal-footer .btn-simpan{grid-column:1/-1;order:-1}
+    }
+</style>
+
     <!-- Live Sync Tahap 6: Supabase Auth authoritative guard -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase-config.js"></script>
@@ -2468,8 +2490,10 @@
     <script src="js/attendance-bootstrap.js?v=9.0"></script>
     <!-- Tahap 20: Master Satuan dan Konversi Kemasan -->
     <script src="js/unit-conversion.js?v=20.0"></script>
+    <!-- Tahap 21: Promo dan Harga Lanjutan -->
+    <script src="js/promo-pricing.js?v=21.0"></script>
     <!-- Live Sync Tahap 7: Cloud Master Barang -->
-    <script src="js/products-service.js?v=7.0"></script>
+    <script src="js/products-service.js?v=21.0"></script>
     <script src="js/products-bootstrap.js?v=7.0"></script>
 
 </head>
@@ -2953,34 +2977,77 @@
 
     <!-- MODAL PENGATURAN PROMO -->
     <div class="modal" id="modalPromo">
-        <div class="modal-content">
-            <div class="modal-header" id="promoTitle">🏷️ Pengaturan Promo Diskon</div>
+        <div class="modal-content promo-modal-content">
+            <div class="modal-header" id="promoTitle">🏷️ Promo &amp; Harga Lanjutan</div>
             <input type="hidden" id="promoIndex">
 
-            <div class="toggle-row" style="margin-bottom: 10px;">
-                <span style="font-size:0.82rem; font-weight:600;">Aktifkan Promo Item Ini</span>
+            <div class="toggle-row promo-section">
+                <div>
+                    <strong style="display:block;font-size:.84rem;">Aktifkan promo produk</strong>
+                    <small style="color:var(--label-color);">Harga normal otomatis digunakan di luar periode promo.</small>
+                </div>
                 <label class="switch">
-                    <input type="checkbox" id="promoAktif">
+                    <input type="checkbox" id="promoAktif" onchange="updatePromoForm()">
                     <span class="slider"></span>
                 </label>
             </div>
 
-            <label>Harga Promo / Potongan (Rp)</label>
-            <input type="number" id="promoHarga" placeholder="Contoh: 3000 (Harga Promo)">
+            <div class="promo-section">
+                <div class="promo-section-title">Identitas dan jenis promo</div>
+                <div class="promo-form-grid">
+                    <div class="promo-field field-full">
+                        <label>Nama Program Promo</label>
+                        <input type="text" id="promoNama" maxlength="80" placeholder="Contoh: Hemat Akhir Pekan" oninput="updatePromoPreview()">
+                    </div>
+                    <div class="promo-field">
+                        <label>Jenis Promo</label>
+                        <select id="promoType" onchange="updatePromoForm()">
+                            <option value="fixed_price">Harga promo tetap</option>
+                            <option value="percentage">Diskon persen</option>
+                        </select>
+                    </div>
+                    <div class="promo-field" id="promoFixedField">
+                        <label>Harga Promo per Satuan (Rp)</label>
+                        <input type="number" id="promoHarga" min="1" step="1" placeholder="Contoh: 3000" oninput="updatePromoPreview()">
+                    </div>
+                    <div class="promo-field" id="promoPercentField" style="display:none;">
+                        <label>Diskon (%)</label>
+                        <input type="number" id="promoPersen" min="0.01" max="99.99" step="0.01" placeholder="Contoh: 10" oninput="updatePromoPreview()">
+                    </div>
+                    <div class="promo-field">
+                        <label>Minimal Pembelian</label>
+                        <input type="number" id="promoMinQty" min="1" step="0.001" value="1" oninput="updatePromoPreview()">
+                    </div>
+                </div>
+            </div>
 
-            <label>Min. Pembelian Untk Promo (Pcs/Qty)</label>
-            <input type="number" id="promoMinQty" value="1" placeholder="Contoh: 10 (Kosongkan/1 jika promo tanpa syarat qty)">
+            <div class="promo-section">
+                <div class="promo-section-title">Periode promo</div>
+                <div class="promo-form-grid">
+                    <div class="promo-field">
+                        <label>Tanggal Mulai</label>
+                        <input type="date" id="promoTglMulai" onchange="updatePromoPreview()">
+                    </div>
+                    <div class="promo-field">
+                        <label>Tanggal Selesai</label>
+                        <input type="date" id="promoTglSelesai" onchange="updatePromoPreview()">
+                    </div>
+                </div>
+                <small style="display:block;margin-top:8px;color:var(--label-color);">Kosongkan tanggal jika promo tidak memiliki batas periode.</small>
+            </div>
 
-            <label>Tanggal Mulai Promo</label>
-            <input type="date" id="promoTglMulai">
-
-            <label>Tanggal Selesai Promo</label>
-            <input type="date" id="promoTglSelesai">
+            <div class="promo-preview" id="promoPreview" aria-live="polite">
+                <div class="promo-preview-row"><span>Harga normal</span><strong id="promoPreviewNormal">Rp 0</strong></div>
+                <div class="promo-preview-row"><span>Harga setelah promo</span><strong id="promoPreviewFinal">Rp 0</strong></div>
+                <div class="promo-preview-row"><span>Potongan per satuan</span><strong id="promoPreviewDiscount">Rp 0</strong></div>
+                <div class="promo-preview-row"><span>Margin setelah promo</span><strong id="promoPreviewMargin">Rp 0</strong></div>
+                <div class="promo-preview-warning" id="promoPreviewWarning"></div>
+            </div>
 
             <div class="modal-footer">
                 <button class="btn-act btn-batal" onclick="tutupModal('modalPromo')">Batal</button>
                 <button class="btn-act btn-hapus" onclick="hapusPromoBarang()">Hapus Promo</button>
-                <button class="btn-act btn-simpan" style="width: auto;" onclick="simpanPromoBarang()">Simpan Promo</button>
+                <button class="btn-act btn-simpan" style="width:auto;" onclick="simpanPromoBarang()">Simpan Promo</button>
             </div>
         </div>
     </div>
@@ -3585,6 +3652,9 @@ const loggedUser =
 
     /* HELPER VERIFIKASI AKTIF PROMO (INTEGRASI KE KASIR.HTML & CETAK LABEL) */
     function CekPromoAktif(item, qtyBeli = 1) {
+        if (window.LDMPromoPricing) {
+            return window.LDMPromoPricing.resolve(item, qtyBeli).applied;
+        }
         if (!item.promo || !item.promo.aktif) return false;
         let today = getTanggalWITA();
         let tglMulai = item.promo.tglMulai || "";
@@ -3605,6 +3675,10 @@ const loggedUser =
 // Tidak memperhitungkan syarat jumlah pembelian.
 // =====================================================
 function CekPromoTersedia(item) {
+    if (window.LDMPromoPricing) {
+        const promo = window.LDMPromoPricing.normalize(item && item.promo, Number(item && item.harga) || 0);
+        return !!promo && window.LDMPromoPricing.isScheduled(promo);
+    }
     if (!item.promo || !item.promo.aktif) return false;
 
     const today = getTanggalWITA();
@@ -3708,7 +3782,9 @@ let isPromoTersedia = CekPromoTersedia(item);
 let isPromoValid = CekPromoAktif(item, 1);
 
             // KONEKSI HARGA PROMO KE PERHITUNGAN MARGIN DENGAN OTOMATIS ME-DETECT HARGA PROMO
-            let hgEfektif = (isPromoValid && item.promo.hargaPromo) ? Number(item.promo.hargaPromo) : hgJual;
+            let hgEfektif = window.LDMPromoPricing
+                ? window.LDMPromoPricing.resolve(item, 1).unitPrice
+                : ((isPromoValid && item.promo.hargaPromo) ? Number(item.promo.hargaPromo) : hgJual);
             let margin = hgEfektif - hgBeli;
 
             // =====================================================
@@ -3829,13 +3905,21 @@ else {
 
     let pMin = Number(item.promo.minQty) || 1;
     let pHarga = Number(item.promo.hargaPromo) || 0;
+    let pNama = String(item.promo.nama || "Promo Produk").replace(/[&<>"']/g, char => ({
+        "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"
+    })[char]);
+    let pJenis = item.promo.type === "percentage"
+        ? `Diskon ${Number(item.promo.value || 0).toLocaleString("id-ID")}%`
+        : "Harga Khusus";
 
     promoInfoHTML = `
         <div class="promo-info-badge">
 
-            🏷️ <b>PROMO AKTIF</b>
+            🏷️ <b>${pNama}</b>
 
             <br>
+
+            <span>${pJenis}</span>
 
             <span>
                 Min. Beli ${pMin} ${stn}
@@ -4404,45 +4488,102 @@ function catatKartuStokMutasi(payload = {}) {
         let data = JSON.parse(localStorage.getItem("dataBarang")) || defaultBarang;
         let item = data[index];
 
+        if (!item) {
+            return tampilkanNotifikasi("Barang Tidak Ditemukan", "Data barang yang dipilih tidak tersedia.", "⚠️");
+        }
+
         document.getElementById("promoIndex").value = index;
-        document.getElementById("promoTitle").innerText = "🏷️ Promo Diskon - " + item.nama;
+        document.getElementById("promoTitle").innerText = "🏷️ Promo & Harga - " + item.nama;
 
         let promo = item.promo || {};
         document.getElementById("promoAktif").checked = !!promo.aktif;
+        document.getElementById("promoNama").value = promo.nama || "Promo " + item.nama;
+        document.getElementById("promoType").value = promo.type === "percentage" ? "percentage" : "fixed_price";
         document.getElementById("promoHarga").value = promo.hargaPromo || "";
+        document.getElementById("promoPersen").value = promo.type === "percentage" ? (promo.value || promo.persen || "") : "";
         document.getElementById("promoMinQty").value = promo.minQty || 1;
         document.getElementById("promoTglMulai").value = promo.tglMulai || "";
         document.getElementById("promoTglSelesai").value = promo.tglSelesai || "";
 
+        updatePromoForm();
         document.getElementById("modalPromo").style.display = "flex";
     }
 
+    function getPromoDraftFromForm() {
+        const type = document.getElementById("promoType").value;
+        return {
+            aktif: document.getElementById("promoAktif").checked,
+            nama: document.getElementById("promoNama").value.trim() || "Promo Produk",
+            type,
+            value: type === "percentage"
+                ? Number(document.getElementById("promoPersen").value)
+                : Number(document.getElementById("promoHarga").value),
+            hargaPromo: Number(document.getElementById("promoHarga").value),
+            minQty: Math.max(1, Number(document.getElementById("promoMinQty").value) || 1),
+            tglMulai: document.getElementById("promoTglMulai").value,
+            tglSelesai: document.getElementById("promoTglSelesai").value
+        };
+    }
+
+    function updatePromoForm() {
+        const type = document.getElementById("promoType").value;
+        document.getElementById("promoFixedField").style.display = type === "fixed_price" ? "block" : "none";
+        document.getElementById("promoPercentField").style.display = type === "percentage" ? "block" : "none";
+        updatePromoPreview();
+    }
+
+    function updatePromoPreview() {
+        const index = Number(document.getElementById("promoIndex").value);
+        const data = JSON.parse(localStorage.getItem("dataBarang")) || defaultBarang;
+        const item = data[index] || {};
+        const hargaNormal = Math.max(0, Number(item.harga) || 0);
+        const hargaBeli = Math.max(0, Number(item.hargaBeli) || 0);
+        const draft = getPromoDraftFromForm();
+        const result = window.LDMPromoPricing
+            ? window.LDMPromoPricing.validate(draft, hargaNormal)
+            : { valid: true, errors: [], promo: draft };
+        const normalized = result.promo || draft;
+        const hargaFinal = Math.max(0, Number(normalized.hargaPromo) || 0);
+        const potongan = Math.max(0, hargaNormal - hargaFinal);
+        const margin = hargaFinal - hargaBeli;
+
+        document.getElementById("promoPreviewNormal").innerText = `Rp ${hargaNormal.toLocaleString("id-ID")}`;
+        document.getElementById("promoPreviewFinal").innerText = `Rp ${hargaFinal.toLocaleString("id-ID")}`;
+        document.getElementById("promoPreviewDiscount").innerText = `Rp ${potongan.toLocaleString("id-ID")}`;
+        document.getElementById("promoPreviewMargin").innerText = `${margin < 0 ? "-" : "+"}Rp ${Math.abs(margin).toLocaleString("id-ID")}`;
+
+        const warnings = [];
+        if (draft.aktif && result.errors && result.errors.length) warnings.push(...result.errors);
+        if (draft.aktif && hargaFinal > 0 && hargaFinal < hargaBeli) {
+            warnings.push("Peringatan: harga promo berada di bawah harga beli.");
+        }
+        document.getElementById("promoPreviewWarning").innerText = warnings.join(" ");
+    }
+
     function simpanPromoBarang() {
-        let index = document.getElementById("promoIndex").value;
+        let index = Number(document.getElementById("promoIndex").value);
         let data = JSON.parse(localStorage.getItem("dataBarang")) || defaultBarang;
 
-        let isAktif = document.getElementById("promoAktif").checked;
-        let hargaPromo = Number(document.getElementById("promoHarga").value);
-        let minQty = Number(document.getElementById("promoMinQty").value) || 1;
-        let tglMulai = document.getElementById("promoTglMulai").value;
-        let tglSelesai = document.getElementById("promoTglSelesai").value;
-
-        if (isAktif && (!hargaPromo || hargaPromo <= 0)) {
-            return tampilkanNotifikasi("Input Salah", "Masukkan harga potongan / promo yang valid!", "⚠️");
+        if (!data[index]) {
+            return tampilkanNotifikasi("Barang Tidak Ditemukan", "Data barang yang dipilih tidak tersedia.", "⚠️");
         }
 
-        data[index].promo = {
-            aktif: isAktif,
-            hargaPromo: hargaPromo,
-            minQty: minQty,
-            tglMulai: tglMulai,
-            tglSelesai: tglSelesai
-        };
+        const draft = getPromoDraftFromForm();
+        const hargaNormal = Number(data[index].harga) || 0;
+        const result = window.LDMPromoPricing
+            ? window.LDMPromoPricing.validate(draft, hargaNormal)
+            : { valid: true, errors: [], promo: draft };
+
+        if (draft.aktif && !result.valid) {
+            return tampilkanNotifikasi("Promo Belum Valid", result.errors.join(" "), "⚠️");
+        }
+
+        data[index].promo = result.promo || draft;
 
         simpanKeStorage(data);
         tutupModal("modalPromo");
         muatBarang();
-        tampilkanNotifikasi("Berhasil", "Pengaturan promo diskon berhasil disimpan!", "🏷️");
+        tampilkanNotifikasi("Promo Tersimpan", "Promo dan harga lanjutan berhasil disimpan serta dijadwalkan untuk sinkronisasi cloud.", "🏷️");
     }
 
     function hapusPromoBarang() {

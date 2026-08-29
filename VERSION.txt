@@ -111,3 +111,13 @@ Recovery Center: Owner + Admin + Kasir (aksi tetap mengikuti otoritas recovery)
 QA & Security: Owner only
 Role Visibility: Menu desktop dan HP disaring konsisten
 PWA Cache: release20-1-global-navigation-v1
+
+Tahap: 21 - Promo dan Harga Lanjutan
+Release Version: 21.0.0
+Promo Types: Harga tetap + diskon persen
+Promo Conditions: Minimal pembelian + tanggal mulai/selesai
+Price Authority: public.products.promo_price dihitung/validasi server
+Promo Metadata: promo_name + promo_type + promo_value
+Pricing Audit: public.product_pricing_history
+Legacy Compatibility: promo lama otomatis menjadi fixed_price
+PWA Cache: release21-promo-pricing-v1
