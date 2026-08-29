@@ -2,6 +2,7 @@
     "use strict";
 
     const ITEMS=[
+        {href:"multi-store.html",icon:"⇄",label:"Multi-Toko & Transfer",roles:["owner","admin"]},
         {href:"pwa-settings.html",icon:"▣",label:"Aplikasi & Update",roles:["owner","admin","kasir"]},
         {href:"recovery-center.html",icon:"↻",label:"Recovery Center",roles:["owner","admin","kasir"]},
         {href:"qa-security-performance.html",icon:"✓",label:"QA & Security",roles:["owner"]}
@@ -23,6 +24,7 @@
         "eod.html":["owner","admin"],
         "pengeluaran.html":["owner","admin"],
         "backup & restore.html":["owner","admin"],
+        "multi-store.html":["owner","admin"],
         "pwa-settings.html":["owner","admin","kasir"],
         "recovery-center.html":["owner","admin","kasir"],
         "qa-security-performance.html":["owner"]
@@ -62,9 +64,25 @@
             .ldm-system-standalone a:hover{border-color:#0f9d58;box-shadow:0 5px 14px rgba(15,157,88,.1);transform:translateY(-1px)}
             .ldm-system-standalone a.active{background:#edf8f2;border-color:#0f9d58;color:#087943}
             .ldm-system-nav-icon{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:6px;background:rgba(15,157,88,.1);color:#0f9d58;font-size:12px;font-weight:900;flex:0 0 auto}
+            .ldm-active-store-pill{display:flex;align-items:center;gap:7px;margin:8px 10px;padding:9px 10px;border-radius:9px;background:rgba(15,157,88,.14);color:inherit;font-size:10px;font-weight:800;line-height:1.3}
+            .ldm-active-store-pill::before{content:"";width:7px;height:7px;border-radius:50%;background:#22c55e;box-shadow:0 0 0 3px rgba(34,197,94,.17);flex:0 0 auto}
+            .ldm-system-standalone .ldm-active-store-pill{margin:0 auto 0 0;color:#24513d;background:#e9f8f0;max-width:260px}
             @media(max-width:720px){.ldm-system-standalone{padding:0 10px;justify-content:stretch}.ldm-system-standalone-label{width:100%;margin:0}.ldm-system-standalone a{flex:1 1 calc(50% - 7px);justify-content:center;white-space:nowrap}.ldm-system-standalone a:last-child{flex-basis:100%}}
         `;
         document.head.appendChild(style);
+    }
+
+    function activeStorePill(){
+        const pill=document.createElement("div");
+        pill.className="ldm-active-store-pill";
+        pill.dataset.ldmActiveStore="true";
+        pill.textContent=`Toko aktif: ${localStorage.getItem("ldmCloudStoreName")||"Belum terhubung"}`;
+        return pill;
+    }
+
+    function refreshActiveStorePills(){
+        const text=`Toko aktif: ${localStorage.getItem("ldmCloudStoreName")||"Belum terhubung"}`;
+        document.querySelectorAll("[data-ldm-active-store]").forEach(pill=>{pill.textContent=text});
     }
 
     function makeLink(item,role,mode){
@@ -82,6 +100,7 @@
     }
 
     function enhanceSidebar(nav,role){
+        if(!nav.querySelector("[data-ldm-active-store]"))nav.prepend(activeStorePill());
         ITEMS.forEach(item=>{
             const existing=nav.querySelector(`a[href="${item.href}"]`);
             if(existing){
@@ -104,6 +123,7 @@
         nav.className="ldm-system-standalone";
         nav.setAttribute("aria-label","Menu Sistem LocDailyMar");
         const label=document.createElement("span");label.className="ldm-system-standalone-label";label.textContent="Menu Sistem";nav.appendChild(label);
+        nav.appendChild(activeStorePill());
         ITEMS.forEach(item=>nav.appendChild(makeLink(item,role,"standalone")));
         const anchor=document.querySelector("header,.top,.header-app,.page-header");
         if(anchor)anchor.insertAdjacentElement("afterend",nav);else document.body.insertAdjacentElement("afterbegin",nav);
@@ -133,6 +153,7 @@
         document.documentElement.dataset.ldmRole=role;
         const sidebars=[...document.querySelectorAll(".nav-bar")];
         if(sidebars.length)sidebars.forEach(nav=>enhanceSidebar(nav,role));else createStandalone(role);
+        refreshActiveStorePills();
         applyRoleAccess(role);
         document.querySelectorAll("[data-ldm-system-nav]").forEach(link=>{
             const allowed=String(link.dataset.roleAccess||"").split(",");
@@ -141,7 +162,7 @@
     }
 
     if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",render,{once:true});else render();
-    window.addEventListener("storage",event=>{if(event.key==="userRole"||event.key==="role")render()});
+    window.addEventListener("storage",event=>{if(["userRole","role","ldmCloudStoreName"].includes(event.key))render()});
     if(!currentRole()){
         let attempts=0;
         const timer=setInterval(()=>{
