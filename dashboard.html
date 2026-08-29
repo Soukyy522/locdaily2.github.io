@@ -11272,6 +11272,7 @@ window.addEventListener(
         "goods.receipt.html":["owner","admin"],
         "kartu-stok.html":["owner","admin","kasir"],
         "stock-opname.html":["owner","admin","kasir"],
+        "multi-store.html":["owner","admin"],
         "laporan.html":["owner","admin","kasir"],
         "shift-closing.html":["owner","admin"],
         "eod.html":["owner","admin"],
@@ -11343,6 +11344,7 @@ window.addEventListener(
         {page:"barang.html", icon:"📦", label:"Barang", group:"Inventori", roles:["owner","admin"], badge:"navBadge"},
         {page:"kartu-stok.html", icon:"📒", label:"Kartu Stok", group:"Inventori", roles:["owner","admin","kasir"]},
         {page:"stock-opname.html", icon:"📋", label:"Stock Opname", group:"Inventori", roles:["owner","admin","kasir"]},
+        {page:"multi-store.html", icon:"⇄", label:"Multi-Toko & Transfer", group:"Inventori", roles:["owner","admin"], quick:true},
 
         {page:"supplier.html", icon:"🏢", label:"Supplier", group:"Supplier & Pembelian", roles:["owner","admin"]},
         {page:"Purchase-Order.html", icon:"🛒", label:"Purchase Order", group:"Supplier & Pembelian", roles:["owner","admin"], badge:"pendingPOBadge"},
@@ -12301,6 +12303,6 @@ window.addEventListener(
     if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init,{once:true});else init();
 })();
 </script>
-<script src="js/global-system-navigation.js?v=20.1"></script>
+<script src="js/global-system-navigation.js?v=22.2"></script>
 </body>
 </html>

@@ -8,9 +8,12 @@
     <title>Sync Conflict & Recovery Center - LocDailyMar</title>
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="assets/icons/icon-192.png">
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         *{box-sizing:border-box}body{margin:0;background:#f3f6fb;color:#172033;font:14px/1.5 Inter,system-ui,sans-serif}.wrap{width:min(1220px,calc(100% - 28px));margin:22px auto 50px}.top,.card{background:#fff;border:1px solid #dfe6ef;border-radius:17px;box-shadow:0 9px 28px #0f234512}.top{padding:22px;display:flex;align-items:center;justify-content:space-between;gap:16px}.top h1{font-size:clamp(1.3rem,3vw,1.9rem);margin:0 0 4px}.muted{color:#64748b}.actions{display:flex;gap:8px;flex-wrap:wrap}button,.btn{border:0;border-radius:9px;padding:10px 13px;font-weight:800;cursor:pointer;text-decoration:none;background:#0d2240;color:#fff}.green{background:#0f9d58}.light{background:#e8eef7;color:#0d2240}.danger{background:#fee2e2;color:#991b1b}.warn{background:#fef3c7;color:#92400e}button:disabled{opacity:.5;cursor:not-allowed}.notice{margin:14px 0;padding:13px 15px;border:1px solid #f2c66d;background:#fff9e8;border-radius:12px}.summary{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:14px 0}.metric{padding:14px;background:#fff;border:1px solid #dfe6ef;border-radius:13px}.metric b{display:block;font-size:1.45rem}.card{padding:18px;margin-top:14px}.card-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}.card h2{font-size:1.05rem;margin:0}.table-wrap{overflow:auto;border:1px solid #e6ebf2;border-radius:11px}table{width:100%;border-collapse:collapse;min-width:900px}th,td{text-align:left;padding:10px;border-bottom:1px solid #edf1f5;vertical-align:top}th{background:#f7f9fc;font-size:.74rem;color:#475569;position:sticky;top:0}.badge{display:inline-block;padding:4px 8px;border-radius:999px;font-size:.7rem;font-weight:900;text-transform:uppercase}.pending,.retry_requested{background:#dbeafe;color:#1d4ed8}.syncing{background:#e0f2fe;color:#0369a1}.synced,.resolved{background:#dcfce7;color:#166534}.conflict,.open{background:#fef3c7;color:#92400e}.failed,.blocked{background:#fee2e2;color:#991b1b}.discarded{background:#e5e7eb;color:#475569}.error{max-width:340px;color:#991b1b;white-space:normal}.small{font-size:.76rem}.empty{text-align:center;padding:26px;color:#64748b}.message{display:none;margin-top:13px;padding:12px;border-radius:10px;white-space:pre-wrap}.message.show{display:block}.message.ok{background:#dcfce7;color:#166534}.message.bad{background:#fee2e2;color:#991b1b}@media(max-width:800px){.top{align-items:flex-start;flex-direction:column}.summary{grid-template-columns:1fr 1fr}.card-head{align-items:flex-start;flex-direction:column}}@media(max-width:430px){.summary{grid-template-columns:1fr}}
     </style>
+    <link rel="stylesheet" href="css/system-pages-shared-theme.css?v=22.2">
     <script src="js/security-hardening.js?v=19.0"></script>
     <script defer src="js/qa-runtime.js?v=19.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -23,9 +26,21 @@
     <script src="js/recovery-service.js?v=17.0"></script>
     <script src="js/pwa-manager.js?v=19.1"></script>
 </head>
-<body>
-<main class="wrap">
-    <section class="top"><div><h1>🛟 Sync Conflict & Recovery Center</h1><div class="muted" id="identity">Memuat sesi cloud…</div></div><div class="actions"><button class="green" id="refreshBtn">↻ Refresh</button><button id="syncBtn">Sinkronkan Queue</button><button class="light" id="exportBtn">Export Recovery JSON</button><a class="btn light" href="dashboard.html">← Dashboard</a></div></section>
+<body class="ldm-system-page">
+<header class="ldm-shared-header" data-ldm-shared-header>
+    <div class="ldm-shared-brand">
+        <button class="ldm-shared-menu-toggle" type="button" data-ldm-menu-toggle aria-label="Buka menu navigasi" aria-expanded="false">☰</button>
+        <img class="ldm-shared-logo" data-ldm-brand-logo alt="Logo toko">
+        <div class="ldm-shared-brand-copy"><h1 data-ldm-brand-title>LocDailyMar</h1><p data-ldm-brand-subtitle>Sistem Operasional Toko</p></div>
+    </div>
+    <div class="ldm-shared-actions">
+        <span class="ldm-shared-role" data-ldm-role-chip>👤 Memuat</span>
+        <button class="ldm-shared-action ldm-shared-theme-button" type="button" data-ldm-theme-open>🎨 Tema</button>
+        <a class="ldm-shared-action ldm-shared-action-home" href="dashboard.html">⌂ Dashboard</a>
+    </div>
+</header>
+<main class="wrap ldm-system-content">
+    <section class="ldm-page-hero"><div class="ldm-page-hero-copy"><span class="ldm-page-eyebrow">Sinkronisasi & Pemulihan</span><h1>🛟 Sync Conflict & Recovery Center</h1><p class="muted" id="identity">Memuat sesi cloud…</p></div><div class="ldm-page-hero-actions actions"><button class="green" id="refreshBtn">↻ Refresh</button><button id="syncBtn">Sinkronkan Queue</button><button class="light" id="exportBtn">Export JSON</button></div></section>
     <div class="notice"><strong>Aturan aman:</strong> Retry tidak membuat transaksi ganda karena tetap memakai <code>client_transaction_id</code>. Discard hanya dapat dilakukan Owner, wajib online, wajib memiliki alasan, tercatat di cloud, dan diblokir kembali oleh server.</div>
     <section class="summary"><div class="metric"><span>Queue lokal</span><b id="localTotal">0</b></div><div class="metric"><span>Belum sinkron</span><b id="unsynced">0</b></div><div class="metric"><span>Conflict cloud</span><b id="cloudOpen">0</b></div><div class="metric"><span>Resolved</span><b id="resolved">0</b></div><div class="metric"><span>Discarded</span><b id="discarded">0</b></div></section>
     <div class="message" id="message"></div>
@@ -80,6 +95,7 @@
     if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",refresh,{once:true});else refresh();
 })();
 </script>
-<script src="js/global-system-navigation.js?v=20.1"></script>
+<script src="js/global-system-navigation.js?v=22.2"></script>
+<script src="js/shared-system-theme.js?v=22.2"></script>
 </body>
 </html>

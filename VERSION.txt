@@ -132,3 +132,18 @@ Transfer Status: DRAFT -> IN_TRANSIT -> RECEIVED
 Stock Ledger: transfer_out + transfer_in
 Stock Authority: RPC atomik + public.stock_movements
 PWA Cache: release22-multi-store-v1
+
+Patch: 22.1.0 - Responsive Global Navigation + Dashboard Theme
+Desktop Navigation: Mega Menu lengkap pada seluruh halaman operasional
+Mobile Navigation: Hamburger drawer responsif
+Multi-Store Theme: Mengikuti headerConfig Dashboard termasuk dark mode, warna, font, dan logo
+Role Visibility: Owner/Admin/Kasir tetap disaring berdasarkan hak akses
+PWA Cache: release22-1-responsive-navigation-v1
+
+Patch: 22.2.0 - Linked System Pages Theme
+Target Pages: Multi-Toko, Aplikasi & Update, Recovery Center, QA & Security
+Shared Theme Key: headerConfig (kompatibel dengan Dashboard)
+Theme Editor: Tersedia pada keempat halaman
+Theme Sync: Navigasi halaman + storage event + BroadcastChannel lintas tab
+Responsive Navigation: Mega Menu desktop + hamburger drawer HP
+PWA Cache: release22-2-linked-system-theme-v1

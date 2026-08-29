@@ -6,6 +6,7 @@
     <meta name="theme-color" content="#0f9d58">
     <title>Multi-Toko & Transfer Stok - LocDailyMar</title>
     <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         :root{--ms-green:#0f9d58;--ms-dark:#2c3e50;--ms-bg:#f4f7f6;--ms-card:#fff;--ms-border:#dfe7e3;--ms-muted:#667085;--ms-danger:#d92d20;--ms-warning:#b54708}
         *{box-sizing:border-box}body{margin:0;background:var(--ms-bg);color:var(--ms-dark);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif}
@@ -25,6 +26,8 @@
         @media(max-width:820px){.ms-grid{grid-template-columns:1fr}.ms-summary{grid-template-columns:1fr 1fr}.ms-summary .ms-stat:last-child{grid-column:1/-1}.ms-header-inner{align-items:flex-start}.ms-form-grid{grid-template-columns:1fr}}
         @media(max-width:480px){.ms-header-inner,.ms-main{width:min(100% - 18px,1180px)}.ms-header{padding:17px 9px}.ms-title h1{font-size:1.05rem}.ms-back{padding:8px}.ms-panel{padding:14px}.ms-summary{gap:8px}.ms-stat{padding:12px}.ms-panel-head{display:block}.ms-panel-head .ms-btn{margin-top:10px;width:100%}.ms-store{grid-template-columns:1fr}.ms-store .ms-btn{width:100%}}
     </style>
+    <link rel="stylesheet" href="css/multi-store-dashboard-theme.css?v=22.1">
+    <link rel="stylesheet" href="css/system-pages-shared-theme.css?v=22.2">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase-config.js"></script>
     <script src="js/supabase-client.js?v=22.0"></script>
@@ -34,15 +37,32 @@
     <script src="js/cloud-session-guard.js?v=22.0"></script>
     <script src="js/multi-store-service.js?v=22.0"></script>
 </head>
-<body>
+<body class="ldm-system-page">
     <div class="ms-offline" id="offlineBanner">Mode offline — pergantian toko dan transfer stok dinonaktifkan.</div>
-    <header class="ms-header">
-        <div class="ms-header-inner">
-            <div class="ms-title"><h1>Multi-Toko & Transfer Stok</h1><p>Kelola cabang, toko aktif perangkat, dan perpindahan persediaan.</p></div>
-            <a class="ms-back" href="dashboard.html">← Dashboard</a>
+    <header class="ldm-shared-header" data-ldm-shared-header>
+        <div class="ldm-shared-brand">
+            <button class="ldm-shared-menu-toggle" type="button" data-ldm-menu-toggle aria-label="Buka menu navigasi" aria-expanded="false">☰</button>
+            <img class="ldm-shared-logo" data-ldm-brand-logo alt="Logo toko">
+            <div class="ldm-shared-brand-copy">
+                <h1 data-ldm-brand-title>LocDailyMar</h1>
+                <p data-ldm-brand-subtitle>Sistem Operasional Toko</p>
+            </div>
+        </div>
+        <div class="ldm-shared-actions">
+            <span class="ldm-shared-role" id="roleChip" data-ldm-role-chip>👤 Memuat</span>
+            <button class="ldm-shared-action ldm-shared-theme-button" type="button" data-ldm-theme-open>🎨 Tema</button>
+            <a class="ldm-shared-action ldm-shared-action-home" href="dashboard.html">⌂ Dashboard</a>
         </div>
     </header>
-    <main class="ms-main" id="appRoot">
+    <main class="ms-main ldm-system-content" id="appRoot">
+        <section class="ms-page-intro">
+            <div class="ms-page-intro-copy">
+                <span class="ms-page-eyebrow">Operasional Cabang</span>
+                <h1>Multi-Toko & Transfer Stok</h1>
+                <p>Kelola toko aktif perangkat, cabang usaha, dan perpindahan persediaan dari satu halaman.</p>
+            </div>
+            <div class="ms-page-state"><span></span> Terhubung ke Cloud</div>
+        </section>
         <div class="ms-alert" id="alertBox"></div>
         <section class="ms-summary">
             <div class="ms-stat"><span>Toko aktif perangkat</span><strong id="activeStoreName">Memuat…</strong></div>
@@ -53,12 +73,12 @@
         <div class="ms-grid">
             <div>
                 <section class="ms-panel">
-                    <div class="ms-panel-head"><div><h2>Daftar Toko</h2><p>Toko aktif berlaku hanya pada perangkat ini.</p></div></div>
+                    <div class="ms-panel-head"><div><span class="ms-panel-kicker">🏪 Jaringan Toko</span><h2>Daftar Toko</h2><p>Toko aktif berlaku hanya pada perangkat ini.</p></div></div>
                     <div class="ms-store-list" id="storeList"><div class="ms-empty">Memuat toko…</div></div>
                 </section>
 
                 <section class="ms-panel" id="branchPanel">
-                    <div class="ms-panel-head"><div><h2>Tambah Cabang</h2><p>Cabang mendapatkan Store ID baru dan stok awal nol.</p></div></div>
+                    <div class="ms-panel-head"><div><span class="ms-panel-kicker">＋ Pengembangan</span><h2>Tambah Cabang</h2><p>Cabang mendapatkan Store ID baru dan stok awal nol.</p></div></div>
                     <form class="ms-form" id="branchForm">
                         <div class="ms-form-grid">
                             <div class="ms-field"><label>Kode Cabang</label><input id="branchCode" maxlength="30" placeholder="LDM-CABANG-02" required></div>
@@ -72,7 +92,7 @@
 
             <div>
                 <section class="ms-panel">
-                    <div class="ms-panel-head"><div><h2>Buat Transfer Stok</h2><p>Barang harus memiliki barcode yang sama pada toko tujuan.</p></div></div>
+                    <div class="ms-panel-head"><div><span class="ms-panel-kicker">⇄ Perpindahan Barang</span><h2>Buat Transfer Stok</h2><p>Barang harus memiliki barcode yang sama pada toko tujuan.</p></div></div>
                     <form class="ms-form" id="transferForm">
                         <div class="ms-field"><label>Toko Tujuan</label><select id="destinationStore" required><option value="">Pilih toko tujuan</option></select></div>
                         <div class="ms-table-wrap"><table class="ms-table"><thead><tr><th>Pilih</th><th>Barang</th><th>Stok Sumber</th><th>Stok Tujuan</th><th>Qty Transfer</th></tr></thead><tbody id="candidateRows"><tr><td colspan="5" class="ms-empty">Pilih toko tujuan terlebih dahulu.</td></tr></tbody></table></div>
@@ -82,7 +102,7 @@
                 </section>
 
                 <section class="ms-panel">
-                    <div class="ms-panel-head"><div><h2>Riwayat Transfer</h2><p>Stok sumber berkurang saat dikirim dan tujuan bertambah saat diterima.</p></div><button class="ms-btn ms-btn-light" id="refreshTransfers" type="button">Muat Ulang</button></div>
+                    <div class="ms-panel-head"><div><span class="ms-panel-kicker">🕘 Aktivitas</span><h2>Riwayat Transfer</h2><p>Stok sumber berkurang saat dikirim dan tujuan bertambah saat diterima.</p></div><button class="ms-btn ms-btn-light" id="refreshTransfers" type="button">Muat Ulang</button></div>
                     <div id="transferList"><div class="ms-empty">Memuat transfer…</div></div>
                 </section>
             </div>
@@ -106,6 +126,7 @@
             const active=currentStore();
             $("activeStoreName").textContent=active?active.store_name:"Tidak tersedia";
             $("storeCount").textContent=stores.length;
+            $("roleChip").textContent=`👤 ${currentRole()||"pengguna"}`;
             $("branchPanel").style.display=currentRole()==="owner"?"block":"none";
             $("storeList").innerHTML=stores.length?stores.map(store=>`
                 <div class="ms-store ${store.is_current?"current":""}">
@@ -174,6 +195,7 @@
         window.addEventListener("online",onlineState);window.addEventListener("offline",onlineState);onlineState();boot();
     })();
     </script>
-    <script src="js/global-system-navigation.js?v=22.0"></script>
+    <script src="js/global-system-navigation.js?v=22.2"></script>
+    <script src="js/shared-system-theme.js?v=22.2"></script>
 </body>
 </html>
