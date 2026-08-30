@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="id">
-<head><meta name="referrer" content="strict-origin-when-cross-origin"><link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><script src="js/license-config.js?v=23.2.2"></script><script src="js/license-client.js?v=23.2.2"></script><script src="js/security-hardening.js?v=23.2.2"></script><script defer src="js/qa-runtime.js?v=19.0"></script>
+<head><meta name="referrer" content="strict-origin-when-cross-origin"><link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><script src="js/security-hardening.js?v=19.0"></script><script defer src="js/qa-runtime.js?v=19.0"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - LocDailyMar POS</title>
@@ -1051,18 +1051,6 @@ async function migrateOldAccounts() {
 // LOGIN UTAMA
 // =====================================================
 
-function withLoginTimeout(promise, timeoutMs, message) {
-    let timer = 0;
-    const timeout = new Promise((_, reject) => {
-        timer = window.setTimeout(
-            () => reject(new Error(message || "Pemeriksaan akun terlalu lama. Periksa internet lalu coba lagi.")),
-            timeoutMs
-        );
-    });
-    return Promise.race([promise, timeout])
-        .finally(() => window.clearTimeout(timer));
-}
-
 async function handleLogin(event) {
 
     event.preventDefault();
@@ -1144,11 +1132,12 @@ async function handleLogin(event) {
 
     try {
 
-        const context = await withLoginTimeout(
-            window.LDMCloudSession.signIn(emailInput,passwordInput),
-            15000,
-            "Login melebihi batas 15 detik. Periksa internet, Supabase, lalu coba kembali."
-        );
+        const context =
+            await window.LDMCloudSession
+                .signIn(
+                    emailInput,
+                    passwordInput
+                );
 
         const profile =
             context.profile;
@@ -1267,11 +1256,9 @@ async function resumeCloudLogin() {
 
     try {
 
-        const context = await withLoginTimeout(
-            window.LDMCloudSession.resume(),
-            10000,
-            "Pemulihan sesi melebihi batas 10 detik. Silakan login kembali."
-        );
+        const context =
+            await window.LDMCloudSession
+                .resume();
 
         if(context){
             window.location.replace(
