@@ -33,6 +33,14 @@
         })
     });
 
+    const page=(location.pathname.split("/").pop()||"index.html").toLowerCase();
+    const publicPage=["license.html","offline.html","404.html"].includes(page);
+    let watchdog=0;
+
+    function returnTarget(){
+        return /^[A-Za-z0-9._% -]+\.html$/i.test(page)?page:"dashboard.html";
+    }
+
     function mountGateScreen(){
         if(publicPage||!window.LDM_LICENSE_CONFIG.enabled)return;
         document.documentElement.classList.add("ldm-license-pending");
