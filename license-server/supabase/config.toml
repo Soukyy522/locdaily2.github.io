@@ -1,2 +1,5 @@
 [functions.ldm-license]
 verify_jwt = false
+
+[functions.ldm-license-admin]
+verify_jwt = false
