@@ -1,9 +1,9 @@
 "use strict";
 
-const APP_VERSION = "23.2.0";
+const APP_VERSION = "23.2.1";
 const CACHE_PREFIX = "ldm-";
-const SHELL_CACHE = `${CACHE_PREFIX}release23-2-license-shell-v1`;
-const RUNTIME_CACHE = `${CACHE_PREFIX}release23-2-license-runtime-v1`;
+const SHELL_CACHE = `${CACHE_PREFIX}release23-2-1-license-shell-v1`;
+const RUNTIME_CACHE = `${CACHE_PREFIX}release23-2-1-license-runtime-v1`;
 const SUPABASE_CDN = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
 
 const APP_SHELL = [
@@ -99,7 +99,7 @@ self.addEventListener("fetch", event => {
         event.respondWith(networkFirstNavigation(request));
         return;
     }
-    if(url.origin===self.location.origin && /\/js\/(license-config|license-client|security-hardening|license-admin-config|license-admin)\.js$/i.test(url.pathname)){
+    if(url.origin===self.location.origin && /\/js\/(license-config|license-client|security-hardening|cloud-session-guard|license-admin-config|license-admin)\.js$/i.test(url.pathname)){
         event.respondWith(networkFirstAsset(request));
         return;
     }
