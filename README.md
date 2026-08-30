@@ -311,8 +311,10 @@ File utama:
 - `docs/TAHAP-19.md`
 
 Jalankan audit frontend dengan `node tools/qa-stage19.mjs .`. Peringatan berbeda dari kegagalan: kegagalan harus dibereskan sebelum rilis, sedangkan peringatan perlu ditinjau dan dicatat.
-# LocDailyMar — TAHAP 23.1 Lisensi Berbayar
+# LocDailyMar — TAHAP 23.1.1 Lisensi Berbayar
 
 Versi ini menambahkan empat paket lisensi, trial Warung Sederhana 14 hari, pemesanan melalui WhatsApp developer, penerbitan License Key manual, batas perangkat/toko, dan penguncian seluruh halaman operasional.
+
+Patch 23.1.1 memperbaiki halaman putih setelah login akibat penjaga lisensi tertahan cache lama. Selama validasi sekarang tampil layar pemeriksaan dan tersedia fallback aman bila script gagal dimuat.
 
 Mulai pemasangan dari `docs/TAHAP-23.1-LISENSI-4-PAKET-MANUAL-WHATSAPP.md`.
