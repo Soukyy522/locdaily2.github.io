@@ -1,7 +1,7 @@
 (function(){
     "use strict";
 
-    const VERSION="23.1.0";
+    const VERSION="23.1.1";
     const TOKEN_KEY="ldmLicenseActivationTokenV231";
     const CERT_KEY="ldmLicenseCertificateV231";
     const INSTALLATION_KEY="ldmLicenseInstallationIdV231";
@@ -9,6 +9,7 @@
     const config=window.LDM_LICENSE_CONFIG||{};
     let currentPayload=null;
     let currentMode="unlicensed";
+    let bootPromise=null;
 
     const PAGE_FEATURES=Object.freeze({
         "index.html":"dashboard",
@@ -272,10 +273,11 @@
         return `license.html?${query.toString()}`;
     }
 
-    async function bootGuard(){
+    async function runGuard(){
         const page=normalizedPage(location.pathname);
         if(PUBLIC_PAGES.has(page)||config.enabled!==true){
-            document.documentElement.classList.remove("ldm-license-pending");
+            if(window.LDMLicenseGate)window.LDMLicenseGate.complete();
+            else document.documentElement.classList.remove("ldm-license-pending");
             window.dispatchEvent(new CustomEvent("ldm-license-ready",{detail:status()}));
             return true;
         }
@@ -287,7 +289,8 @@
                 location.replace(`license.html?error=FEATURE_LOCKED&feature=${encodeURIComponent(required)}`); return false;
             }
             bindFeatureGate(); applyFeatureVisibility(document);
-            document.documentElement.classList.remove("ldm-license-pending");
+            if(window.LDMLicenseGate)window.LDMLicenseGate.complete();
+            else document.documentElement.classList.remove("ldm-license-pending");
             window.dispatchEvent(new CustomEvent("ldm-license-ready",{detail:status()}));
             return true;
         }catch(error){
@@ -295,6 +298,12 @@
             location.replace(activationUrl(error.message||"LICENSE_INVALID"));
             return false;
         }
+    }
+
+    function bootGuard(){
+        if(bootPromise)return bootPromise;
+        bootPromise=runGuard();
+        return bootPromise;
     }
 
     window.LDMLicense=Object.freeze({version:VERSION,activate,startTrial,validateOnline,ensureValid,deactivate,clearLicense,hasFeature,featureForPage,applyFeatureVisibility,status,configurationStatus,installationId,readCertificate,bootGuard});

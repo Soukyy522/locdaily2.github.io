@@ -1,11 +1,17 @@
 (function(){
     "use strict";
 
-    const VERSION = "23.1.0";
+    const VERSION = "23.1.1";
 
     /* Satu penjaga lisensi untuk seluruh halaman operasional. */
     if(window.LDMLicense && typeof window.LDMLicense.bootGuard === "function"){
-        window.LDMLicense.bootGuard();
+        window.LDMLicense.bootGuard().catch(error=>{
+            if(window.LDMLicenseGate)window.LDMLicenseGate.fail(error&&error.message||"LICENSE_GUARD_FAILED");
+        });
+    }else if(window.LDM_LICENSE_CONFIG&&window.LDM_LICENSE_CONFIG.enabled){
+        window.addEventListener("load",()=>{
+            if(!window.LDMLicense&&window.LDMLicenseGate)window.LDMLicenseGate.fail("LICENSE_CLIENT_NOT_LOADED");
+        },{once:true});
     }
 
     function ensureReferrerPolicy(){
