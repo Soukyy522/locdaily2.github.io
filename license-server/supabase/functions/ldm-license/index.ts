@@ -89,7 +89,7 @@ Deno.serve(async(req:Request)=>{
   const action=String(body.action||"").toLowerCase();
 
   if(action==="health"){
-    return respond({ok:true,service:"ldm-license",version:"23.1.0",signingKeyConfigured:Boolean(Deno.env.get("LDM_LICENSE_PRIVATE_JWK")),allowedOrigins:[...allowedOrigins()].length,requestId},200,cors);
+    return respond({ok:true,service:"ldm-license",version:"23.1.1",signingKeyConfigured:Boolean(Deno.env.get("LDM_LICENSE_PRIVATE_JWK")),allowedOrigins:[...allowedOrigins()].length,requestId},200,cors);
   }
 
   const installationId=String(body.installationId||"").trim();
