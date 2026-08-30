@@ -11,6 +11,6 @@
         supabaseUrl:"https://PROJECT-REF-LISENSI.supabase.co",
         publishableKey:"MASUKKAN_PUBLISHABLE_KEY_PROJECT_LISENSI",
         functionUrl:"https://PROJECT-REF-LISENSI.supabase.co/functions/v1/ldm-license-admin",
-        appVersion:"23.2.0"
+        appVersion:"23.2.2"
     });
 })();

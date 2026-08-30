@@ -1,7 +1,7 @@
 (function(){
     "use strict";
 
-    const VERSION = "23.1.1";
+    const VERSION = "23.2.2";
 
     /* Satu penjaga lisensi untuk seluruh halaman operasional. */
     if(window.LDMLicense && typeof window.LDMLicense.bootGuard === "function"){

@@ -1,7 +1,7 @@
 (function(){
     "use strict";
 
-    const VERSION="23.1.1";
+    const VERSION="23.2.2";
     const TOKEN_KEY="ldmLicenseActivationTokenV231";
     const CERT_KEY="ldmLicenseCertificateV231";
     const INSTALLATION_KEY="ldmLicenseInstallationIdV231";
