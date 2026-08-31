@@ -1,7 +1,7 @@
 (function(){
     "use strict";
 
-    const NAV_VERSION="22.2";
+    const NAV_VERSION="25.2";
     const EOD_KEYS=["laporan","dataLaporan","shiftClosingLog","dataRetur"];
 
     /*
@@ -13,7 +13,7 @@
         {page:"absensi.html",icon:"📝",label:"Absensi",group:"Utama",roles:["owner","admin","kasir"]},
         {page:"kasir.html",icon:"💵",label:"Kasir",group:"Utama",roles:["owner","admin","kasir"],quick:true},
 
-        {page:"barang.html",icon:"📦",label:"Barang",group:"Inventori",roles:["owner","admin"],badge:"navBadge"},
+        {page:"barang.html",icon:"📦",label:"Barang",group:"Inventori",roles:["owner","admin","kasir"],badge:"navBadge"},
         {page:"kartu-stok.html",icon:"📒",label:"Kartu Stok",group:"Inventori",roles:["owner","admin","kasir"]},
         {page:"stock-opname.html",icon:"📋",label:"Stock Opname",group:"Inventori",roles:["owner","admin","kasir"]},
         {page:"multi-store.html",icon:"⇄",label:"Multi-Toko & Transfer",group:"Inventori",roles:["owner","admin"],quick:true},
@@ -24,6 +24,7 @@
 
         {page:"retur.html",icon:"↩️",label:"Retur",group:"Keuangan & Laporan",roles:["owner","admin","kasir"]},
         {page:"laporan.html",icon:"📑",label:"Laporan",group:"Keuangan & Laporan",roles:["owner","admin","kasir"],quick:true},
+        {page:"owner-control-center.html",icon:"🏛️",label:"Kontrol Pusat",group:"Keuangan & Laporan",roles:["owner"],primaryOwnerOnly:true},
         {page:"pengeluaran.html",icon:"💸",label:"Pengeluaran",group:"Keuangan & Laporan",roles:["owner","admin"]},
 
         {page:"shift-closing.html",icon:"🔒",label:"Closing Shift",group:"Closing & Data",roles:["owner","admin"]},
@@ -32,7 +33,9 @@
 
         {page:"pwa-settings.html",icon:"📲",label:"Aplikasi & Update",group:"Sistem",roles:["owner","admin","kasir"]},
         {page:"recovery-center.html",icon:"🛟",label:"Recovery Center",group:"Sistem",roles:["owner","admin","kasir"]},
-        {page:"qa-security-performance.html",icon:"🧪",label:"QA & Security",group:"Sistem",roles:["owner"]}
+        {page:"qa-security-performance.html",icon:"🧪",label:"QA & Security",group:"Sistem",roles:["owner"]},
+        {page:"license.html",icon:"🔑",label:"Lisensi & Paket",group:"Sistem",roles:["owner","admin","kasir"]},
+        {page:"panduan.html",icon:"📘",label:"Panduan & Bantuan",group:"Sistem",roles:["owner","admin","kasir"]}
     ];
 
     const GROUP_ORDER=["Utama","Inventori","Supplier & Pembelian","Keuangan & Laporan","Closing & Data","Sistem"];
@@ -221,7 +224,7 @@
 
     function routeLink(route,mode){
         const klass=mode==="mobile"?"ldm-global-mobile-link":"ldm-global-link";
-        return `<a href="${route.page}" class="${klass}${isActive(route)?" active":""}" data-ldm-route="${esc(route.page)}"${isActive(route)?' aria-current="page"':''}><span class="ldm-global-icon" aria-hidden="true">${route.icon}</span><span class="ldm-global-link-label">${esc(route.label)}</span>${badgeHTML(route)}</a>`;
+        return `<a href="${route.page}" class="${klass}${isActive(route)?" active":""}" data-ldm-route="${esc(route.page)}"${route.primaryOwnerOnly?' data-primary-owner-route="true" hidden':''}${isActive(route)?' aria-current="page"':''}><span class="ldm-global-icon" aria-hidden="true">${route.icon}</span><span class="ldm-global-link-label">${esc(route.label)}</span>${badgeHTML(route)}</a>`;
     }
 
     function groupedHTML(routes,mode){
@@ -280,7 +283,12 @@
             }
         });
 
-        if(unique.length)return;
+        if(unique.length){
+            document.documentElement.classList.remove("ldm-global-floating-menu");
+            document.getElementById("ldmGlobalFloatingToggle")?.remove();
+            return;
+        }
+        document.documentElement.classList.add("ldm-global-floating-menu");
         let floating=document.getElementById("ldmGlobalFloatingToggle");
         if(!floating){
             floating=document.createElement("button");
@@ -377,6 +385,29 @@
         document.querySelectorAll(".ldm-global-role").forEach(node=>{node.textContent=`👤 ${role}`});
     }
 
+    function applyPrimaryOwnerRoutes(context){
+        const allowed=context?.is_primary_owner===true;
+        document.querySelectorAll('[data-primary-owner-route="true"]').forEach(link=>{
+            const license=window.LDM_LICENSE_V2_STATE;
+            const licensingEnabled=window.LDM_LICENSE_V2_CONFIG?.enabled!==false;
+            const licensed=!licensingEnabled||Boolean(
+                license&&window.LDMLicenseV2?.hasFeature("central_control",license)
+            );
+            link.hidden=!(allowed&&licensed);
+        });
+    }
+
+    function initializePrimaryOwnerAccess(){
+        const start=()=>window.LDMPrimaryOwner.initialize().then(applyPrimaryOwnerRoutes);
+        if(window.LDMPrimaryOwner){start();return}
+        if(document.getElementById("ldmPrimaryOwnerScript"))return;
+        const script=document.createElement("script");
+        script.id="ldmPrimaryOwnerScript";
+        script.src="js/primary-owner-service.js?v=26.0";
+        script.addEventListener("load",start,{once:true});
+        document.head.appendChild(script);
+    }
+
     function markLegacyEodLinks(result){
         document.documentElement.setAttribute("data-ldm-eod-ready",result.ready?"true":"false");
         document.querySelectorAll('a[href="eod.html"]').forEach(link=>{
@@ -403,9 +434,11 @@
         const mobileReady=buildMobileDrawer(role,eodResult.ready);
         syncBadges();
         refreshContext();
+        initializePrimaryOwnerAccess();
 
         if(desktopReady&&mobileReady){
             document.documentElement.classList.add("ldm-global-nav-ready","ldm-global-mega-ready");
+            window.dispatchEvent(new CustomEvent("ldm-global-navigation-rendered",{detail:{role,eodReady:eodResult.ready}}));
             return true;
         }
         return false;
@@ -454,6 +487,8 @@
     window.addEventListener("focus",()=>syncEodAvailability(false));
     document.addEventListener("visibilitychange",()=>{if(!document.hidden)syncEodAvailability(false)});
     window.addEventListener("ldm-cloud-session-ready",()=>{render();syncEodAvailability(false)});
+    window.addEventListener("ldm-primary-owner-ready",event=>applyPrimaryOwnerRoutes(event.detail));
+    window.addEventListener("ldm-license-v2-authorized",()=>applyPrimaryOwnerRoutes(window.LDM_PRIMARY_OWNER_CONTEXT));
 
     window.LDMGlobalNavigation={
         version:NAV_VERSION,
