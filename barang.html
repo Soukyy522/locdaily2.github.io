@@ -2502,7 +2502,9 @@
 <script defer src="js/license-v2-guard.js?v=25.2.0"></script>
 <style id="ldmKasirBarangReadOnlyStyle">
     html[data-ldm-role="kasir"] #formTambahBarang,
+    html[data-ldm-role="kasir"] .btn-cetak-label,
     body.role-kasir-readonly #formTambahBarang,
+    body.role-kasir-readonly .btn-cetak-label,
     body.role-kasir-readonly .action-buttons {
         display: none !important;
     }
@@ -4716,25 +4718,8 @@ function catatKartuStokMutasi(payload = {}) {
     }
 
     /* FUNGSI CETAK LABEL PRICE - SATU DESAIN TAMPILAN BARU */
-    function requireLabelPricePrintAccess() {
-        const role = String(
-            localStorage.getItem("userRole") ||
-            localStorage.getItem("role") ||
-            ""
-        ).trim().toLowerCase();
-
-        if (["owner", "admin", "kasir"].includes(role)) return true;
-
-        tampilkanNotifikasi(
-            "Akses Tidak Tersedia",
-            "Masuk menggunakan akun Owner, Admin, atau Kasir untuk mencetak label price.",
-            "🔒"
-        );
-        return false;
-    }
-
     function bukaModalPilihOpsiCetak() {
-        if (!requireLabelPricePrintAccess()) return;
+        if (!requireOwnerBarangAction()) return;
 
         let rawData = localStorage.getItem("dataBarang");
         let data = rawData ? JSON.parse(rawData) : defaultBarang;
@@ -5019,7 +5004,7 @@ function catatKartuStokMutasi(payload = {}) {
 
 
     function cetakLabelPriceTerpilih() {
-        if (!requireLabelPricePrintAccess()) return;
+        if (!requireOwnerBarangAction()) return;
 
         const data = getDataBarangLabelPrice();
 
