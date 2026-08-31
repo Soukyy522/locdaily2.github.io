@@ -1,7 +1,6 @@
 (function(){
     "use strict";
 
-    const SERVICE_VERSION = "25.2.1";
     const ENABLED_KEY = "ldmReportingCloudEnabled";
     const LAST_SYNC_KEY = "ldmReportingLastSyncAt";
     const EXPENSE_BUCKET = "ldm-expense-receipts";
@@ -1431,7 +1430,6 @@
     }
 
     window.LDMReporting = Object.freeze({
-        version:SERVICE_VERSION,
         createUUID,
         stableNumericId,
         isEnabled,

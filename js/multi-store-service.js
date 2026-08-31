@@ -134,11 +134,34 @@
         return Array.isArray(data) ? data : [];
     }
 
+
+    async function listEmployees(){
+        const data=await rpc("ldm_network_employees");
+        return Array.isArray(data) ? data : [];
+    }
+
+    async function transferEmployee(userId,destinationStoreId,note=""){
+        if(navigator.onLine===false) throw new Error("Pemindahan karyawan membutuhkan koneksi internet.");
+        return rpc("ldm_transfer_employee",{
+            p_user_id:String(userId||"").trim(),
+            p_destination_store_id:String(destinationStoreId||"").trim(),
+            p_note:String(note||"").trim()||null
+        });
+    }
+
+    async function listEmployeeTransfers(limit=100){
+        const data=await rpc("ldm_employee_transfer_history",{p_limit:Number(limit)||100});
+        return Array.isArray(data) ? data : [];
+    }
+
     async function startRealtime(callback){
         if(channel) return channel;
         await authenticated();
-        channel=client().channel("ldm-multi-store-transfer-v22")
+        channel=client().channel("ldm-multi-store-transfer-v24-1")
             .on("postgres_changes",{event:"*",schema:"public",table:"stock_transfers"},payload=>{
+                if(typeof callback==="function") callback(payload);
+            })
+            .on("postgres_changes",{event:"*",schema:"public",table:"employee_store_transfers"},payload=>{
                 if(typeof callback==="function") callback(payload);
             })
             .subscribe();
@@ -153,6 +176,7 @@
     window.LDMMultiStore=Object.freeze({
         listStores,createBranch,prepareStoreDevice,switchStore,offlineQueueSafe,
         transferCandidates,createTransfer,sendTransfer,receiveTransfer,cancelTransfer,
-        listTransfers,startRealtime,stopRealtime,clearStoreCaches
+        listTransfers,listEmployees,transferEmployee,listEmployeeTransfers,
+        startRealtime,stopRealtime,clearStoreCaches
     });
 })();
